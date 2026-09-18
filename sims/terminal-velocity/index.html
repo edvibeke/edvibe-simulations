@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Terminal Velocity — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Terminal Velocity</h1>
+      <p>Drop the ball. Watch the two forces balance, and the velocity stop rising.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="A falling ball with weight and drag arrows, plus a velocity-time graph"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="mass">Mass</label>
+        <span class="ev-slider__value" id="massValue">5.0 kg</span>
+      </div>
+      <input type="range" id="mass" class="ev-slider"
+             min="1" max="20" step="0.5" value="5">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="k">Drag coefficient</label>
+        <span class="ev-slider__value" id="kValue">0.50</span>
+      </div>
+      <input type="range" id="k" class="ev-slider"
+             min="0.05" max="2.00" step="0.05" value="0.50">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="mainBtn">▶ Drop</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Velocity</span>
+      <span class="ev-readout__value" id="velValue">0.0 m/s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Drag force</span>
+      <span class="ev-readout__value" id="dragValue">0.0 N</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Acceleration</span>
+      <span class="ev-readout__value" id="accelValue">9.81 m/s²</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Set the mass and drag coefficient, then click
+    <em>Drop</em>. The ball falls through the column on the left. The red arrow
+    is the weight (constant). The green arrow is drag (grows as it speeds up).
+    The graph on the right plots velocity against time. Watch what happens
+    when the two arrows become equal.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: when drag equals weight, the net force is zero — so the acceleration is zero. But the ball doesn't stop — it keeps moving at a constant speed. That's terminal velocity.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
