@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Osmosis — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Osmosis</h1>
+      <p>Water moves through a partially permeable membrane — from dilute to concentrated.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="Two solutions separated by a partially permeable membrane, plus a graph of water counts"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="soluteLeft">Solute on left</label>
+        <span class="ev-slider__value" id="soluteLeftValue">4</span>
+      </div>
+      <input type="range" id="soluteLeft" class="ev-slider"
+             min="0" max="20" step="1" value="4">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="soluteRight">Solute on right</label>
+        <span class="ev-slider__value" id="soluteRightValue">16</span>
+      </div>
+      <input type="range" id="soluteRight" class="ev-slider"
+             min="0" max="20" step="1" value="16">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="pauseBtn">⏸ Pause</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Water on left</span>
+      <span class="ev-readout__value" id="waterLeftValue">30</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Water on right</span>
+      <span class="ev-readout__value" id="waterRightValue">30</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Net flow</span>
+      <span class="ev-readout__value ev-readout__value--text" id="directionValue">—</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Two solutions are separated by a partially permeable
+    membrane. The membrane lets <em>water</em> through, but not solute.
+    Change the solute amounts with the sliders. Watch blue water molecules cross the
+    membrane from the <em>dilute</em> side (fewer solutes) to the <em>concentrated</em>
+    side (more solutes). The graph shows how the water splits between the two sides
+    over time. Try setting both sides to the same solute — does anything happen?
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: water always moves toward the more concentrated solution — the side
+    with more solute. This is osmosis. In cells, this is how roots take up water from
+    soil, and why a plant wilts if you water it with salty water. If both sides have
+    the same concentration, water moves both ways at the same rate — no net change.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
