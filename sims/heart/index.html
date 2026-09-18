@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>The Heart — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>The Heart</h1>
+      <p>Watch blood flow through two separate circuits — lungs and body.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="520" aria-label="Schematic of the heart showing blood flow through two circuits"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="bpm">Heart rate</label>
+        <span class="ev-slider__value" id="bpmValue">70 BPM</span>
+      </div>
+      <input type="range" id="bpm" class="ev-slider"
+             min="40" max="180" step="5" value="70">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--ghost ev-toggle" id="labelsBtn" aria-pressed="true">
+        🏷 Labels on
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost ev-toggle" id="pauseBtn" aria-pressed="false">
+        ⏸ Pause
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Phase</span>
+      <span class="ev-readout__value ev-readout__value--text" id="phaseValue">Diastole</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Beat duration</span>
+      <span class="ev-readout__value" id="beatValue">0.86 s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Blood to body</span>
+      <span class="ev-readout__value" id="flowValue">100%</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Blood flows continuously through the heart, day and
+    night. <span style="color:#60a5fa">Blue blood</span> is deoxygenated — it comes
+    from the body via the <em>vena cava</em>, goes through the right side of the heart,
+    and is pumped to the lungs via the <em>pulmonary artery</em>.
+    <span style="color:#ef4444">Red blood</span> is oxygenated — it comes back from the
+    lungs via the <em>pulmonary vein</em>, goes through the left side, and is pumped to
+    the whole body via the <em>aorta</em>. The two sides never mix.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: the two sides of the heart are <em>completely separate</em> — that's
+    why it's called double circulation. The right side sends blood to the lungs (a short
+    trip). The left side sends blood to the whole body (a long trip) — which is why
+    the left ventricle's wall is much thicker and more muscular. It has to pump harder.
+    Blue blood is never red blood — they don't mix.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
