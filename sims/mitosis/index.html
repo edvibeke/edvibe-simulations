@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Mitosis — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Mitosis</h1>
+      <p>Step through the stages of cell division — one cell becomes two.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="520" aria-label="A cell progressing through the stages of mitosis"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-stage-nav">
+      <button type="button" class="ev-btn ev-btn--ghost" id="prevBtn">← Previous</button>
+      <button type="button" class="ev-btn ev-btn--primary" id="playBtn">▶ Play</button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="nextBtn">Next →</button>
+    </div>
+    <div class="ev-stage-dots" id="stageDots" role="tablist" aria-label="Stages of mitosis">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Stage</span>
+      <span class="ev-readout__value ev-readout__value--text" id="stageName">Interphase</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">What's happening</span>
+      <span class="ev-readout__value ev-readout__value--text" id="stageDesc">Cell grows and copies its DNA</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Chromosomes</span>
+      <span class="ev-readout__value" id="chromValue">4</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Use <em>Next</em> to step through each stage, or
+    <em>Play</em> to watch the whole process automatically. The dots below the buttons
+    let you jump to any stage. Watch what happens to the chromosomes — they copy
+    themselves, line up at the middle, then <em>pull apart</em>. Two identical
+    daughter cells come out the other end.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: the chromosomes copy themselves <em>before</em> the cell divides — during
+    interphase, when you can't even see them. Then during anaphase they get pulled apart
+    to opposite ends. Each daughter cell ends up with the <em>same</em> number and type of
+    chromosomes as the parent. That's why mitosis produces identical clones — it's used
+    for growth and repair, not for making sex cells.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
