@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Refraction — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Refraction</h1>
+      <p>Drag the incoming ray. Watch how it bends when it crosses into a new material.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="520" aria-label="Light ray crossing a boundary between two media"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="n1">Top material (n₁)</label>
+        <span class="ev-slider__value" id="n1Value">1.00</span>
+      </div>
+      <input type="range" id="n1" class="ev-slider"
+             min="1.00" max="2.50" step="0.01" value="1.00">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="n2">Bottom material (n₂)</label>
+        <span class="ev-slider__value" id="n2Value">1.33</span>
+      </div>
+      <input type="range" id="n2" class="ev-slider"
+             min="1.00" max="2.50" step="0.01" value="1.33">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="air-water">Air → Water</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="air-glass">Air → Glass</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="water-air">Water → Air</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="glass-air">Glass → Air</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Angle in (θ₁)</span>
+      <span class="ev-readout__value" id="theta1Value">—</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Angle out (θ₂)</span>
+      <span class="ev-readout__value" id="theta2Value">—</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">n₁ sin θ₁ / sin θ₂</span>
+      <span class="ev-readout__value" id="ratioValue">—</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Drag the round handle at the end of the incoming ray
+    to change its angle. Two sliders set how optically dense each material is
+    (its <em>refractive index</em>). The dashed vertical line is the <em>normal</em> —
+    angles are always measured from it. Try the <em>Water → Air</em> preset and
+    drag the ray to a large angle.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: <em>n₁ sin θ₁</em> always equals <em>n₂ sin θ₂</em> — that's Snell's law. And when light tries to go from dense to less dense at too steep an angle, it can't escape — it reflects back entirely. That's total internal reflection, and it's how fibre optic cables work.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
