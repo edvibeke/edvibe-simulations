@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Ohm's Law — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Ohm's Law</h1>
+      <p>Adjust voltage and resistance to see current change.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="500" aria-label="Circuit diagram showing current flow through a resistor"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="voltage">Voltage</label>
+        <span class="ev-slider__value" id="voltageValue">12 V</span>
+      </div>
+      <input type="range" id="voltage" class="ev-slider"
+             min="0" max="24" step="1" value="12">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="resistance">Resistance</label>
+        <span class="ev-slider__value" id="resistanceValue">6 Ω</span>
+      </div>
+      <input type="range" id="resistance" class="ev-slider"
+             min="1" max="100" step="1" value="6">
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Current</span>
+      <span class="ev-readout__value" id="currentValue">2.00 A</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Power</span>
+      <span class="ev-readout__value" id="powerValue">24.0 W</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Move the sliders to change voltage and resistance.
+    The current updates live as <em>I = V ÷ R</em>. Try keeping voltage fixed while
+    changing resistance — notice that as resistance goes up, current goes down.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: when voltage stays the same, doubling the resistance cuts the current in half.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
