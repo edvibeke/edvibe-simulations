@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>pH Scale — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>The pH Scale</h1>
+      <p>Add acid or alkali to pure water. Watch the colour and the pH.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="520" aria-label="A beaker of solution that changes colour with pH, and the pH scale from 0 to 14"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="mix">Add acid ← → Add alkali</label>
+        <span class="ev-slider__value" id="mixValue">Pure water</span>
+      </div>
+      <input type="range" id="mix" class="ev-slider"
+             min="-100" max="100" step="1" value="0">
+      <div class="ev-slider__ends">
+        <span>← more acid</span>
+        <span>more alkali →</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">pH</span>
+      <span class="ev-readout__value" id="phValue">7.0</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">[H⁺] (mol/dm³)</span>
+      <span class="ev-readout__value" id="hValue">1.0 × 10⁻⁷</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Solution</span>
+      <span class="ev-readout__value ev-readout__value--text" id="kindValue">Neutral</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Drag the slider to the left to add acid, or to the
+    right to add alkali. The beaker shows what universal indicator would look
+    like in that solution. The scale on the right is the pH scale.
+    Notice the <em>[H⁺]</em> readout — every step of 1 on the pH scale changes
+    the hydrogen ion concentration by a factor of ten.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: pH 7 is neutral. Lower pH = more H⁺ ions = more acidic. Higher pH = fewer H⁺ ions (more OH⁻) = more alkaline. Each step of 1 on the pH scale is a <em>ten-fold</em> change in H⁺ concentration. pH 3 has 10 000× more H⁺ than pH 7.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
