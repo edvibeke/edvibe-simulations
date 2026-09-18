@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>States of Matter — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>States of Matter</h1>
+      <p>Add energy to a block of ice. Watch the particles — and the thermometer.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="Particles in a container plus a heating curve graph"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="energy">Energy added</label>
+        <span class="ev-slider__value" id="energyValue">15%</span>
+      </div>
+      <input type="range" id="energy" class="ev-slider"
+             min="0" max="100" step="1" value="15">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="autoBtn">▶ Auto-heat</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Temperature</span>
+      <span class="ev-readout__value" id="tempValue">-5 °C</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">State</span>
+      <span class="ev-readout__value" id="stateValue">Solid</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Energy added</span>
+      <span class="ev-readout__value" id="energyOutValue">15%</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Drag the <em>Energy added</em> slider up slowly, or click
+    <em>Auto-heat</em>. Watch the particles in the box — they start locked in a lattice,
+    then slip past each other, then fly apart. Watch the thermometer too. You may be
+    surprised: it doesn't always rise.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: at 0 °C and again at 100 °C, the temperature stops rising even though
+    you keep adding energy. The energy is being used to break the bonds between particles,
+    not to make them move faster. Only once the change is complete does the temperature rise again.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
