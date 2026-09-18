@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Rates of Reaction — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Rates of Reaction</h1>
+      <p>Change the conditions — see how often particles react.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="Reactant particles colliding and reacting, plus a rate graph"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="temp">Temperature</label>
+        <span class="ev-slider__value" id="tempValue">40 °C</span>
+      </div>
+      <input type="range" id="temp" class="ev-slider"
+             min="20" max="80" step="1" value="40">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="count">Concentration</label>
+        <span class="ev-slider__value" id="countValue">30 particles</span>
+      </div>
+      <input type="range" id="count" class="ev-slider"
+             min="20" max="60" step="1" value="30">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--ghost ev-toggle" id="catalystBtn" aria-pressed="false">
+        🧪 Add catalyst
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Reactions</span>
+      <span class="ev-readout__value" id="reactionsValue">0</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Rate (last 5 s)</span>
+      <span class="ev-readout__value" id="rateValue">0.0 /s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Temperature</span>
+      <span class="ev-readout__value" id="tempOutValue">40 °C</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Two types of reactant particles bounce around the
+    container. When an <span style="color:#818cf8">A</span> and a
+    <span style="color:#f59e0b">B</span> particle collide <em>with enough energy</em>,
+    they react — you'll see a green flash. The graph on the right counts reactions over time.
+    Try raising the temperature. Then try adding more particles. Then try the catalyst.
+    Which one changes the rate the most?
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: every factor makes the graph steeper. Temperature does it because particles move faster and hit harder. Concentration does it because there are more particles to hit. A catalyst does it by making each collision more likely to succeed — without changing the particles at all.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
