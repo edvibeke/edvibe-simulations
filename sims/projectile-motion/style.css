@@ -1,0 +1,16 @@
+/* Actions row inside .ev-controls */
+.ev-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ev-readout {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 600px) {
+  .ev-readout { grid-template-columns: 1fr 1fr; }
+  .ev-readout__item:last-child { grid-column: 1 / -1; }
+}

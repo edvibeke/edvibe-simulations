@@ -1,38 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Projectile Motion</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Projectile Motion — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Projectile Motion</h1>
-    <p>Adjust the launch angle and speed, then fire.</p>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Projectile Motion</h1>
+      <p>Change the angle and speed, then fire. Watch how far it goes.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
   </header>
 
-  <div class="controls">
-    <label>Angle: <span id="angleVal">45</span>°
-      <input type="range" id="angle" min="5" max="85" value="45">
-    </label>
-    <label>Speed: <span id="speedVal">30</span> m/s
-      <input type="range" id="speed" min="10" max="60" value="30">
-    </label>
-    <label>Gravity: <span id="gravVal">9.8</span> m/s²
-      <input type="range" id="grav" min="1" max="20" step="0.1" value="9.8">
-    </label>
-    <button id="fire">🔥 Fire</button>
-    <button id="reset">Reset</button>
-  </div>
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="500" aria-label="Projectile trajectory from a cannon"></canvas>
+  </main>
 
-  <div class="stats">
-    <div><strong>Range:</strong> <span id="rangeOut">0</span> m</div>
-    <div><strong>Max height:</strong> <span id="heightOut">0</span> m</div>
-    <div><strong>Flight time:</strong> <span id="timeOut">0</span> s</div>
-  </div>
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="angle">Angle</label>
+        <span class="ev-slider__value" id="angleValue">45°</span>
+      </div>
+      <input type="range" id="angle" class="ev-slider"
+             min="5" max="85" step="1" value="45">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="speed">Speed</label>
+        <span class="ev-slider__value" id="speedValue">30 m/s</span>
+      </div>
+      <input type="range" id="speed" class="ev-slider"
+             min="10" max="50" step="1" value="30">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" data-action="fire">🔥 Fire</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="preset">Try 45° max range</button>
+    </div>
+  </section>
 
-  <canvas id="stage" width="900" height="500"></canvas>
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Range</span>
+      <span class="ev-readout__value" id="rangeValue">— m</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Max height</span>
+      <span class="ev-readout__value" id="heightValue">— m</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Time of flight</span>
+      <span class="ev-readout__value" id="timeValue">— s</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Move the sliders to set launch angle and speed.
+    Press <em>Fire</em> to launch. The trajectory of your previous shot stays on
+    screen as a dashed line so you can compare. Try keeping speed the same and
+    changing only the angle — what angle gives the longest range?
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: 30° and 60° travel the same distance. 45° goes furthest. Angles that add up to 90° give the same range.</span>
+  </section>
 
   <script src="script.js"></script>
 </body>
