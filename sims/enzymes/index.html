@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Enzymes — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Enzymes</h1>
+      <p>Change the temperature or pH — see what happens to the enzyme's active site.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="Enzyme with active site, substrate molecules, and a rate graph"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="temp">Temperature</label>
+        <span class="ev-slider__value" id="tempValue">37 °C</span>
+      </div>
+      <input type="range" id="temp" class="ev-slider"
+             min="10" max="70" step="1" value="37">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="ph">pH</label>
+        <span class="ev-slider__value" id="phValue">7.0</span>
+      </div>
+      <input type="range" id="ph" class="ev-slider"
+             min="2" max="12" step="0.5" value="7">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="pauseBtn">⏸ Pause</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Reactions</span>
+      <span class="ev-readout__value" id="reactionsValue">0</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Rate (last 5 s)</span>
+      <span class="ev-readout__value" id="rateValue">0.0 /s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Active site</span>
+      <span class="ev-readout__value ev-readout__value--text" id="shapeValue">Working</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Blue <em>substrate</em> molecules bounce around the
+    enzyme. When one fits into the enzyme's <em>active site</em>, the reaction happens
+    and it's released as two yellow <em>products</em>. Try changing the temperature.
+    Watch what happens past the optimum — the active site changes shape and substrates
+    no longer fit. That's denaturation, and it's permanent.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: rate is fastest at 37 °C (body temperature). Below that, particles
+    move slower so there are fewer collisions. Above that, the enzyme's active site
+    <em>denatures</em> — it changes shape permanently, so the substrate no longer
+    fits. That's why high fever is dangerous. Same idea applies to pH.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
