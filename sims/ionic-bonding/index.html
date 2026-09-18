@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Ionic Bonding — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Ionic Bonding</h1>
+      <p>Drag the outer electron from sodium to chlorine. Watch what happens.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="520" aria-label="A sodium atom and a chlorine atom, with a draggable electron forming an ionic bond"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-state-buttons">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="step" id="stepBtn" disabled>
+        ▶ Continue
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Sodium</span>
+      <span class="ev-readout__value" id="naValue">Na</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Chlorine</span>
+      <span class="ev-readout__value" id="clValue">Cl</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Status</span>
+      <span class="ev-readout__value ev-readout__value--text" id="statusValue">Atoms</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Sodium (Na) has <em>one</em> electron in its outer shell.
+    Chlorine (Cl) has <em>seven</em> and needs one more to be full.
+    Drag the lone electron from sodium to the empty slot on chlorine.
+    When it arrives, both atoms become ions — and opposite charges attract.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: sodium <em>loses</em> an electron and becomes Na⁺. Chlorine <em>gains</em> one and becomes Cl⁻. Opposite charges attract, so the two ions stick together. That's an ionic bond. The electron didn't disappear — it moved. Metals lose, non-metals gain.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
