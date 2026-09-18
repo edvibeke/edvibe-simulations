@@ -243,3 +243,8 @@ canvas {
 /* Grab cursor on the canvas since the probe is draggable */
 #stage { cursor: grab; touch-action: none; }
 #stage:active { cursor: grabbing; }
+
+
+
+#stage { cursor: grab; touch-action: none; }
+#stage:active { cursor: grabbing; }

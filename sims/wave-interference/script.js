@@ -1,38 +1,46 @@
 (() => {
   'use strict';
 
-  /* ── Constants ─────────────────────────────────────── */
+  /* ── Layout constants ──────────────────────────────── */
 
-  const INITIAL = {
-    wavelength: 100,      // px
-    separation: 280,      // px
-    probeX: 450,
-    probeY: 100
-  };
+  const CANVAS_W = 900;
+  const CANVAS_H = 660;
 
-  const RIPPLE_SPEED = 100;    // px/s, controls animation speed
-  const OFF_W = 180;            // offscreen render size (fast)
-  const OFF_H = 100;
+  const FIELD_H     = 350;      // 2D ripple field height
+  const TRACE_A_Y   = 365;
+  const TRACE_A_H   = 60;
+  const TRACE_B_Y   = 435;
+  const TRACE_B_H   = 60;
+  const TRACE_SUM_Y = 510;
+  const TRACE_SUM_H = 145;
+
+  const LABEL_W = 90;
+  const TRACE_X = LABEL_W;
+  const TRACE_W = CANVAS_W - LABEL_W;
+
+  const TRACE_SECONDS = 3.0;
+  const TRACE_SAMPLES = 300;
+  const UNIT_A = 22;
+  const UNIT_B = 22;
+  const UNIT_SUM = 22;
+
+  const RIPPLE_FREQ = 0.7;                   // Hz (visible, slow)
+  const OMEGA = 2 * Math.PI * RIPPLE_FREQ;   // rad/s
+
   const SOURCE_RADIUS = 10;
   const PROBE_RADIUS = 9;
 
-  /* ── DOM ───────────────────────────────────────────── */
+  const INITIAL = {
+    wavelength: 100,
+    separation: 280,
+    probeX: 450,
+    probeY: 175
+  };
 
-  const canvas          = document.getElementById('stage');
-  const ctx             = canvas.getContext('2d');
-  const wavelengthSlider = document.getElementById('wavelength');
-  const separationSlider = document.getElementById('separation');
-  const wavelengthValue = document.getElementById('wavelengthValue');
-  const separationValue = document.getElementById('separationValue');
-  const rAValue         = document.getElementById('rAValue');
-  const rBValue         = document.getElementById('rBValue');
-  const pathDiffValue   = document.getElementById('pathDiffValue');
-  const modeBtn         = document.getElementById('modeBtn');
-  const helpEl          = document.getElementById('help');
-  const insightEl       = document.getElementById('insight');
+  /* ── Offscreen field buffer (§8 perf) ──────────────── */
 
-  /* ── Offscreen buffer (§8 perf: render small, scale up) ── */
-
+  const OFF_W = 180;
+  const OFF_H = 70;
   const off = document.createElement('canvas');
   off.width = OFF_W;
   off.height = OFF_H;
@@ -40,12 +48,28 @@
   const imgData = offCtx.createImageData(OFF_W, OFF_H);
   const px = imgData.data;
 
+  /* ── DOM ───────────────────────────────────────────── */
+
+  const canvas           = document.getElementById('stage');
+  const ctx              = canvas.getContext('2d');
+  const wavelengthSlider = document.getElementById('wavelength');
+  const separationSlider = document.getElementById('separation');
+  const wavelengthValue  = document.getElementById('wavelengthValue');
+  const separationValue  = document.getElementById('separationValue');
+  const rAValue          = document.getElementById('rAValue');
+  const rBValue          = document.getElementById('rBValue');
+  const meetValue        = document.getElementById('meetValue');
+  const pauseBtn         = document.getElementById('pauseBtn');
+  const helpEl           = document.getElementById('help');
+  const insightEl        = document.getElementById('insight');
+
   /* ── State ─────────────────────────────────────────── */
 
   let state;
   let rafId = null;
   let lastTime = 0;
   let dragging = false;
+  let dragCount = 0;
 
   function makeInitialState() {
     return {
@@ -54,69 +78,51 @@
       probeX: INITIAL.probeX,
       probeY: INITIAL.probeY,
       time: 0,
-      mode: 'ripple',     // 'ripple' | 'envelope'
       paused: false
     };
   }
 
   function sourcePositions() {
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
+    const cx = CANVAS_W / 2;
+    const cy = FIELD_H / 2;
     const half = state.separation / 2;
-    return {
-      ax: cx - half, ay: cy,
-      bx: cx + half, by: cy
-    };
+    return { ax: cx - half, ay: cy, bx: cx + half, by: cy };
   }
 
-  /* ── Field rendering ───────────────────────────────── */
+  function waveSpeed() {
+    return state.wavelength * RIPPLE_FREQ;   // px/s
+  }
+
+  /* ── 2D field rendering ───────────────────────────── */
 
   function renderField() {
-    const W = canvas.width;
-    const H = canvas.height;
-    const scaleX = W / OFF_W;
-    const scaleY = H / OFF_H;
+    const scaleX = CANVAS_W / OFF_W;
+    const scaleY = FIELD_H / OFF_H;
     const { ax, ay, bx, by } = sourcePositions();
-
     const k = 2 * Math.PI / state.wavelength;
-    const omega = 2 * Math.PI * (RIPPLE_SPEED / state.wavelength);
-    const phase = omega * state.time;
-
-    const isEnvelope = state.mode === 'envelope';
+    const phase = OMEGA * state.time;
 
     for (let py = 0; py < OFF_H; py++) {
       const cy = (py + 0.5) * scaleY;
       for (let pxi = 0; pxi < OFF_W; pxi++) {
         const cx = (pxi + 0.5) * scaleX;
+        const rA = Math.hypot(cx - ax, cy - ay);
+        const rB = Math.hypot(cx - bx, cy - by);
 
-        const dxA = cx - ax, dyA = cy - ay;
-        const dxB = cx - bx, dyB = cy - by;
-        const rA = Math.sqrt(dxA * dxA + dyA * dyA);
-        const rB = Math.sqrt(dxB * dxB + dyB * dyB);
+        // instantaneous amplitude in [-2, 2]
+        const y = Math.sin(phase - k * rA) + Math.sin(phase - k * rB);
 
         let r, g, b;
-
-        if (isEnvelope) {
-          // Amplitude envelope: 2·|cos(k·Δr/2)|, in [0, 2]
-          const env = 2 * Math.abs(Math.cos(k * (rA - rB) / 2));
-          const t = env / 2;
+        if (y >= 0) {
+          const t = y / 2;
           r = 30 + t * 99;
           g = 41 + t * 99;
           b = 59 + t * 189;
         } else {
-          // Instantaneous: sin(phase - k·rA) + sin(phase - k·rB), in [-2, 2]
-          const y = Math.sin(phase - k * rA) + Math.sin(phase - k * rB);
-          if (y >= 0) {
-            const t = y / 2;
-            r = 30 + t * 99;
-            g = 41 + t * 99;
-            b = 59 + t * 189;
-          } else {
-            const t = -y / 2;
-            r = 30 + t * 209;
-            g = 41 + t * 27;
-            b = 59 + t * 9;
-          }
+          const t = -y / 2;
+          r = 30 + t * 209;
+          g = 41 + t * 27;
+          b = 59 + t * 9;
         }
 
         const idx = (py * OFF_W + pxi) * 4;
@@ -129,42 +135,70 @@
 
     offCtx.putImageData(imgData, 0, 0);
     ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(off, 0, 0, W, H);
+    ctx.drawImage(off, 0, 0, CANVAS_W, FIELD_H);
   }
 
-  /* ── Overlays ──────────────────────────────────────── */
+  /* ── Overlays on the field ────────────────────────── */
 
-  function renderOverlays() {
+  function renderFieldOverlays() {
     const { ax, ay, bx, by } = sourcePositions();
-    const probe = { x: state.probeX, y: state.probeY };
 
-    // Lines to sources
-    ctx.lineWidth = 2;
+    // Divider line between field and traces
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, FIELD_H);
+    ctx.lineTo(CANVAS_W, FIELD_H);
+    ctx.stroke();
+
+    // Dashed lines from probe to sources
     ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 2;
 
     ctx.strokeStyle = 'rgba(129,140,248,0.9)';
     ctx.beginPath();
-    ctx.moveTo(probe.x, probe.y);
+    ctx.moveTo(state.probeX, state.probeY);
     ctx.lineTo(ax, ay);
     ctx.stroke();
 
     ctx.strokeStyle = 'rgba(245,158,11,0.9)';
     ctx.beginPath();
-    ctx.moveTo(probe.x, probe.y);
+    ctx.moveTo(state.probeX, state.probeY);
     ctx.lineTo(bx, by);
     ctx.stroke();
 
     ctx.setLineDash([]);
 
     // Source markers
-    drawSource(ax, ay, '#818cf8');
-    drawSource(bx, by, '#f59e0b');
+    drawSource(ax, ay, '#818cf8', 'A');
+    drawSource(bx, by, '#f59e0b', 'B');
 
-    // Probe marker
-    drawProbe(probe);
+    // Probe
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(state.probeX, state.probeY, PROBE_RADIUS + 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.arc(state.probeX, state.probeY, PROBE_RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Small "drag me" hint on the probe the first time
+    if (dragCount === 0) {
+      ctx.fillStyle = 'rgba(226,232,240,0.75)';
+      ctx.font = '600 13px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('← drag me', state.probeX + PROBE_RADIUS + 8, state.probeY);
+    }
   }
 
-  function drawSource(x, y, color) {
+  function drawSource(x, y, color, label) {
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(x, y, SOURCE_RADIUS, 0, Math.PI * 2);
@@ -173,108 +207,158 @@
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 2;
     ctx.stroke();
-  }
 
-  function drawProbe(p) {
-    // Outer ring with a subtle glow
     ctx.fillStyle = '#0f172a';
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, PROBE_RADIUS + 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#e2e8f0';
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, PROBE_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    ctx.font = '700 12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, y + 1);
   }
 
-  /* ── Readout ───────────────────────────────────────── */
+  /* ── Trace panels ─────────────────────────────────── */
 
-  function syncReadout() {
-    const { ax, ay, bx, by } = sourcePositions();
-    const dxA = state.probeX - ax, dyA = state.probeY - ay;
-    const dxB = state.probeX - bx, dyB = state.probeY - by;
-    const rA = Math.sqrt(dxA * dxA + dyA * dyA);
-    const rB = Math.sqrt(dxB * dxB + dyB * dyB);
-    const diffPx = Math.abs(rA - rB);
-    const diffLambda = diffPx / state.wavelength;
-
-    wavelengthValue.textContent = state.wavelength + ' px';
-    separationValue.textContent = state.separation + ' px';
-    rAValue.textContent = rA.toFixed(0) + ' px';
-    rBValue.textContent = rB.toFixed(0) + ' px';
-    pathDiffValue.textContent = diffLambda.toFixed(2) + ' λ';
-
-    return { rA, rB, diffLambda };
-  }
-
-  /* ── Interference type (rendered near probe) ───────── */
-
-  function renderInterferenceBadge() {
+  function renderTraces() {
     const { ax, ay, bx, by } = sourcePositions();
     const rA = Math.hypot(state.probeX - ax, state.probeY - ay);
     const rB = Math.hypot(state.probeX - bx, state.probeY - by);
-    const n = Math.abs(rA - rB) / state.wavelength;
-    const frac = n - Math.round(n);          // in [-0.5, 0.5]
-    const a = Math.abs(frac);
 
-    let label, color;
-    if (a < 0.12) {
-      label = 'Constructive';
-      color = '#10b981';
-    } else if (a > 0.38) {
-      label = 'Destructive';
-      color = '#ef4444';
-    } else {
-      label = 'Partial';
-      color = '#94a3b8';
-    }
+    const k = 2 * Math.PI / state.wavelength;
+    const v = waveSpeed();
 
-    // Place the badge to the right of the probe, kept inside the canvas
-    const pad = 14;
-    ctx.font = '700 16px system-ui, sans-serif';
-    const textW = ctx.measureText(label).width;
-    let bx0 = state.probeX + PROBE_RADIUS + 12;
-    let by0 = state.probeY - 22;
-    if (bx0 + textW + pad > canvas.width) bx0 = state.probeX - PROBE_RADIUS - 12 - textW - pad;
-    if (by0 < 0) by0 = state.probeY + PROBE_RADIUS + 4;
+    // Helper to sample the wave from a source at a given past time
+    const waveAt = (sourceR, dtBack) => {
+      const t = state.time - dtBack;
+      return Math.sin(OMEGA * (t - sourceR / v));
+    };
 
-    ctx.fillStyle = 'rgba(15,23,42,0.85)';
-    ctx.fillRect(bx0, by0, textW + pad, 26);
+    drawTracePanel({
+      y: TRACE_A_Y, h: TRACE_A_H, unit: UNIT_A,
+      label: 'Wave from A', color: '#818cf8',
+      sample: (dtBack) => waveAt(rA, dtBack)
+    });
 
-    ctx.fillStyle = color;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'left';
-    ctx.fillText(label, bx0 + pad / 2, by0 + 13);
+    drawTracePanel({
+      y: TRACE_B_Y, h: TRACE_B_H, unit: UNIT_B,
+      label: 'Wave from B', color: '#f59e0b',
+      sample: (dtBack) => waveAt(rB, dtBack)
+    });
+
+    // Combined — height doubles when in sync
+    drawTracePanel({
+      y: TRACE_SUM_Y, h: TRACE_SUM_H, unit: UNIT_SUM,
+      label: 'Combined', color: '#10b981',
+      sample: (dtBack) => waveAt(rA, dtBack) + waveAt(rB, dtBack),
+      bold: true
+    });
   }
 
-  /* ── Frame ─────────────────────────────────────────── */
+  function drawTracePanel({ y, h, unit, label, color, sample, bold }) {
+    const baseline = y + h / 2;
+
+    // Panel background
+    ctx.fillStyle = '#0b1220';
+    ctx.fillRect(0, y, CANVAS_W, h);
+
+    // Grid baseline
+    ctx.strokeStyle = 'rgba(100,116,139,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(TRACE_X, baseline);
+    ctx.lineTo(CANVAS_W, baseline);
+    ctx.stroke();
+
+    // Left label
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '700 11px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label.toUpperCase(), 12, y + 16);
+
+    ctx.fillStyle = '#64748b';
+    ctx.font = '600 10px system-ui, sans-serif';
+    ctx.fillText('now →', 12, y + h - 12);
+
+    // The wave itself
+    ctx.strokeStyle = color;
+    ctx.lineWidth = bold ? 3 : 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+
+    for (let i = 0; i <= TRACE_SAMPLES; i++) {
+      const frac = i / TRACE_SAMPLES;
+      const tx = TRACE_X + frac * TRACE_W;
+      const dtBack = TRACE_SECONDS * (1 - frac);   // from oldest to newest
+      const val = sample(dtBack);
+      const ty = baseline - unit * val;
+      if (i === 0) ctx.moveTo(tx, ty);
+      else ctx.lineTo(tx, ty);
+    }
+
+    ctx.stroke();
+
+    // Playhead dot at the "now" end
+    const lastVal = sample(0);
+    const lastTy = baseline - unit * lastVal;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(CANVAS_W - 6, lastTy, bold ? 4 : 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Divider
+    ctx.strokeStyle = 'rgba(100,116,139,0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, y + h);
+    ctx.lineTo(CANVAS_W, y + h);
+    ctx.stroke();
+  }
+
+  /* ── Readout + "meet" label ──────────────────────── */
+
+  function meetInfo() {
+    const { ax, ay, bx, by } = sourcePositions();
+    const rA = Math.hypot(state.probeX - ax, state.probeY - ay);
+    const rB = Math.hypot(state.probeX - bx, state.probeY - by);
+    const diffLambda = Math.abs(rA - rB) / state.wavelength;
+    const frac = diffLambda - Math.round(diffLambda);   // in [-0.5, 0.5]
+    const a = Math.abs(frac);
+
+    if (a < 0.12)  return { rA, rB, kind: 'In step',         color: '#10b981' };
+    if (a > 0.38)  return { rA, rB, kind: 'Out of step',     color: '#ef4444' };
+    return { rA, rB, kind: 'Partly in step',                 color: '#94a3b8' };
+  }
+
+  function syncReadout() {
+    const info = meetInfo();
+    wavelengthValue.textContent = state.wavelength + ' px';
+    separationValue.textContent = state.separation + ' px';
+    rAValue.textContent = info.rA.toFixed(0) + ' px';
+    rBValue.textContent = info.rB.toFixed(0) + ' px';
+    meetValue.textContent = info.kind;
+    meetValue.style.color = info.color;
+  }
+
+  /* ── Render loop ──────────────────────────────────── */
 
   function render() {
+    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
     renderField();
-    renderOverlays();
-    renderInterferenceBadge();
+    renderFieldOverlays();
+    renderTraces();
   }
 
   function tick(now) {
     const dt = Math.min((now - lastTime) / 1000, 0.05);
     lastTime = now;
 
-    if (state.mode === 'ripple') {
+    if (!state.paused) {
       state.time += dt;
+      syncReadout();
     }
-
     render();
 
-    if (state.paused) {
-      rafId = null;
-    } else {
-      rafId = requestAnimationFrame(tick);
-    }
+    if (!state.paused) rafId = requestAnimationFrame(tick);
+    else rafId = null;
   }
 
   function start() {
@@ -287,20 +371,36 @@
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   }
 
-  /* ── Input ─────────────────────────────────────────── */
+  function togglePause() {
+    state.paused = !state.paused;
+    if (state.paused) {
+      stop();
+      pauseBtn.textContent = '▶ Play';
+    } else {
+      pauseBtn.textContent = '⏸ Pause';
+      start();
+    }
+  }
+
+  /* ── Pointer ──────────────────────────────────────── */
 
   function canvasCoords(e) {
     const rect = canvas.getBoundingClientRect();
     return {
-      x: (e.clientX - rect.left) * (canvas.width / rect.width),
-      y: (e.clientY - rect.top)  * (canvas.height / rect.height)
+      x: (e.clientX - rect.left) * (CANVAS_W / rect.width),
+      y: (e.clientY - rect.top)  * (CANVAS_H / rect.height)
     };
   }
 
+  function inField(p) {
+    return p.y >= 0 && p.y <= FIELD_H;
+  }
+
   canvas.addEventListener('pointerdown', (e) => {
+    const p = canvasCoords(e);
+    if (!inField(p)) return;
     dragging = true;
     canvas.setPointerCapture(e.pointerId);
-    const p = canvasCoords(e);
     state.probeX = p.x;
     state.probeY = p.y;
     syncReadout();
@@ -310,17 +410,21 @@
   canvas.addEventListener('pointermove', (e) => {
     if (!dragging) return;
     const p = canvasCoords(e);
-    state.probeX = p.x;
-    state.probeY = p.y;
+    state.probeX = Math.max(0, Math.min(CANVAS_W, p.x));
+    state.probeY = Math.max(0, Math.min(FIELD_H, p.y));
     syncReadout();
     if (state.paused) render();
-    insightEl.hidden = false;
   });
 
   canvas.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
     dragging = false;
     try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    dragCount++;
+    if (dragCount >= 3) insightEl.hidden = false;
   });
+
+  /* ── Sliders, buttons ─────────────────────────────── */
 
   wavelengthSlider.addEventListener('input', () => {
     state.wavelength = parseFloat(wavelengthSlider.value);
@@ -334,13 +438,7 @@
     if (state.paused) render();
   });
 
-  modeBtn.addEventListener('click', () => {
-    state.mode = state.mode === 'ripple' ? 'envelope' : 'ripple';
-    modeBtn.textContent = state.mode === 'ripple'
-      ? 'Show amplitude (static)'
-      : 'Show ripple (animated)';
-    if (state.paused) render();
-  });
+  pauseBtn.addEventListener('click', togglePause);
 
   document.querySelector('[data-action="reset"]').addEventListener('click', reset);
   document.querySelector('[data-action="help"]').addEventListener('click', () => {
@@ -352,7 +450,8 @@
     state = makeInitialState();
     wavelengthSlider.value = state.wavelength;
     separationSlider.value = state.separation;
-    modeBtn.textContent = 'Show amplitude (static)';
+    pauseBtn.textContent = '⏸ Pause';
+    dragCount = 0;
     helpEl.hidden = true;
     insightEl.hidden = true;
     syncReadout();
@@ -360,7 +459,7 @@
     start();
   }
 
-  /* ── Init ──────────────────────────────────────────── */
+  /* ── Init ─────────────────────────────────────────── */
 
   state = makeInitialState();
   wavelengthSlider.value = state.wavelength;
