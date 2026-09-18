@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Pendulum — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Pendulum</h1>
+      <p>Change the string length and mass — see what affects the period.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="500" aria-label="A pendulum swinging back and forth"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="length">String length</label>
+        <span class="ev-slider__value" id="lengthValue">1.00 m</span>
+      </div>
+      <input type="range" id="length" class="ev-slider"
+             min="0.5" max="3.0" step="0.05" value="1.0">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="mass">Bob mass</label>
+        <span class="ev-slider__value" id="massValue">3 kg</span>
+      </div>
+      <input type="range" id="mass" class="ev-slider"
+             min="1" max="10" step="1" value="3">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" data-action="pause" id="pauseBtn">
+        ⏸ Pause
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Period</span>
+      <span class="ev-readout__value" id="periodValue">2.01 s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Angle</span>
+      <span class="ev-readout__value" id="angleValue">30°</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Bob speed</span>
+      <span class="ev-readout__value" id="speedValue">0.00 m/s</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Drag the <em>String length</em> slider to change the
+    pendulum. Drag the <em>Bob mass</em> slider to change how heavy the bob is.
+    Watch the <em>Period</em> readout — the time for one full swing.
+    Change mass first. Then change length. Which one changes the period?
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: changing mass does not change the period — only the string length does. Longer string, slower swing.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
