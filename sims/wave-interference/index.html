@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Wave Interference — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Wave Interference</h1>
+      <p>Two sources ripple outward. Drag the probe to see where they reinforce or cancel.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="500" aria-label="Two wave sources with a draggable probe point"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="wavelength">Wavelength</label>
+        <span class="ev-slider__value" id="wavelengthValue">100 px</span>
+      </div>
+      <input type="range" id="wavelength" class="ev-slider"
+             min="40" max="200" step="5" value="100">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="separation">Source separation</label>
+        <span class="ev-slider__value" id="separationValue">280 px</span>
+      </div>
+      <input type="range" id="separation" class="ev-slider"
+             min="100" max="500" step="10" value="280">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" data-action="mode" id="modeBtn">
+        Show amplitude (static)
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">To source A</span>
+      <span class="ev-readout__value" id="rAValue">— px</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">To source B</span>
+      <span class="ev-readout__value" id="rBValue">— px</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Path diff</span>
+      <span class="ev-readout__value" id="pathDiffValue">— λ</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Drag anywhere on the canvas to move the probe.
+    The readout shows how far the probe is from each source, and the difference
+    in wavelengths. When the path difference is a whole number (0, 1, 2…),
+    the waves arrive in step and reinforce. When it's a half-number (0.5, 1.5…),
+    they cancel. This is exactly what happens in a ripple tank or a double-slit
+    experiment — bright fringes are constructive, dark bands are destructive.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: on the midline between the sources, path difference is always zero — the waves arrive together. That vertical line of brightness is a permanent constructive ridge.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
