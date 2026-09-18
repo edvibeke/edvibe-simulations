@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Covalent Bonding — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Covalent Bonding</h1>
+      <p>Push two hydrogen atoms together. Watch them share their electrons.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="520" aria-label="Two hydrogen atoms that share their electrons when brought together"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label>Interaction</label>
+        <span class="ev-slider__value" id="distValue">320 px apart</span>
+      </div>
+      <p class="ev-control__hint">
+        Drag the <strong>right hydrogen atom</strong> left or right.
+        Pull it toward the other to form a bond — pull it apart to break it.
+      </p>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Left atom</span>
+      <span class="ev-readout__value" id="leftValue">H</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Right atom</span>
+      <span class="ev-readout__value" id="rightValue">H</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Status</span>
+      <span class="ev-readout__value ev-readout__value--text" id="statusValue">Separate atoms</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Each hydrogen atom has <em>one</em> electron in its outer shell.
+    Hydrogen wants <em>two</em> electrons to be full (like helium). Drag the right atom
+    toward the left one. When they get close enough, the two electrons move into the
+    middle and are <em>shared</em> by both atoms. Nothing is lost, nothing is gained —
+    both atoms now count two electrons. That's a covalent bond. Pull them apart and
+    the shared pair splits back into two separate atoms.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: unlike ionic bonding, nothing is transferred. Both atoms keep their
+    own electron, but they pool them into a <em>shared pair</em> in the overlap region.
+    The shared pair belongs to both atoms at once — so each hydrogen now has a full
+    outer shell of two electrons. That's why H₂ is stable: it's the same electron
+    arrangement as helium.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
