@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Electrolysis — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Electrolysis</h1>
+      <p>Switch on the power. Watch ions migrate to the electrodes and the solution change.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="520" aria-label="Electrolysis cell with copper sulfate solution and two graphite electrodes"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-state-buttons">
+      <button type="button" class="ev-btn ev-btn--primary" id="powerBtn" aria-pressed="false">
+        ⚡ Switch on power
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Cu²⁺ in solution</span>
+      <span class="ev-readout__value" id="concValue">100%</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Cu deposited</span>
+      <span class="ev-readout__value" id="depositValue">0.00 g</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Time</span>
+      <span class="ev-readout__value" id="timeValue">0 s</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Click <em>Switch on power</em>. The battery pushes
+    electrons through the wires, making the left electrode <em>negative</em> (the
+    cathode) and the right electrode <em>positive</em> (the anode).
+    Blue <span style="color:#60a5fa">Cu²⁺</span> ions drift to the cathode and
+    turn into copper metal. Orange <span style="color:#f59e0b">SO₄²⁻</span> ions
+    drift to the anode where oxygen bubbles form. Watch the blue colour fade as
+    Cu²⁺ ions leave the solution.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: the solution fades from blue to colourless. That's because Cu²⁺
+    ions are being <em>removed</em> from the solution — they gain electrons at the
+    cathode and become solid copper. Meanwhile oxygen bubbles form at the anode.
+    The sulfate ions don't change — they're just spectators. This is how copper is
+    purified in industry.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
