@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Dynamic Equilibrium — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Dynamic Equilibrium</h1>
+      <p>Watch a reversible reaction settle — then disturb it. See how it fights back.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="Particles of A and B interconverting, plus a graph of their amounts over time"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="temp">Temperature</label>
+        <span class="ev-slider__value" id="tempValue">40 °C</span>
+      </div>
+      <input type="range" id="temp" class="ev-slider"
+             min="20" max="80" step="1" value="40">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--ghost" id="addABtn">+ 10 A</button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="addBBtn">+ 10 B</button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="pauseBtn">⏸ Pause</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Amount of A</span>
+      <span class="ev-readout__value" id="aValue">60</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Amount of B</span>
+      <span class="ev-readout__value" id="bValue">60</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">B ÷ A</span>
+      <span class="ev-readout__value" id="kValue">1.00</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> A ⇌ B is a reversible reaction. Blue A particles
+    turn into green B, and green B turn back into blue A. The particles never stop
+    reacting — they just reach a <em>balance</em> where the two rates are equal.
+    Try the buttons: add more A, add more B, or change the temperature.
+    Watch the graph shift, then settle again at a new balance.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: the reactions never stop — this is <em>dynamic</em> equilibrium.
+    When you disturb the balance, the system shifts to oppose your change:
+    add more A → it makes more B. Heat it up → the endothermic direction speeds
+    up more, shifting the balance. That's Le Chatelier's principle.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
