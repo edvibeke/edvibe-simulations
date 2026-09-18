@@ -4,136 +4,153 @@
   /* ── Layout ─────────────────────────────────────────── */
 
   const W = 900, H = 540;
-  const BOX = { x: 40, y: 60, w: 380, h: 420 };
+  const BOX   = { x: 40,  y: 60, w: 380, h: 420 };
   const GRAPH = { x: 500, y: 90, w: 360, h: 380 };
   const T_MIN = -20, T_MAX = 140;
 
   const N_PARTICLES = 48;
-  const PARTICLES_PER_ROW = 8;
+  const PARTICLE_R  = 7;
 
-  const INITIAL = { energy: 15 };
+  /* ── State definitions ──────────────────────────────── */
+
+  const INITIAL_STATE = 'solid';
+
+  // energy = where the marker sits on the heating curve (0-100%)
+  // temp   = the temperature shown in the readout
+  // example= familiar word for students
+  const STATES = {
+    solid: {
+      name: 'Solid',
+      energy: 15,
+      temp: -10,
+      example: 'Ice',
+      color: '#60a5fa',
+      particleColor: '#60a5fa',
+      springK: 140,       // strong pull to home — locked lattice
+      jitter: 30,         // small vibration
+      damping: 0.82,
+      caption: 'Locked in a lattice — they only vibrate in place'
+    },
+    liquid: {
+      name: 'Liquid',
+      energy: 50,
+      temp: 50,
+      example: 'Water',
+      color: '#22d3ee',
+      particleColor: '#22d3ee',
+      springK: 14,        // weak pull — they can slide
+      jitter: 420,
+      damping: 0.9,
+      caption: 'Touching but sliding — they flow to the bottom'
+    },
+    gas: {
+      name: 'Gas',
+      energy: 90,
+      temp: 120,
+      example: 'Steam',
+      color: '#f59e0b',
+      particleColor: '#f59e0b',
+      springK: 0,         // no pull — free flight
+      jitter: 1700,
+      damping: 0.985,
+      caption: 'Far apart, moving fast — they fill the container'
+    }
+  };
 
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas       = document.getElementById('stage');
   const ctx          = canvas.getContext('2d');
-  const energySlider = document.getElementById('energy');
-  const energyValue  = document.getElementById('energyValue');
   const tempValue    = document.getElementById('tempValue');
   const stateValue   = document.getElementById('stateValue');
-  const energyOutValue = document.getElementById('energyOutValue');
-  const autoBtn      = document.getElementById('autoBtn');
+  const exampleValue = document.getElementById('exampleValue');
   const helpEl       = document.getElementById('help');
   const insightEl    = document.getElementById('insight');
+  const stateBtns    = document.querySelectorAll('[data-state]');
 
-  /* ── State ──────────────────────────────────────────── */
+  /* ── Sim state ──────────────────────────────────────── */
 
-  let state = makeInitialState();
+  let current = INITIAL_STATE;
   let particles = [];
   let rafId = null;
   let lastTime = 0;
-  let autoHeating = false;
-  let maxEnergyReached = INITIAL.energy;
+  let switches = 0;
 
-  function makeInitialState() {
-    return { energy: INITIAL.energy };
+  /* ── Home positions ─────────────────────────────────── */
+
+  function latticeHome(i) {
+    const cols = 8;
+    const rows = Math.ceil(N_PARTICLES / cols);
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const cellW = BOX.w / (cols + 1);
+    const cellH = (BOX.h * 0.5) / (rows + 1);
+    return {
+      hx: BOX.x + cellW * (col + 1),
+      hy: BOX.y + BOX.h * 0.32 + cellH * row
+    };
   }
 
-  /* ── Particle setup ─────────────────────────────────── */
+  function liquidHome() {
+    return {
+      hx: BOX.x + 25 + Math.random() * (BOX.w - 50),
+      hy: BOX.y + BOX.h * 0.50 + Math.random() * (BOX.h * 0.42)
+    };
+  }
 
   function makeParticles() {
     const list = [];
-    const cols = PARTICLES_PER_ROW;
-    const rows = Math.ceil(N_PARTICLES / cols);
-
-    const cellW = BOX.w / (cols + 1);
-    const cellH = (BOX.h * 0.55) / (rows + 1);
-    const baseY = BOX.y + BOX.h * 0.35;
-
     for (let i = 0; i < N_PARTICLES; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const hx = BOX.x + cellW * (col + 1) + (Math.random() - 0.5) * 6;
-      const hy = baseY + cellH * (row + 1) + (Math.random() - 0.5) * 6;
+      const h = current === 'solid' ? latticeHome(i) : liquidHome();
       list.push({
-        homeX: hx,
-        homeY: hy,
-        x: hx,
-        y: hy,
-        vx: (Math.random() - 0.5) * 20,
-        vy: (Math.random() - 0.5) * 20,
-        seed: Math.random() * Math.PI * 2
+        x: BOX.x + BOX.w / 2 + (Math.random() - 0.5) * 60,
+        y: BOX.y + BOX.h * 0.55 + (Math.random() - 0.5) * 60,
+        vx: 0, vy: 0,
+        hx: h.hx, hy: h.hy
       });
     }
     return list;
   }
 
-  /* ── Physics model ──────────────────────────────────── */
-
-  // Energy mapping:
-  //   0–20   solid warming from -20 °C to 0 °C
-  //   20–40  melting plateau (0 °C)
-  //   40–60  liquid warming from 0 °C to 100 °C
-  //   60–80  boiling plateau (100 °C)
-  //   80–100 gas warming from 100 °C to 140 °C
-  function model(e) {
-    if (e < 20)  return { temp: -20 + (e / 20) * 20,       state: 'solid',   melt: 0,             boil: 0,             kinetic: 0.05 + (e / 20) * 0.10 };
-    if (e < 40)  return { temp: 0,                         state: 'melting', melt: (e - 20) / 20, boil: 0,             kinetic: 0.15 + ((e - 20) / 20) * 0.15 };
-    if (e < 60)  return { temp: ((e - 40) / 20) * 100,     state: 'liquid',  melt: 1,             boil: 0,             kinetic: 0.30 + ((e - 40) / 20) * 0.25 };
-    if (e < 80)  return { temp: 100,                       state: 'boiling', melt: 1,             boil: (e - 60) / 20, kinetic: 0.55 + ((e - 60) / 20) * 0.30 };
-    return { temp: 100 + ((e - 80) / 20) * 40,             state: 'gas',     melt: 1,             boil: 1,             kinetic: 0.85 + ((e - 80) / 20) * 0.40 };
+  function reassignHomes() {
+    if (current === 'solid') {
+      particles.forEach((p, i) => {
+        const h = latticeHome(i);
+        p.hx = h.hx; p.hy = h.hy;
+      });
+    } else if (current === 'liquid') {
+      particles.forEach(p => {
+        const h = liquidHome();
+        p.hx = h.hx; p.hy = h.hy;
+      });
+    }
   }
 
-  /* ── Particle update ────────────────────────────────── */
+  /* ── Physics ────────────────────────────────────────── */
 
   function updateParticles(dt) {
-    const m = model(state.energy);
+    const cfg = STATES[current];
 
-    // Per-particle freedom
-    // Base freedom scales with kinetic. Lattice attraction decays as freedom rises.
-    const baseFreedom = Math.min(1, m.kinetic * 1.15);
-
-    particles.forEach((p, i) => {
-      // Individual variation so particles don't move as a block
-      const wave = 0.5 + 0.5 * Math.sin(p.seed + performance.now() * 0.0015 + i * 0.7);
-      const freedom = Math.max(0, Math.min(1, baseFreedom * (0.7 + wave * 0.5)));
-
-      // Attraction to home position (strong when freedom is low)
-      const attraction = (1 - freedom) * 90;
-      const dx = p.homeX - p.x;
-      const dy = p.homeY - p.y;
-
-      p.vx += dx * attraction * dt;
-      p.vy += dy * attraction * dt;
-
-      // Thermal jitter (higher with freedom)
-      const jitter = 80 + freedom * 500;
-      p.vx += (Math.random() - 0.5) * jitter * dt;
-      p.vy += (Math.random() - 0.5) * jitter * dt;
-
-      // Gas particles drift upward — bounce off the top of the box
-      if (freedom > 0.85) {
-        p.vy -= 40 * dt;    // gentle upward push
+    for (const p of particles) {
+      if (cfg.springK > 0) {
+        p.vx += (p.hx - p.x) * cfg.springK * dt;
+        p.vy += (p.hy - p.y) * cfg.springK * dt;
       }
+      p.vx += (Math.random() - 0.5) * cfg.jitter * dt;
+      p.vy += (Math.random() - 0.5) * cfg.jitter * dt;
 
-      // Damping keeps things from exploding
-      p.vx *= 0.94;
-      p.vy *= 0.94;
+      p.vx *= cfg.damping;
+      p.vy *= cfg.damping;
 
-      // Integrate
       p.x += p.vx * dt;
       p.y += p.vy * dt;
 
-      // Bounce off walls
-      const pad = 8;
-      if (p.x < BOX.x + pad)              { p.x = BOX.x + pad;              p.vx = Math.abs(p.vx); }
-      if (p.x > BOX.x + BOX.w - pad)      { p.x = BOX.x + BOX.w - pad;      p.vx = -Math.abs(p.vx); }
-      if (p.y < BOX.y + pad)              { p.y = BOX.y + pad;              p.vy = Math.abs(p.vy); }
-      if (p.y > BOX.y + BOX.h - pad)      { p.y = BOX.y + BOX.h - pad;      p.vy = -Math.abs(p.vy); }
-
-      // Update home for liquid/gas so they don't snap back to old lattice
-      // (only relevant if we ever decrease energy — home stays put, which is fine)
-    });
+      const pad = PARTICLE_R + 2;
+      if (p.x < BOX.x + pad)         { p.x = BOX.x + pad;         p.vx =  Math.abs(p.vx) * 0.8; }
+      if (p.x > BOX.x + BOX.w - pad) { p.x = BOX.x + BOX.w - pad; p.vx = -Math.abs(p.vx) * 0.8; }
+      if (p.y < BOX.y + pad)         { p.y = BOX.y + pad;         p.vy =  Math.abs(p.vy) * 0.8; }
+      if (p.y > BOX.y + BOX.h - pad) { p.y = BOX.y + BOX.h - pad; p.vy = -Math.abs(p.vy) * 0.8; }
+    }
   }
 
   /* ── Render ─────────────────────────────────────────── */
@@ -142,6 +159,7 @@
     ctx.clearRect(0, 0, W, H);
     drawBox();
     drawParticles();
+    drawCaption();
     drawGraph();
   }
 
@@ -161,31 +179,30 @@
   }
 
   function drawParticles() {
-    const m = model(state.energy);
+    const cfg = STATES[current];
+    ctx.fillStyle = cfg.particleColor;
 
-    // Colour by state: blue → teal → amber
-    let color;
-    switch (m.state) {
-      case 'solid':   color = '#60a5fa'; break;
-      case 'melting': color = '#22d3ee'; break;
-      case 'liquid':  color = '#22d3ee'; break;
-      case 'boiling': color = '#f59e0b'; break;
-      case 'gas':     color = '#f59e0b'; break;
-    }
-
-    particles.forEach(p => {
-      ctx.fillStyle = color;
+    for (const p of particles) {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, PARTICLE_R, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = '#0b1220';
+      ctx.strokeStyle = 'rgba(11,18,32,0.9)';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-    });
+    }
   }
 
-  /* ── Graph ──────────────────────────────────────────── */
+  function drawCaption() {
+    const cfg = STATES[current];
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '700 12px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(cfg.caption, BOX.x + BOX.w / 2, BOX.y + BOX.h + 30);
+  }
+
+  /* ── Heating-curve graph ───────────────────────────── */
 
   function drawGraph() {
     const g = GRAPH;
@@ -198,17 +215,11 @@
     ctx.lineWidth = 1;
     for (let e = 0; e <= 100; e += 20) {
       const x = g.x + (e / 100) * g.w;
-      ctx.beginPath();
-      ctx.moveTo(x, g.y);
-      ctx.lineTo(x, g.y + g.h);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, g.y); ctx.lineTo(x, g.y + g.h); ctx.stroke();
     }
     for (let t = T_MIN; t <= T_MAX; t += 20) {
       const y = g.y + g.h - ((t - T_MIN) / (T_MAX - T_MIN)) * g.h;
-      ctx.beginPath();
-      ctx.moveTo(g.x, y);
-      ctx.lineTo(g.x + g.w, y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(g.x, y); ctx.lineTo(g.x + g.w, y); ctx.stroke();
     }
 
     // Axes
@@ -220,7 +231,7 @@
     ctx.lineTo(g.x + g.w, g.y + g.h);
     ctx.stroke();
 
-    // Tick labels
+    // Ticks
     ctx.fillStyle = '#94a3b8';
     ctx.font = '600 10px ui-monospace, monospace';
     ctx.textAlign = 'center';
@@ -241,7 +252,7 @@
     ctx.font = '700 11px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('ENERGY ADDED', g.x + g.w / 2, g.y + g.h + 26);
+    ctx.fillText('ENERGY', g.x + g.w / 2, g.y + g.h + 26);
 
     ctx.save();
     ctx.translate(g.x - 44, g.y + g.h / 2);
@@ -251,15 +262,13 @@
     ctx.fillText('TEMPERATURE  (°C)', 0, 0);
     ctx.restore();
 
-    // Heating curve path
+    // Heating curve
     ctx.strokeStyle = '#818cf8';
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
     ctx.beginPath();
-    const curvePoints = [
-      [0, -20], [20, 0], [40, 0], [60, 100], [80, 100], [100, 140]
-    ];
-    curvePoints.forEach(([e, t], i) => {
+    const pts = [[0, -20], [20, 0], [40, 0], [60, 100], [80, 100], [100, 140]];
+    pts.forEach(([e, t], i) => {
       const x = g.x + (e / 100) * g.w;
       const y = g.y + g.h - ((t - T_MIN) / (T_MAX - T_MIN)) * g.h;
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
@@ -279,14 +288,33 @@
       ctx.setLineDash([]);
     });
 
-    // Current position marker
-    const m = model(state.energy);
-    const mx = g.x + (state.energy / 100) * g.w;
-    const my = g.y + g.h - ((m.temp - T_MIN) / (T_MAX - T_MIN)) * g.h;
+    // Zone labels
+    const zoneLabels = [
+      { e: 15, label: 'solid' },
+      { e: 50, label: 'liquid' },
+      { e: 90, label: 'gas' }
+    ];
+    ctx.fillStyle = 'rgba(148,163,184,0.75)';
+    ctx.font = '700 10px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    zoneLabels.forEach(({ e, label }) => {
+      const x = g.x + (e / 100) * g.w;
+      ctx.fillText(label, x, g.y + 12);
+    });
+
+    // Current marker
+    const cfg = STATES[current];
+    const mx = g.x + (cfg.energy / 100) * g.w;
+    const my = g.y + g.h - ((cfg.temp - T_MIN) / (T_MAX - T_MIN)) * g.h;
+
+    ctx.fillStyle = 'rgba(99,102,241,0.25)';
+    ctx.beginPath();
+    ctx.arc(mx, my, 16, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.fillStyle = '#ef4444';
     ctx.beginPath();
-    ctx.arc(mx, my, 7, 0, Math.PI * 2);
+    ctx.arc(mx, my, 8, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.strokeStyle = '#0b1220';
@@ -297,42 +325,21 @@
   /* ── Readout ────────────────────────────────────────── */
 
   function syncReadout() {
-    const m = model(state.energy);
-    const stateName = { solid: 'Solid', melting: 'Melting', liquid: 'Liquid', boiling: 'Boiling', gas: 'Gas' }[m.state];
-
-    energyValue.textContent    = state.energy + '%';
-    energyOutValue.textContent = state.energy + '%';
-    tempValue.textContent      = m.temp.toFixed(0) + ' °C';
-    stateValue.textContent     = stateName;
-
-    // Colour the temp by state
-    tempValue.style.color = m.state === 'solid'   ? '#60a5fa'
-                          : m.state === 'melting' ? '#22d3ee'
-                          : m.state === 'liquid'  ? '#22d3ee'
-                          : m.state === 'boiling' ? '#f59e0b'
-                          : '#f59e0b';
+    const cfg = STATES[current];
+    stateValue.textContent = cfg.name;
+    stateValue.style.color = cfg.color;
+    tempValue.textContent  = cfg.temp + ' °C';
+    tempValue.style.color  = cfg.color;
+    exampleValue.textContent = cfg.example;
   }
 
-  /* ── Animation loop ────────────────────────────────── */
+  /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
     const dt = Math.min((now - lastTime) / 1000, 0.05);
     lastTime = now;
-
-    if (autoHeating) {
-      state.energy = Math.min(100, state.energy + dt * 12);
-      energySlider.value = state.energy;
-      syncReadout();
-
-      if (state.energy >= 100) {
-        autoHeating = false;
-        autoBtn.textContent = '▶ Auto-heat';
-      }
-    }
-
     updateParticles(dt);
     render();
-
     rafId = requestAnimationFrame(tick);
   }
 
@@ -342,44 +349,34 @@
     rafId = requestAnimationFrame(tick);
   }
 
-  function stopLoop() {
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  /* ── State switching ────────────────────────────────── */
+
+  function setState(next) {
+    if (next === current) return;
+    current = next;
+
+    stateBtns.forEach(b => {
+      b.setAttribute('aria-pressed', b.dataset.state === next ? 'true' : 'false');
+    });
+
+    reassignHomes();
+
+    if (current === 'gas') {
+      particles.forEach(p => {
+        p.vx = (Math.random() - 0.5) * 420;
+        p.vy = (Math.random() - 0.5) * 420;
+      });
+    }
+
+    syncReadout();
+    switches++;
+    if (switches >= 4) insightEl.hidden = false;
   }
 
-  /* ── Input ──────────────────────────────────────────── */
+  /* ── Events ─────────────────────────────────────────── */
 
-  energySlider.addEventListener('input', () => {
-    state.energy = parseFloat(energySlider.value);
-    syncReadout();
-    if (state.energy > maxEnergyReached + 5) {
-      maxEnergyReached = state.energy;
-    }
-    if (maxEnergyReached >= 95) insightEl.hidden = false;
-  });
-
-  autoBtn.addEventListener('click', () => {
-    if (autoHeating) {
-      autoHeating = false;
-      autoBtn.textContent = '▶ Auto-heat';
-    } else {
-      autoHeating = true;
-      autoBtn.textContent = '⏸ Pause';
-    }
-  });
-
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
-    stopLoop();
-    autoHeating = false;
-    state = makeInitialState();
-    energySlider.value = state.energy;
-    autoBtn.textContent = '▶ Auto-heat';
-    maxEnergyReached = INITIAL.energy;
-    particles = makeParticles();
-    helpEl.hidden = true;
-    insightEl.hidden = true;
-    syncReadout();
-    render();
-    startLoop();
+  stateBtns.forEach(btn => {
+    btn.addEventListener('click', () => setState(btn.dataset.state));
   });
 
   document.querySelector('[data-action="help"]').addEventListener('click', () => {
@@ -388,8 +385,11 @@
 
   /* ── Init ───────────────────────────────────────────── */
 
+  stateBtns.forEach(b => {
+    b.setAttribute('aria-pressed', b.dataset.state === INITIAL_STATE ? 'true' : 'false');
+  });
+
   particles = makeParticles();
-  energySlider.value = state.energy;
   syncReadout();
   render();
   startLoop();

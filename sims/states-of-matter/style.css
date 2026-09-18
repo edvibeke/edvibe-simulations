@@ -1,3 +1,5 @@
+/* ── Palette ────────────────────────────────────────── */
+
 :root {
   --ev-bg:        #0f172a;
   --ev-surface:   #1e293b;
@@ -28,7 +30,8 @@ body {
   padding: 16px;
 }
 
-/* Header */
+/* ── Header ─────────────────────────────────────────── */
+
 .ev-header {
   display: flex;
   align-items: flex-start;
@@ -55,7 +58,8 @@ body {
 
 .ev-header__actions { display: flex; gap: 8px; flex-shrink: 0; }
 
-/* Buttons */
+/* ── Buttons ────────────────────────────────────────── */
+
 .ev-btn {
   display: inline-flex;
   align-items: center;
@@ -90,7 +94,8 @@ body {
 
 .ev-btn--primary { background: var(--ev-primary); color: #fff; }
 
-/* Stage */
+/* ── Stage ──────────────────────────────────────────── */
+
 .ev-stage {
   max-width: 1000px;
   margin: 0 auto 16px;
@@ -106,60 +111,43 @@ canvas {
   max-width: 100%;
   display: block;
   border-radius: 8px;
+  touch-action: none;
 }
 
-/* Controls */
+/* ── Controls ───────────────────────────────────────── */
+
 .ev-controls {
   max-width: 1000px;
   margin: 0 auto 16px;
+}
+
+.ev-state-buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
-.ev-control {
-  background: var(--ev-surface);
-  border: 1px solid var(--ev-border);
-  border-radius: 12px;
-  padding: 14px 16px;
-}
-
-.ev-control__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 10px;
-}
-
-.ev-control label {
-  font-size: 11px;
+.ev-state-btn {
+  justify-content: center;
+  padding: 16px 12px;
+  font-size: 1rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ev-text-dim);
+  min-height: 60px;
 }
 
-.ev-slider { width: 100%; accent-color: var(--ev-primary); cursor: pointer; }
-
-.ev-slider__value {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--ev-text);
+.ev-state-btn[aria-pressed="true"] {
+  background: var(--ev-primary);
+  border-color: var(--ev-primary);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
 }
 
-.ev-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  background: var(--ev-surface);
-  border: 1px solid var(--ev-border);
-  border-radius: 12px;
-  padding: 14px 16px;
+.ev-state-btn[aria-pressed="true"]:hover {
+  background: var(--ev-primary-2);
 }
 
-/* Readout */
+/* ── Readout ────────────────────────────────────────── */
+
 .ev-readout {
   max-width: 1000px;
   margin: 0 auto 16px;
@@ -194,7 +182,13 @@ canvas {
   line-height: 1.1;
 }
 
-/* Help / Insight */
+.ev-readout__value--text {
+  font-size: 1.3rem !important;
+  font-family: system-ui, -apple-system, sans-serif !important;
+}
+
+/* ── Help / Insight ─────────────────────────────────── */
+
 .ev-help, .ev-insight {
   max-width: 1000px;
   margin: 0 auto 16px;
@@ -219,14 +213,16 @@ canvas {
 
 .ev-help[hidden], .ev-insight[hidden] { display: none; }
 
-/* Responsive */
+/* ── Responsive ─────────────────────────────────────── */
+
 @media (max-width: 600px) {
   body { padding: 12px; }
   .ev-header { flex-direction: column; }
-  .ev-controls { grid-template-columns: 1fr; }
   .ev-readout { grid-template-columns: 1fr 1fr; }
   .ev-readout__item:last-child { grid-column: 1 / -1; }
   .ev-readout__value { font-size: 1.5rem; }
+  .ev-state-buttons { gap: 8px; }
+  .ev-state-btn { padding: 12px 8px; font-size: 0.9rem; min-height: 54px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -235,9 +231,3 @@ canvas {
     transition-duration: 0.01ms !important;
   }
 }
-#stage { cursor: pointer; touch-action: none; }
-
-.ev-actions .ev-btn { min-height: 38px; }
-#stage { touch-action: none; }
-#stage { touch-action: none; }
-.ev-actions .ev-btn { min-height: 38px; }

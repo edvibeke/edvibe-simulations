@@ -12,12 +12,9 @@
   <header class="ev-header">
     <div class="ev-header__text">
       <h1>States of Matter</h1>
-      <p>Add energy to a block of ice. Watch the particles — and the thermometer.</p>
+      <p>Same particles — different arrangements. Click a state to see what changes.</p>
     </div>
     <div class="ev-header__actions">
-      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
-        <span aria-hidden="true">↺</span> Reset
-      </button>
       <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
         <span aria-hidden="true">?</span> Help
       </button>
@@ -25,50 +22,48 @@
   </header>
 
   <main class="ev-stage">
-    <canvas id="stage" width="900" height="540" aria-label="Particles in a container plus a heating curve graph"></canvas>
+    <canvas id="stage" width="900" height="540" aria-label="Particles arranged as a solid, liquid, or gas, plus a heating curve graph"></canvas>
   </main>
 
   <section class="ev-controls" aria-label="Controls">
-    <div class="ev-control">
-      <div class="ev-control__row">
-        <label for="energy">Energy added</label>
-        <span class="ev-slider__value" id="energyValue">15%</span>
-      </div>
-      <input type="range" id="energy" class="ev-slider"
-             min="0" max="100" step="1" value="15">
-    </div>
-    <div class="ev-actions">
-      <button type="button" class="ev-btn ev-btn--primary" id="autoBtn">▶ Auto-heat</button>
+    <div class="ev-state-buttons">
+      <button type="button" class="ev-btn ev-btn--ghost ev-state-btn" data-state="solid" aria-pressed="true">
+        🧊 Solid
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost ev-state-btn" data-state="liquid" aria-pressed="false">
+        💧 Liquid
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost ev-state-btn" data-state="gas" aria-pressed="false">
+        ☁️ Gas
+      </button>
     </div>
   </section>
 
   <section class="ev-readout" aria-label="Measurements">
     <div class="ev-readout__item">
-      <span class="ev-readout__label">Temperature</span>
-      <span class="ev-readout__value" id="tempValue">-5 °C</span>
-    </div>
-    <div class="ev-readout__item">
       <span class="ev-readout__label">State</span>
       <span class="ev-readout__value" id="stateValue">Solid</span>
     </div>
     <div class="ev-readout__item">
-      <span class="ev-readout__label">Energy added</span>
-      <span class="ev-readout__value" id="energyOutValue">15%</span>
+      <span class="ev-readout__label">Temperature</span>
+      <span class="ev-readout__value" id="tempValue">-10 °C</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Example</span>
+      <span class="ev-readout__value ev-readout__value--text" id="exampleValue">Ice</span>
     </div>
   </section>
 
   <section class="ev-help" id="help" hidden>
-    <strong>How to use:</strong> Drag the <em>Energy added</em> slider up slowly, or click
-    <em>Auto-heat</em>. Watch the particles in the box — they start locked in a lattice,
-    then slip past each other, then fly apart. Watch the thermometer too. You may be
-    surprised: it doesn't always rise.
+    <strong>How to use:</strong> Click <em>Solid</em>, <em>Liquid</em>, or <em>Gas</em>.
+    Same particles every time — only the arrangement and the temperature change.
+    Ice → Water → Steam. Notice the marker on the graph jumping between the three
+    parts of the heating curve.
   </section>
 
   <section class="ev-insight" id="insight" hidden>
     <span aria-hidden="true">💡</span>
-    <span>Notice: at 0 °C and again at 100 °C, the temperature stops rising even though
-    you keep adding energy. The energy is being used to break the bonds between particles,
-    not to make them move faster. Only once the change is complete does the temperature rise again.</span>
+    <span>Notice: the particles never change — only how they're arranged and how fast they move. Cold solid = locked lattice. Room-temperature liquid = touching but sliding. Hot gas = far apart, moving fast.</span>
   </section>
 
   <script src="script.js"></script>
