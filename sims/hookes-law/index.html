@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Hooke's Law — EdVibe Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Hooke's Law</h1>
+      <p>Hang masses from a spring. Watch the graph build up as you experiment.</p>
+    </div>
+    <div class="ev-header__actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="A mass hanging from a spring, with a graph of force against extension"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="mass">Hanging mass</label>
+        <span class="ev-slider__value" id="massValue">0.50 kg</span>
+      </div>
+      <input type="range" id="mass" class="ev-slider"
+             min="0" max="2" step="0.05" value="0.5">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="k">Spring constant (k)</label>
+        <span class="ev-slider__value" id="kValue">50 N/m</span>
+      </div>
+      <input type="range" id="k" class="ev-slider"
+             min="20" max="200" step="5" value="50">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" data-action="sweep">Auto-sweep the mass</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Weight (F = mg)</span>
+      <span class="ev-readout__value" id="forceValue">4.91 N</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Extension</span>
+      <span class="ev-readout__value" id="extensionValue">0.098 m</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">k = F ÷ x</span>
+      <span class="ev-readout__value" id="kOutValue">50.0 N/m</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Drag the <em>Hanging mass</em> slider up and down slowly.
+    Every time you release the slider at a new mass, a point is added to the graph on
+    the right. The graph plots <em>extension</em> against <em>force</em>. After a few
+    points, look at the shape. Then change the <em>spring constant</em> and repeat —
+    what changes? (Hint: the graph clears when you change the spring, because it's a
+    different spring.)
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: the points form a straight line through the origin — extension is proportional to force. That's Hooke's law: F = kx. A stiffer spring (bigger k) gives a shallower line, because the same force stretches it less.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
