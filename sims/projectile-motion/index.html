@@ -1,1 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projectile Motion</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Projectile Motion</h1>
+    <p>Adjust the launch angle and speed, then fire.</p>
+  </header>
 
+  <div class="controls">
+    <label>Angle: <span id="angleVal">45</span>°
+      <input type="range" id="angle" min="5" max="85" value="45">
+    </label>
+    <label>Speed: <span id="speedVal">30</span> m/s
+      <input type="range" id="speed" min="10" max="60" value="30">
+    </label>
+    <label>Gravity: <span id="gravVal">9.8</span> m/s²
+      <input type="range" id="grav" min="1" max="20" step="0.1" value="9.8">
+    </label>
+    <button id="fire">🔥 Fire</button>
+    <button id="reset">Reset</button>
+  </div>
+
+  <div class="stats">
+    <div><strong>Range:</strong> <span id="rangeOut">0</span> m</div>
+    <div><strong>Max height:</strong> <span id="heightOut">0</span> m</div>
+    <div><strong>Flight time:</strong> <span id="timeOut">0</span> s</div>
+  </div>
+
+  <canvas id="stage" width="900" height="500"></canvas>
+
+  <script src="script.js"></script>
+</body>
+</html>
