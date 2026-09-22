@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Natural Selection — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Natural Selection</h1>
+      <p>Change the background and the predator pressure — watch the beetles adapt.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <span aria-hidden="true">↖</span> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="Beetles on a coloured background, with a colour-distribution graph and a mean-colour graph"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="bg">Background colour</label>
+        <span class="ev-slider__value" id="bgValue">Medium</span>
+      </div>
+      <input type="range" id="bg" class="ev-slider"
+             min="0" max="100" step="1" value="50">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="predator">Predator pressure</label>
+        <span class="ev-slider__value" id="predatorValue">Medium</span>
+      </div>
+      <input type="range" id="predator" class="ev-slider"
+             min="0" max="100" step="1" value="50">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="pauseBtn">
+        ⏸ Pause
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="resetPopBtn">
+        ↺ New population
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Generation</span>
+      <span class="ev-readout__value" id="genValue">1</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Average colour</span>
+      <span class="ev-readout__value ev-readout__value--text" id="avgValue">Medium</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Match to background</span>
+      <span class="ev-readout__value ev-readout__value--text" id="matchValue">Good</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Beetles come in many shades of green. Change the
+    <em>background colour</em> so it's lighter or darker, and turn up the
+    <em>predator pressure</em>. Beetles that stand out get eaten more easily;
+    ones that blend in survive and reproduce. The top graph shows the spread of
+    colours, the bottom one the average colour over generations.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: individuals don't change colour — but the <em>population</em> does.
+    Over time the average colour moves toward the background. The variation is already
+    there; the predator just picks which variants survive. That's natural selection:
+    it doesn't invent traits, it sorts the ones that already exist.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,66 +1,6 @@
-/* Organism picker */
-.ev-organisms {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  background: var(--ev-surface);
-  border: 1px solid var(--ev-border);
-  border-radius: 12px;
-  padding: 14px;
-}
+/* Sim-specific styles — base shared by shared/edvibe-sim.css */
 
-.ev-organism-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 8px;
-  border-radius: 10px;
-  border: 1px solid var(--ev-border);
-  background: var(--ev-surface-2);
-  color: var(--ev-text);
-  font: inherit;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  min-height: 78px;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
-}
-
-.ev-organism-btn:hover {
-  background: var(--ev-border);
-  border-color: var(--ev-primary);
-}
-
-.ev-organism-btn:active {
-  transform: scale(0.97);
-}
-
-.ev-organism-btn:focus-visible {
-  outline: 2px solid var(--ev-primary-2);
-  outline-offset: 2px;
-}
-
-.ev-organism-btn__icon {
-  font-size: 26px;
-  line-height: 1;
-}
-
-.ev-organism-btn__role {
-  font-size: 10px;
-  color: var(--ev-text-dim);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-@media (max-width: 600px) {
-  .ev-organisms { grid-template-columns: repeat(2, 1fr); }
-  .ev-organism-btn { min-height: 70px; }
-}
-
-
-
+.ev-controls { grid-template-columns: 1fr; }
 
 /* Organism picker */
 .ev-organisms {

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Food Chains — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Food Chains</h1>
+      <p>Build a food chain and watch energy move through each level.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <span aria-hidden="true">↖</span> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <span aria-hidden="true">↺</span> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <span aria-hidden="true">?</span> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="A food chain with organisms and an energy pyramid"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-organisms" id="organismPicker" aria-label="Choose an organism to add to the chain">
+      <!-- populated by JS -->
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--ghost" id="clearBtn">
+        🗑 Clear the chain
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Organisms</span>
+      <span class="ev-readout__value" id="lengthValue">0</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Energy at top</span>
+      <span class="ev-readout__value" id="energyValue">—</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Trophic levels</span>
+      <span class="ev-readout__value" id="trophicValue">0</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Click an organism to add it to your chain.
+    You have to <em>start with a producer</em> (🌿 grass or 🌳 tree), and each
+    organism eats only the one before it — so chain levels must go up by one each
+    time. The energy pyramid on the right shows how much energy is left at each
+    level: about <em>90% is lost</em> between links.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <span aria-hidden="true">💡</span>
+    <span>Notice: energy flows <em>one way</em> through a food chain, and most of it is
+    lost at each step — as heat, movement and waste. That's why food chains rarely
+    have more than four or five links, and why top predators need a huge area to
+    find enough energy.</span>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="EdVibe Simulations — interactive science experiments for the classroom: physics, chemistry and biology.">
+  <title>EdVibe Simulations</title>
+  <link rel="stylesheet" href="shared/edvibe-sim.css">
+  <style>
+    .ev-home {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .ev-hero {
+      text-align: center;
+      padding: 32px 8px 8px;
+    }
+
+    .ev-hero h1 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+    }
+
+    .ev-hero p {
+      color: var(--ev-text-dim);
+      font-size: 1.05rem;
+      margin: 0 auto 24px;
+      max-width: 560px;
+    }
+
+    .ev-filters {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .ev-filters .ev-btn[aria-pressed="true"] {
+      background: var(--ev-primary);
+      border-color: var(--ev-primary);
+      color: #fff;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    .ev-section {
+      margin: 0 0 28px;
+    }
+
+    .ev-section:not([hidden]) {
+      display: block;
+    }
+
+    .ev-section h2 {
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ev-text-dim);
+      margin: 0 0 12px;
+    }
+
+    .ev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 14px;
+    }
+
+    .ev-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 18px 18px 16px;
+      background: var(--ev-surface);
+      border: 1px solid var(--ev-border);
+      border-radius: 14px;
+      text-decoration: none;
+      color: var(--ev-text);
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .ev-card:hover {
+      background: var(--ev-surface-2);
+      border-color: var(--ev-primary);
+      transform: translateY(-2px);
+    }
+
+    .ev-card:focus-visible {
+      outline: 2px solid var(--ev-primary-2);
+      outline-offset: 2px;
+    }
+
+    .ev-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .ev-card p {
+      margin: 0;
+      color: var(--ev-text-dim);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .ev-card__subject {
+      margin-top: auto;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ev-primary-2);
+    }
+
+    .ev-footer {
+      text-align: center;
+      color: var(--ev-text-dim);
+      font-size: 12px;
+      padding: 12px 0 32px;
+    }
+
+    @media (max-width: 600px) {
+      .ev-hero h1 { font-size: 1.8rem; }
+      .ev-hero p { font-size: 0.95rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ev-home">
+
+    <header class="ev-hero">
+      <h1>EdVibe Simulations</h1>
+      <p>Interactive science experiments for the classroom. Drag, click and tweak — watch the physics, chemistry and biology happen live.</p>
+    </header>
+
+    <nav class="ev-filters" aria-label="Filter by subject">
+      <button type="button" class="ev-btn ev-btn--ghost" data-subject="all" aria-pressed="true">All (20)</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-subject="physics" aria-pressed="false">Physics</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-subject="chemistry" aria-pressed="false">Chemistry</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-subject="biology" aria-pressed="false">Biology</button>
+    </nav>
+
+    <section class="ev-section" data-section="physics">
+      <h2>Physics</h2>
+      <div class="ev-grid">
+        <a class="ev-card" href="sims/hookes-law/">
+          <h3>Hooke's Law</h3>
+          <p>Hang masses from a spring and watch the force–extension graph build up.</p>
+          <span class="ev-card__subject">Physics</span>
+        </a>
+        <a class="ev-card" href="sims/ohms-law/">
+          <h3>Ohm's Law</h3>
+          <p>Adjust voltage and resistance and see the current around the circuit change.</p>
+          <span class="ev-card__subject">Physics</span>
+        </a>
+        <a class="ev-card" href="sims/pendulum/">
+          <h3>Pendulum</h3>
+          <p>Change the string length or bob mass — which one actually changes the period?</p>
+          <span class="ev-card__subject">Physics</span>
+        </a>
+        <a class="ev-card" href="sims/projectile-motion/">
+          <h3>Projectile Motion</h3>
+          <p>Set the angle and launch speed, then fire and watch how far it goes.</p>
+          <span class="ev-card__subject">Physics</span>
+        </a>
+        <a class="ev-card" href="sims/refraction/">
+          <h3>Refraction</h3>
+          <p>Drag the incoming ray and watch it bend when it crosses into a new material.</p>
+          <span class="ev-card__subject">Physics</span>
+        </a>
+        <a class="ev-card" href="sims/terminal-velocity/">
+          <h3>Terminal Velocity</h3>
+          <p>Drop the ball and watch the two forces balance as the velocity stops rising.</p>
+          <span class="ev-card__subject">Physics</span>
+        </a>
+        <a class="ev-card" href="sims/wave-interference/">
+          <h3>Wave Interference</h3>
+          <p>Two sources ripple outward — drag the probe to where the waves meet.</p>
+          <span class="ev-card__subject">Physics</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="ev-section" data-section="chemistry">
+      <h2>Chemistry</h2>
+      <div class="ev-grid">
+        <a class="ev-card" href="sims/covalent-bonding/">
+          <h3>Covalent Bonding</h3>
+          <p>Push two hydrogen atoms together and watch them share their electrons.</p>
+          <span class="ev-card__subject">Chemistry</span>
+        </a>
+        <a class="ev-card" href="sims/dynamic-equilibrium/">
+          <h3>Dynamic Equilibrium</h3>
+          <p>Disturb a reversible reaction and see how it settles into a new balance.</p>
+          <span class="ev-card__subject">Chemistry</span>
+        </a>
+        <a class="ev-card" href="sims/electrolysis/">
+          <h3>Electrolysis</h3>
+          <p>Switch on the power and watch ions migrate to the electrodes.</p>
+          <span class="ev-card__subject">Chemistry</span>
+        </a>
+        <a class="ev-card" href="sims/ionic-bonding/">
+          <h3>Ionic Bonding</h3>
+          <p>Drag the outer electron from sodium to chlorine and watch what happens.</p>
+          <span class="ev-card__subject">Chemistry</span>
+        </a>
+        <a class="ev-card" href="sims/ph-scale/">
+          <h3>The pH Scale</h3>
+          <p>Add acid or alkali to pure water and watch the colour and the pH.</p>
+          <span class="ev-card__subject">Chemistry</span>
+        </a>
+        <a class="ev-card" href="sims/rates-of-reaction/">
+          <h3>Rates of Reaction</h3>
+          <p>Change temperature, concentration or a catalyst — watch collisions happen.</p>
+          <span class="ev-card__subject">Chemistry</span>
+        </a>
+        <a class="ev-card" href="sims/states-of-matter/">
+          <h3>States of Matter</h3>
+          <p>Same particles, different arrangements — solid, liquid and gas side by side.</p>
+          <span class="ev-card__subject">Chemistry</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="ev-section" data-section="biology">
+      <h2>Biology</h2>
+      <div class="ev-grid">
+        <a class="ev-card" href="sims/enzymes/">
+          <h3>Enzymes</h3>
+          <p>Change temperature or pH and watch the active site work — or denature.</p>
+          <span class="ev-card__subject">Biology</span>
+        </a>
+        <a class="ev-card" href="sims/food-chains/">
+          <h3>Food Chains</h3>
+          <p>Build a chain and watch energy move through the pyramid — 90% lost per link.</p>
+          <span class="ev-card__subject">Biology</span>
+        </a>
+        <a class="ev-card" href="sims/heart/">
+          <h3>The Heart</h3>
+          <p>Follow blood around the two separate circuits — lungs and body.</p>
+          <span class="ev-card__subject">Biology</span>
+        </a>
+        <a class="ev-card" href="sims/mitosis/">
+          <h3>Mitosis</h3>
+          <p>Step through cell division, from interphase to two identical daughter cells.</p>
+          <span class="ev-card__subject">Biology</span>
+        </a>
+        <a class="ev-card" href="sims/natural-selection/">
+          <h3>Natural Selection</h3>
+          <p>Change the background and watch beetle colours evolve to blend in.</p>
+          <span class="ev-card__subject">Biology</span>
+        </a>
+        <a class="ev-card" href="sims/osmosis/">
+          <h3>Osmosis</h3>
+          <p>Watch water cross a partially permeable membrane, from dilute to concentrated.</p>
+          <span class="ev-card__subject">Biology</span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="ev-footer">
+      EdVibe Simulations · interactive physics, chemistry and biology for the classroom
+    </footer>
+
+  </div>
+
+  <script>
+    (() => {
+      const buttons = document.querySelectorAll('.ev-filters .ev-btn');
+      const sections = document.querySelectorAll('.ev-section');
+
+      function apply(subject) {
+        buttons.forEach(b => {
+          b.setAttribute('aria-pressed', String(b.dataset.subject === subject));
+        });
+        sections.forEach(s => {
+          s.hidden = subject !== 'all' && s.dataset.section !== subject;
+        });
+      }
+
+      buttons.forEach(b => {
+        b.addEventListener('click', () => apply(b.dataset.subject));
+      });
+    })();
+  </script>
+</body>
+</html>
