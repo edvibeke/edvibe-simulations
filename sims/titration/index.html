@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Acid–Base Titration — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Acid&ndash;Base Titration</h1>
+      <p>Drip sodium hydroxide into hydrochloric acid and watch the pH jump at the endpoint.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="A burette dripping sodium hydroxide into a conical flask of hydrochloric acid, with a live pH curve"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="conc">Acid concentration</label>
+        <span class="ev-slider__value" id="concValue">1.0 M</span>
+      </div>
+      <input type="range" id="conc" class="ev-slider"
+             min="0.1" max="2" step="0.1" value="1">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="dropBtn">
+        <i data-lucide="droplet" aria-hidden="true"></i> Add base (0.1 mL)
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="quickBtn">
+        <i data-lucide="plus" aria-hidden="true"></i> Quick add (1 mL)
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Base added</span>
+      <span class="ev-readout__value" id="baseValue">0.0 mL</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">pH</span>
+      <span class="ev-readout__value ev-readout__value--big" id="phValue">1.0</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Drops added</span>
+      <span class="ev-readout__value" id="dropsValue">0</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Equivalence point</span>
+      <span class="ev-readout__value" id="eqValue">2.0 mL</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> The burette holds 1.0&nbsp;M sodium hydroxide (NaOH) and the
+    flask holds 20&nbsp;mL hydrochloric acid (HCl). Add base with the buttons — use single
+    drops to zoom in on the endpoint. The flask liquid is colourless with
+    phenolphthalein… until it suddenly turns <span style="color:#ec4899">pink</span>.
+    The graph plots pH (0&ndash;14) against base added; the dashed line is the
+    <em>equivalence point</em> where the acid and base are exactly balanced.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: the pH creeps up slowly at first, then spikiness around the equivalence point
+    — a single drop can jump the pH from about 3 to 11. That part of the curve is where the
+    indicator changes colour. The equivalence volume you read equals the acid concentration
+    times 20&nbsp;mL, so titration lets you measure a concentration you can't see.</span>
+  </section>
+
+    <script>
+    function evLabel(el, icon, text) {
+      el.innerHTML = '<i data-lucide="' + icon + '" aria-hidden="true"></i> ' + text;
+      if (window.lucide) lucide.createIcons();
+    }
+  </script>
+
+  <script src="script.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+
+  <script>
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

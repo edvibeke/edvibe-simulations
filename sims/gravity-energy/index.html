@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Gravity & Energy — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Gravity &amp; Energy</h1>
+      <p>Watch a ball swap gravitational potential energy for kinetic energy — over and over.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="A ball rolling back and forth in a frictionless V-shaped valley, with an energy bar beneath"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="mass">Ball mass</label>
+        <span class="ev-slider__value" id="massValue">1.0 kg</span>
+      </div>
+      <input type="range" id="mass" class="ev-slider"
+             min="0.5" max="5" step="0.1" value="1">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="height">Release height</label>
+        <span class="ev-slider__value" id="heightValue">80%</span>
+      </div>
+      <input type="range" id="height" class="ev-slider"
+             min="10" max="100" step="1" value="80">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="push">Initial push</label>
+        <span class="ev-slider__value" id="pushValue">0 m/s</span>
+      </div>
+      <input type="range" id="push" class="ev-slider"
+             min="0" max="10" step="0.5" value="0">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="pauseBtn" aria-pressed="false">
+        <i data-lucide="play" aria-hidden="true"></i> Play
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Potential energy</span>
+      <span class="ev-readout__value" id="peValue">0 J</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Kinetic energy</span>
+      <span class="ev-readout__value" id="keValue">0 J</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Speed</span>
+      <span class="ev-readout__value" id="speedValue">0.00 m/s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Height</span>
+      <span class="ev-readout__value" id="heightOutValue">0.0 m</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> The track is a frictionless valley, so no energy is
+    lost. As the ball speeds down, its <em>potential</em> energy (<span style="color:#4ade80">PE</span>)
+    becomes <em>kinetic</em> energy (<span style="color:#facc15">KE</span>), then it climbs back up and
+    the store reverses. Watch the bar under the track swap between green and yellow.
+    Try a heavy ball vs a light ball, then add an initial push and see the ball roll
+    further up the far arm.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: the total energy stays the same the whole time — PE at the top equals KE at
+    the bottom. On a real track the ball would slow and stop because of friction; here there
+    is none, so it keeps swinging forever.</span>
+  </section>
+
+    <script>
+    function evLabel(el, icon, text) {
+      el.innerHTML = '<i data-lucide="' + icon + '" aria-hidden="true"></i> ' + text;
+      if (window.lucide) lucide.createIcons();
+    }
+  </script>
+
+  <script src="script.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+
+  <script>
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

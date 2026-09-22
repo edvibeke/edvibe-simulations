@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Photosynthesis — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Photosynthesis</h1>
+      <p>Shine light on an aquatic plant and count the oxygen bubbles it makes.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage">
+    <canvas id="stage" width="900" height="540" aria-label="A lamp shining onto a beaker with an elodea plant releasing oxygen bubbles, plus a bubbles graph"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="light">Light intensity</label>
+        <span class="ev-slider__value" id="lightValue">60%</span>
+      </div>
+      <input type="range" id="light" class="ev-slider"
+             min="0" max="100" step="1" value="60">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="temp">Water temperature</label>
+        <span class="ev-slider__value" id="tempValue">25 °C</span>
+      </div>
+      <input type="range" id="temp" class="ev-slider"
+             min="5" max="45" step="1" value="25">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="co2">CO₂ concentration</label>
+        <span class="ev-slider__value" id="co2Value">600 ppm</span>
+      </div>
+      <input type="range" id="co2" class="ev-slider"
+             min="0" max="1200" step="50" value="600">
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Rate</span>
+      <span class="ev-readout__value" id="rateValue">0.0 bubbles/min</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Bubbles counted</span>
+      <span class="ev-readout__value" id="bubblesValue">0</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Water temperature</span>
+      <span class="ev-readout__value" id="tempOutValue">25 °C</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">CO₂ level</span>
+      <span class="ev-readout__value" id="co2OutValue">600 ppm</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Elodea is an aquatic plant that makes oxygen when it
+    photosynthesises — each gas bubble you see rising is a little packet of O₂.
+    More bubbles per minute means a faster rate. Change one factor at a time and watch
+    the graph's slope: try dimming the light, chilling the water, or starving it of CO₂.
+    Oxygen production stops completely in the dark.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: raising any single factor helps — but only up to a point. At high light
+    the rate levels off (a limiting factor bites), and above ~40&nbsp;°C the rate crashes
+    because the plant's enzymes denature. Real photosynthesis needs light energy, water and
+    CO₂, and this sim only shows the light-dependent part: keep an eye on the bubbles.</span>
+  </section>
+
+    <script>
+    function evLabel(el, icon, text) {
+      el.innerHTML = '<i data-lucide="' + icon + '" aria-hidden="true"></i> ' + text;
+      if (window.lucide) lucide.createIcons();
+    }
+  </script>
+
+  <script src="script.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+
+  <script>
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

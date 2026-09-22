@@ -1,0 +1,8 @@
+/* Sim-specific styles — base shared by shared/edvibe-sim.css */
+
+.ev-readout__value--big { font-size: 1.6rem; }
+
+@media (max-width: 600px) {
+  .ev-readout { grid-template-columns: 1fr 1fr; }
+  .ev-actions { width: 100%; }
+}
