@@ -17,15 +17,36 @@
   // trophic: 1 = producer, 2 = primary consumer, 3 = secondary, 4 = tertiary
 
   const ORGANISMS = [
-    { id: 'grass',   name: 'Grass',   icon: '🌿', role: 'Producer',   trophic: 1 },
-    { id: 'tree',    name: 'Tree',    icon: '🌳', role: 'Producer',   trophic: 1 },
-    { id: 'rabbit',  name: 'Rabbit',  icon: '🐇', role: 'Herbivore',  trophic: 2 },
-    { id: 'caterpillar', name: 'Caterpillar', icon: '🐛', role: 'Herbivore', trophic: 2 },
-    { id: 'bird',    name: 'Bird',    icon: '🐦', role: 'Carnivore',  trophic: 3 },
-    { id: 'frog',    name: 'Frog',    icon: '🐸', role: 'Carnivore',  trophic: 3 },
-    { id: 'snake',   name: 'Snake',   icon: '🐍', role: 'Carnivore',  trophic: 4 },
-    { id: 'fox',     name: 'Fox',     icon: '🦊', role: 'Top predator', trophic: 5 }
+    { id: 'grass',   name: 'Grass',   role: 'Producer',   trophic: 1 },
+    { id: 'tree',    name: 'Tree',    role: 'Producer',   trophic: 1 },
+    { id: 'rabbit',  name: 'Rabbit',  role: 'Herbivore',  trophic: 2 },
+    { id: 'caterpillar', name: 'Caterpillar', role: 'Herbivore', trophic: 2 },
+    { id: 'bird',    name: 'Bird',    role: 'Carnivore',  trophic: 3 },
+    { id: 'frog',    name: 'Frog',    role: 'Carnivore',  trophic: 3 },
+    { id: 'snake',   name: 'Snake',   role: 'Carnivore',  trophic: 4 },
+    { id: 'fox',     name: 'Fox',     role: 'Top predator', trophic: 5 }
   ];
+
+  // Vector artwork for each organism, used in both the picker and the canvas.
+  const ICONS = {
+    grass: '<svg viewBox="0 0 24 24"><g stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M5 17V8M12 17V5M19 17V8"/><path d="M3 18h18"/></g></svg>',
+    tree: '<svg viewBox="0 0 24 24"><g fill="none" stroke="#15803d" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l6 6H6z"/><path d="M12 8l7 7H5z"/><path d="M12 14l4.5 4.5h-9z"/></g><path d="M12 19v2" stroke="#92400e" stroke-width="2" stroke-linecap="round"/></svg>',
+    rabbit: '<svg viewBox="0 0 24 24"><g fill="none" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="15" rx="6" ry="6.5"/><ellipse cx="8" cy="6" rx="1.8" ry="5"/><ellipse cx="16" cy="6" rx="1.8" ry="5"/></g><circle cx="9.5" cy="13.5" r="0.9" fill="#0f172a"/><circle cx="14.5" cy="13.5" r="0.9" fill="#0f172a"/></svg>',
+    caterpillar: '<svg viewBox="0 0 24 24"><g fill="#a3e635" stroke="#4d7c0f" stroke-width="1.2"><circle cx="5" cy="17" r="3"/><circle cx="11" cy="16" r="3"/><circle cx="17" cy="17" r="3"/><circle cx="14" cy="9.5" r="3.5"/></g><path d="M12.5 7l-1-2M15 7l2-1.5" stroke="#4d7c0f" stroke-width="1.3" stroke-linecap="round"/><circle cx="11" cy="8.5" r="0.9" fill="#1e293b"/></svg>',
+    bird: '<svg viewBox="0 0 24 24"><g fill="#38bdf8" stroke="#0369a1" stroke-width="1.4"><circle cx="9" cy="15" r="5.5"/><circle cx="13.5" cy="8" r="3.4"/></g><path d="M16.5 4.5l4-1.5-1.5 4z" fill="#fbbf24" stroke="#b45309" stroke-width="1"/><path d="M12.5 6.5c3 1 5 3 5.5 6" stroke="#0ea5e9" stroke-width="1.2" fill="none"/><circle cx="12.8" cy="7.4" r="0.8" fill="#0f172a"/></svg>',
+    frog: '<svg viewBox="0 0 24 24"><path d="M5 14a7 7 0 0 1 14 0v1c0 2.5-1.5 4-3.5 4h-7C6.5 19 5 17.5 5 15z" fill="#4ade80" stroke="#16a34a" stroke-width="1.4"/><circle cx="9" cy="11.5" r="1.7" fill="#fff"/><circle cx="15" cy="11.5" r="1.7" fill="#fff"/><circle cx="9" cy="11.8" r="0.8" fill="#0f172a"/><circle cx="15" cy="11.8" r="0.8" fill="#0f172a"/><path d="M5 19l-1.5 1.5M19 19l1.5 1.5" stroke="#16a34a" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    snake: '<svg viewBox="0 0 24 24"><path d="M4 16c3.5 0 3.5-4 7-4s3.5 4 7 4 2.5-3 3.5-3" fill="none" stroke="#84cc16" stroke-width="3" stroke-linecap="round"/><circle cx="21" cy="10" r="1" fill="#ef4444"/><path d="M22 9.4l1.4-1" stroke="#ef4444" stroke-width="1.2" stroke-linecap="round"/></svg>',
+    fox: '<svg viewBox="0 0 24 24"><path d="M8 7l-3-1 2 3M16 7l3-1-2 3" stroke="#fb923c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M12 5l3.5 3.5L12 9 8.5 8.5z" fill="#fb923c" stroke="#c2410c" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 9l4.5 2.5L12 21l2.5-9.5L19 9l-7 4z" fill="#fb923c" stroke="#c2410c" stroke-width="1.3" stroke-linejoin="round"/><circle cx="9.5" cy="11.5" r="0.8" fill="#0f172a"/><circle cx="14.5" cy="11.5" r="0.8" fill="#0f172a"/><path d="M12 14l-0.8 1.4h1.6z" fill="#7f1d1d"/></svg>'
+  };
+
+  const iconImages = {};
+  function preloadIcons() {
+    Object.keys(ICONS).forEach(id => {
+      const img = new Image();
+      img.onload = () => { iconImages[id] = img; };
+      img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(ICONS[id]);
+    });
+  }
 
   const MAX_CHAIN = 5;
 
@@ -58,7 +79,7 @@
       btn.type = 'button';
       btn.className = 'ev-organism-btn';
       btn.innerHTML = `
-        <span class="ev-organism-btn__icon">${org.icon}</span>
+        <span class="ev-organism-btn__icon">${ICONS[org.id]}</span>
         <span>${org.name}</span>
         <span class="ev-organism-btn__role">${org.role}</span>
       `;
@@ -109,7 +130,8 @@
     const header = document.querySelector('.ev-header__text p');
     if (!header) return;
     const original = header.textContent;
-    header.textContent = '⚠ ' + msg;
+    header.innerHTML = '<i data-lucide="triangle-alert" aria-hidden="true"></i> ' + msg;
+    if (window.lucide) lucide.createIcons();
     header.style.color = '#f59e0b';
     setTimeout(() => {
       header.textContent = original;
@@ -193,7 +215,7 @@
       ctx.fillText('Click an organism below to start', 280, 260);
       ctx.font = '400 12px system-ui, sans-serif';
       ctx.fillStyle = '#334155';
-      ctx.fillText('Start with a producer (🌿 or 🌳)', 280, 290);
+      ctx.fillText('Start with a producer (grass or tree)', 280, 290);
     }
   }
 
@@ -218,10 +240,8 @@
       ctx.stroke();
 
       // Icon
-      ctx.font = '46px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(org.icon, pos.x, pos.y - 8);
+      const iconImg = iconImages[org.id];
+      if (iconImg) ctx.drawImage(iconImg, pos.x - 26, pos.y - 44, 52, 52);
 
       // Name
       ctx.fillStyle = '#e2e8f0';
@@ -366,7 +386,7 @@
       ctx.textBaseline = 'middle';
       const energyVal = ENERGY_TOP * Math.pow(0.1, i);
       const label = energyVal >= 1 ? energyVal.toFixed(0) : energyVal.toFixed(2);
-      ctx.fillText(org.icon + ' ' + label, cx, (yBottom + yTop) / 2);
+      ctx.fillText(label, cx, (yBottom + yTop) / 2);
 
       // Percentage on the side
       if (i > 0) {
@@ -452,6 +472,7 @@
   /* ── Init ───────────────────────────────────────────── */
 
   buildPicker();
+  preloadIcons();
   syncReadout();
   start();
 

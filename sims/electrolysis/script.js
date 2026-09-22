@@ -466,7 +466,7 @@
   function setPower(on) {
     powered = on;
     powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    powerBtn.textContent = on ? '⏸ Switch off power' : '⚡ Switch on power';
+    evLabel(powerBtn, on ? 'pause' : 'zap', on ? 'Switch off power' : 'Switch on power');
 
     if (on) {
       if (!everPowered) everPowered = true;
@@ -493,7 +493,7 @@
     everPowered = false;
     powered = false;
     powerBtn.setAttribute('aria-pressed', 'false');
-    powerBtn.textContent = '⚡ Switch on power';
+    evLabel(powerBtn, 'zap', 'Switch on power');
     helpEl.hidden = true;
     insightEl.hidden = true;
 

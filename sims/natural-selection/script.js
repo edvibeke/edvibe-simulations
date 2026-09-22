@@ -485,7 +485,7 @@
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    pauseBtn.textContent = paused ? '▶ Play' : '⏸ Pause';
+    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
   resetPopBtn.addEventListener('click', () => {
@@ -497,7 +497,7 @@
     bgSlider.value = 50;
     predatorSlider.value = 50;
     paused = false;
-    pauseBtn.textContent = '⏸ Pause';
+    evLabel(pauseBtn, 'pause', 'Pause');
     changeCount = 0;
     helpEl.hidden = true;
     insightEl.hidden = true;

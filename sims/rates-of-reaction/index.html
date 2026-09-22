@@ -17,13 +17,13 @@
     </div>
     <div class="ev-header__actions">
       <a class="ev-btn ev-btn--ghost" href="../../index.html">
-        <span aria-hidden="true">↖</span> All simulations
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
       </a>
       <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
-        <span aria-hidden="true">↺</span> Reset
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
       </button>
       <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
-        <span aria-hidden="true">?</span> Help
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
       </button>
     </div>
   </header>
@@ -51,7 +51,7 @@
     </div>
     <div class="ev-actions">
       <button type="button" class="ev-btn ev-btn--ghost ev-toggle" id="catalystBtn" aria-pressed="false">
-        🧪 Add catalyst
+        <i data-lucide="flask-conical" aria-hidden="true"></i> Add catalyst
       </button>
     </div>
   </section>
@@ -81,10 +81,22 @@
   </section>
 
   <section class="ev-insight" id="insight" hidden>
-    <span aria-hidden="true">💡</span>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
     <span>Notice: every factor makes the graph steeper. Temperature does it because particles move faster and hit harder. Concentration does it because there are more particles to hit. A catalyst does it by making each collision more likely to succeed — without changing the particles at all.</span>
   </section>
 
+    <script>
+    function evLabel(el, icon, text) {
+      el.innerHTML = '<i data-lucide="' + icon + '" aria-hidden="true"></i> ' + text;
+      if (window.lucide) lucide.createIcons();
+    }
+  </script>
+
   <script src="script.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+
+  <script>
+    if (window.lucide) lucide.createIcons();
+  </script>
 </body>
 </html>

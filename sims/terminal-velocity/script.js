@@ -86,7 +86,7 @@
       state.running = false;
       state.done = true;
       insightEl.hidden = false;
-      mainBtn.textContent = '▶ Drop again';
+      evLabel(mainBtn, 'play', 'Drop again');
     }
   }
 
@@ -364,7 +364,7 @@
     state.k = k;
     state.running = true;
     state.paused = false;
-    mainBtn.textContent = '⏸ Pause';
+    evLabel(mainBtn, 'pause', 'Pause');
     insightEl.hidden = true;
     syncReadout();
     render();
@@ -375,10 +375,10 @@
     if (!state.running || state.done) return;
     state.paused = !state.paused;
     if (state.paused) {
-      mainBtn.textContent = '▶ Resume';
+      evLabel(mainBtn, 'play', 'Resume');
       stopLoop();
     } else {
-      mainBtn.textContent = '⏸ Pause';
+      evLabel(mainBtn, 'pause', 'Pause');
       startLoop();
     }
   }
@@ -408,7 +408,7 @@
     state = makeInitialState();
     massSlider.value = state.mass;
     kSlider.value = state.k;
-    mainBtn.textContent = '▶ Drop';
+    evLabel(mainBtn, 'play', 'Drop');
     helpEl.hidden = true;
     insightEl.hidden = true;
     syncReadout();

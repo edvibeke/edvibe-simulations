@@ -407,7 +407,7 @@
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    pauseBtn.textContent = paused ? '▶ Play' : '⏸ Pause';
+    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
   tempSlider.addEventListener('input', () => {
@@ -423,7 +423,7 @@
     lastSample = 0;
     paused = false;
     changeCount = 0;
-    pauseBtn.textContent = '⏸ Pause';
+    evLabel(pauseBtn, 'pause', 'Pause');
     tempSlider.value = INITIAL.temperature;
     resetParticles();
     helpEl.hidden = true;

@@ -25,6 +25,13 @@
       margin: 0 0 8px;
     }
 
+    .ev-hero__icon.lucide-atom {
+      width: 46px;
+      height: 46px;
+      color: var(--ev-primary-2);
+      margin-bottom: 12px;
+    }
+
     .ev-hero p {
       color: var(--ev-text-dim);
       font-size: 1.05rem;
@@ -135,6 +142,7 @@
   <div class="ev-home">
 
     <header class="ev-hero">
+      <i data-lucide="atom" class="ev-hero__icon" aria-hidden="true"></i>
       <h1>EdVibe Simulations</h1>
       <p>Interactive science experiments for the classroom. Drag, click and tweak — watch the physics, chemistry and biology happen live.</p>
     </header>
@@ -289,5 +297,7 @@
       });
     })();
   </script>
+  <script src="shared/lucide.min.js"></script>
+  <script>if (window.lucide) lucide.createIcons();</script>
 </body>
 </html>

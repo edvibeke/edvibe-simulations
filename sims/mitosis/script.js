@@ -234,14 +234,14 @@
 
   function startPlay() {
     playing = true;
-    playBtn.textContent = '⏸ Pause';
+    evLabel(playBtn, 'pause', 'Pause');
     playTimer = 0;
     if (currentStage >= FRAMES.length - 1) goToStage(0);
   }
 
   function stopPlay() {
     playing = false;
-    playBtn.textContent = '▶ Play';
+    evLabel(playBtn, 'play', 'Play');
   }
 
   playBtn.addEventListener('click', () => {

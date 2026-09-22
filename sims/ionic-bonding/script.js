@@ -114,7 +114,7 @@
     // Electron is now part of Cl — we no longer draw it as draggable.
     updateReadout();
     stepBtn.disabled = false;
-    stepBtn.textContent = '▶ Bring ions together';
+    evLabel(stepBtn, 'play', 'Bring ions together');
   }
 
   function startBonding() {
@@ -123,7 +123,7 @@
     bonding = true;
     bondProgress = 0;
     stepBtn.disabled = true;
-    stepBtn.textContent = '✓ Bond formed';
+    evLabel(stepBtn, 'check', 'Bond formed');
     updateReadout();
     insightEl.hidden = false;
     lastTime = performance.now();
@@ -450,7 +450,7 @@
       everDragged: false
     };
     stepBtn.disabled = true;
-    stepBtn.textContent = '▶ Continue';
+    evLabel(stepBtn, 'play', 'Continue');
     insightEl.hidden = true;
     helpEl.hidden = true;
     updateReadout();

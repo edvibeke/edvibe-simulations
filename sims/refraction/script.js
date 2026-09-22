@@ -243,7 +243,7 @@
     const c = criticalAngle();
     if (c === null) return;
 
-    const text = '⚡ Total internal reflection — light cannot escape';
+    const text = 'Total internal reflection \u2014 light cannot escape';
     ctx.font = '700 16px system-ui, sans-serif';
     const tw = ctx.measureText(text).width;
 
@@ -257,10 +257,19 @@
     ctx.lineWidth = 2;
     ctx.strokeRect(bx, by, tw + 32, 40);
 
+    // Warning triangle icon
     ctx.fillStyle = '#fca5a5';
-    ctx.textAlign = 'center';
+    ctx.beginPath();
+    ctx.moveTo(bx + 16, by + 7);
+    ctx.lineTo(bx + 27, by + 32);
+    ctx.lineTo(bx + 5, by + 32);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#fca5a5';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(text, W / 2, by + 20);
+    ctx.fillText(text, bx + 34, by + 20);
   }
 
   function drawLabels() {

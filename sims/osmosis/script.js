@@ -531,7 +531,7 @@
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    pauseBtn.textContent = paused ? '▶ Play' : '⏸ Pause';
+    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
   /* ── Reset / Help ───────────────────────────────────── */
@@ -547,7 +547,7 @@
     history = [];
     paused = false;
     changeCount = 0;
-    pauseBtn.textContent = '⏸ Pause';
+    evLabel(pauseBtn, 'pause', 'Pause');
     helpEl.hidden = true;
     insightEl.hidden = true;
 

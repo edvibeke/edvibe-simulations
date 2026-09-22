@@ -435,13 +435,13 @@
   labelsBtn.addEventListener('click', () => {
     labelsOn = !labelsOn;
     labelsBtn.setAttribute('aria-pressed', labelsOn ? 'true' : 'false');
-    labelsBtn.textContent = labelsOn ? '🏷 Labels on' : '🏷 Labels off';
+    evLabel(labelsBtn, 'tag', labelsOn ? 'Labels on' : 'Labels off');
   });
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
     pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
-    pauseBtn.textContent = paused ? '▶ Play' : '⏸ Pause';
+    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
   document.querySelector('[data-action="reset"]').addEventListener('click', () => {
@@ -449,9 +449,9 @@
     paused = false;
     labelsOn = true;
     pauseBtn.setAttribute('aria-pressed', 'false');
-    pauseBtn.textContent = '⏸ Pause';
+    evLabel(pauseBtn, 'pause', 'Pause');
     labelsBtn.setAttribute('aria-pressed', 'true');
-    labelsBtn.textContent = '🏷 Labels on';
+    evLabel(labelsBtn, 'tag', 'Labels on');
     phase = 0;
     changeCount = 0;
     helpEl.hidden = true;

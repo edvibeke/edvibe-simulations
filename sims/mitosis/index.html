@@ -17,13 +17,13 @@
     </div>
     <div class="ev-header__actions">
       <a class="ev-btn ev-btn--ghost" href="../../index.html">
-        <span aria-hidden="true">↖</span> All simulations
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
       </a>
       <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
-        <span aria-hidden="true">↺</span> Reset
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
       </button>
       <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
-        <span aria-hidden="true">?</span> Help
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
       </button>
     </div>
   </header>
@@ -34,9 +34,9 @@
 
   <section class="ev-controls" aria-label="Controls">
     <div class="ev-stage-nav">
-      <button type="button" class="ev-btn ev-btn--ghost" id="prevBtn">← Previous</button>
-      <button type="button" class="ev-btn ev-btn--primary" id="playBtn">▶ Play</button>
-      <button type="button" class="ev-btn ev-btn--ghost" id="nextBtn">Next →</button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="prevBtn"><i data-lucide="chevron-left" aria-hidden="true"></i> Previous</button>
+      <button type="button" class="ev-btn ev-btn--primary" id="playBtn"><i data-lucide="play" aria-hidden="true"></i> Play</button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="nextBtn">Next <i data-lucide="chevron-right" aria-hidden="true"></i></button>
     </div>
     <div class="ev-stage-dots" id="stageDots" role="tablist" aria-label="Stages of mitosis">
       <!-- populated by JS -->
@@ -67,7 +67,7 @@
   </section>
 
   <section class="ev-insight" id="insight" hidden>
-    <span aria-hidden="true">💡</span>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
     <span>Notice: the chromosomes copy themselves <em>before</em> the cell divides — during
     interphase, when you can't even see them. Then during anaphase they get pulled apart
     to opposite ends. Each daughter cell ends up with the <em>same</em> number and type of
@@ -75,6 +75,18 @@
     for growth and repair, not for making sex cells.</span>
   </section>
 
+    <script>
+    function evLabel(el, icon, text) {
+      el.innerHTML = '<i data-lucide="' + icon + '" aria-hidden="true"></i> ' + text;
+      if (window.lucide) lucide.createIcons();
+    }
+  </script>
+
   <script src="script.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+
+  <script>
+    if (window.lucide) lucide.createIcons();
+  </script>
 </body>
 </html>

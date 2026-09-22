@@ -445,7 +445,7 @@
   catalystBtn.addEventListener('click', () => {
     const on = catalystBtn.getAttribute('aria-pressed') === 'true';
     catalystBtn.setAttribute('aria-pressed', on ? 'false' : 'true');
-    catalystBtn.textContent = on ? '🧪 Add catalyst' : '✅ Catalyst active';
+    evLabel(catalystBtn, on ? 'flask-conical' : 'check-circle', on ? 'Add catalyst' : 'Catalyst active');
     changeCount++;
     if (changeCount >= 5) insightEl.hidden = false;
   });
@@ -454,7 +454,7 @@
     tempSlider.value = INITIAL.temperature;
     countSlider.value = INITIAL.count;
     catalystBtn.setAttribute('aria-pressed', 'false');
-    catalystBtn.textContent = '🧪 Add catalyst';
+    evLabel(catalystBtn, 'flask-conical', 'Add catalyst');
     reset();
   });
 

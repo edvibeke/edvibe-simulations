@@ -211,9 +211,9 @@
     state.paused = !state.paused;
     if (state.paused) {
       stop();
-      pauseBtn.textContent = '▶ Play';
+      evLabel(pauseBtn, 'play', 'Play');
     } else {
-      pauseBtn.textContent = '⏸ Pause';
+      evLabel(pauseBtn, 'pause', 'Pause');
       start();
     }
   }
@@ -225,7 +225,7 @@
     state = makeInitialState();
     lengthSlider.value = state.length;
     massSlider.value = state.mass;
-    pauseBtn.textContent = '⏸ Pause';
+    evLabel(pauseBtn, 'pause', 'Pause');
     massChanges = 0;
     helpEl.hidden = true;
     insightEl.hidden = true;

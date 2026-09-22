@@ -17,13 +17,13 @@
     </div>
     <div class="ev-header__actions">
       <a class="ev-btn ev-btn--ghost" href="../../index.html">
-        <span aria-hidden="true">↖</span> All simulations
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
       </a>
       <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
-        <span aria-hidden="true">↺</span> Reset
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
       </button>
       <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
-        <span aria-hidden="true">?</span> Help
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
       </button>
     </div>
   </header>
@@ -38,7 +38,7 @@
     </div>
     <div class="ev-actions">
       <button type="button" class="ev-btn ev-btn--ghost" id="clearBtn">
-        🗑 Clear the chain
+        <i data-lucide="trash-2" aria-hidden="true"></i> Clear the chain
       </button>
     </div>
   </section>
@@ -60,20 +60,32 @@
 
   <section class="ev-help" id="help" hidden>
     <strong>How to use:</strong> Click an organism to add it to your chain.
-    You have to <em>start with a producer</em> (🌿 grass or 🌳 tree), and each
+    You have to <em>start with a producer</em> (grass or tree), and each
     organism eats only the one before it — so chain levels must go up by one each
     time. The energy pyramid on the right shows how much energy is left at each
     level: about <em>90% is lost</em> between links.
   </section>
 
   <section class="ev-insight" id="insight" hidden>
-    <span aria-hidden="true">💡</span>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
     <span>Notice: energy flows <em>one way</em> through a food chain, and most of it is
     lost at each step — as heat, movement and waste. That's why food chains rarely
     have more than four or five links, and why top predators need a huge area to
     find enough energy.</span>
   </section>
 
+    <script>
+    function evLabel(el, icon, text) {
+      el.innerHTML = '<i data-lucide="' + icon + '" aria-hidden="true"></i> ' + text;
+      if (window.lucide) lucide.createIcons();
+    }
+  </script>
+
   <script src="script.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+
+  <script>
+    if (window.lucide) lucide.createIcons();
+  </script>
 </body>
 </html>
