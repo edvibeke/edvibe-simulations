@@ -53,7 +53,8 @@ A collection of free, interactive science simulations for the classroom — phys
 │   └── <sim-name>/
 │       ├── index.html        The sim page
 │       ├── script.js         Simulation logic + canvas rendering
-│       └── style.css         Only the sim's own extra styles (optional)
+│       ├── style.css         Only the sim's own extra styles (optional)
+│       └── thumbnail.jpg     1080×675 (16:10) preview — see Thumbnails
 └── .github/workflows/
     └── pages.yml             Deploys the repo to GitHub Pages
 ```
@@ -76,7 +77,7 @@ already.
 
 | Member | Purpose |
 | --- | --- |
-| `EV.stage(id)` | Wraps a canvas: sizes the backing store to CSS box × `devicePixelRatio`, pre-scales the context, and re-fits on resize or monitor change. Returns `{ canvas, ctx, w, h, fit }` where `w`/`h` are the **logical** size all drawing code is written against. |
+| `EV.stage(id)` | Wraps a canvas: sizes the backing store to CSS box × `devicePixelRatio`, pre-scales the context, and re-fits on resize or monitor change — re-fitting also calls the sim's `onPaint`, because resizing the backing store wipes the drawing. Returns `{ canvas, ctx, w, h, fit }` where `w`/`h` are the **logical** size all drawing code is written against. |
 | `EV.delta(now, last)` | Frame delta in seconds, clamped to 0.05, and forced to `0` under `prefers-reduced-motion`. |
 | `EV.visualTime(now)` | Timestamp for purely decorative motion (pulses, glows, wobbles). Returns a constant under `prefers-reduced-motion`, so effects driven straight off `performance.now()` also hold still. |
 | `EV.reducedMotion()` | Whether the user prefers reduced motion. |
@@ -93,6 +94,55 @@ already.
 Because the context is pre-scaled, draw in logical coordinates and use
 `stage.w` / `stage.h` rather than `canvas.width` / `canvas.height` — the latter
 now report the device-pixel backing size.
+
+### Repainting
+
+Assigning `canvas.width` clears the canvas, and `EV.stage` has to do that on
+every resize. Sims that run their own `requestAnimationFrame` loop recover on
+the next frame; sims that only paint in response to input do not, which is why
+re-fitting calls `stage.onPaint` for you. So a sim must be able to draw a
+complete frame at any moment from its current state — keep that logic in one
+function and register it:
+
+```js
+stage.onPaint = () => { syncReadout(); render(); };
+```
+
+If your sim paints every frame anyway, you can skip `onPaint` entirely; it is
+only the fallback for when the loop is not running (a resize, or
+`prefers-reduced-motion`).
+
+## Thumbnails
+
+Each simulation ships a `thumbnail.jpg` — a real screenshot of that simulation,
+not an illustration. They are what learners see in the simulation library on
+[edvibe.co.ke](https://edvibe.co.ke/simulations.php) before they launch
+anything, so a thumbnail that does not match what they get on click is a bad
+first impression.
+
+The consuming page builds its URL from the folder name alone:
+
+```
+https://cdn.jsdelivr.net/gh/edvibeke/edvibe-simulations@main/sims/<slug>/thumbnail.jpg
+```
+
+so the contract is just:
+
+- one `thumbnail.jpg` per sim folder, named exactly `thumbnail.jpg`
+- **1080×675** — 16:10, matching the `aspect-ratio: 16/10` of the card it fills
+- captured at `deviceScaleFactor: 1` and cropped 1:1, never resampled; several
+  sims are thin line art and downscaling flattens the strokes
+- framed so the header **and** the whole canvas are in shot, since the card
+  already prints the title directly beneath the image
+
+To regenerate one, screenshot the page at a 1080px-wide viewport after letting
+the animation settle, then crop to 1080×675. Two things to watch:
+
+- **Resize before you shoot.** Forcing a viewport resize is what clears the
+  canvas, so capture at the final size rather than resizing afterwards.
+- **Verify, don't assume.** A blank capture still saves as a valid JPEG. Check
+  that the canvas region has real ink in it — compare the canvas pixel buffer
+  against the page background — before committing.
 
 ## Adding a new simulation
 
@@ -112,9 +162,13 @@ now report the device-pixel backing size.
    help toggle or the insight reveal. Use `EV.say()` for discrete events.
    If the sim is driven by dragging the canvas, add `EV.onDragKey()` so it
    works from the keyboard too.
-4. Add a card to the landing page (`index.html`) under the right subject. The
+   If the sim paints on demand rather than every frame, register that paint
+   function as `stage.onPaint` so a window resize can redraw it.
+4. Add `thumbnail.jpg` to the sim folder — 1080×675, screenshot of the running
+   sim. See [Thumbnails](#thumbnails).
+5. Add a card to the landing page (`index.html`) under the right subject. The
    "All (n)" count updates itself.
-5. Commit and push to `main` — the GitHub Actions workflow deploys
+6. Commit and push to `main` — the GitHub Actions workflow deploys
    automatically.
 
 ## Conventions
@@ -134,6 +188,10 @@ now report the device-pixel backing size.
 - Readout values are deliberately **not** live regions — they change every
   frame and would flood a screen reader. Announce discrete events with
   `EV.say()` instead.
+- A sim must survive a window resize or a monitor change without going blank:
+  `EV.stage` re-fits the backing store, which clears the canvas, and repaints via
+  `stage.onPaint`. Keep every sim able to draw a complete frame from its current
+  state.
 - `prefers-reduced-motion` is honoured three times over: the shared theme kills
   CSS transitions, `EV.delta()` freezes the simulation clock, and
   `EV.visualTime()` pins decorative effects that are drawn straight from a
