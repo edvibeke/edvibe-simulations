@@ -11,7 +11,8 @@
   /* ── DOM ───────────────────────────────────────────── */
 
   const canvas        = document.getElementById('stage');
-  const ctx           = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx           = stage.ctx;
   const lengthSlider  = document.getElementById('length');
   const massSlider    = document.getElementById('mass');
   const lengthValue   = document.getElementById('lengthValue');
@@ -20,8 +21,6 @@
   const angleValue    = document.getElementById('angleValue');
   const speedValue    = document.getElementById('speedValue');
   const pauseBtn      = document.getElementById('pauseBtn');
-  const helpEl        = document.getElementById('help');
-  const insightEl     = document.getElementById('insight');
 
   /* ── State (§5, §15) ───────────────────────────────── */
 
@@ -80,29 +79,32 @@
   /* ── Render ────────────────────────────────────────── */
 
   function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, stage.w, stage.h);
     drawCeiling();
     drawArc();
     drawTrail();
     drawRod();
     drawBob();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawCeiling() {
     ctx.fillStyle = '#334155';
-    ctx.fillRect(0, 0, canvas.width, 30);
+    ctx.fillRect(0, 0, stage.w, 30);
 
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, 30);
-    ctx.lineTo(canvas.width, 30);
+    ctx.lineTo(stage.w, 30);
     ctx.stroke();
 
     // Hatch marks
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 2;
-    for (let x = 20; x < canvas.width; x += 40) {
+    for (let x = 20; x < stage.w; x += 40) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x - 15, 30);
@@ -181,7 +183,7 @@
   /* ── Animation loop (§6) ───────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (!state.paused) {
@@ -211,9 +213,9 @@
     state.paused = !state.paused;
     if (state.paused) {
       stop();
-      evLabel(pauseBtn, 'play', 'Play');
+      EV.label(pauseBtn, 'play', 'Play');
     } else {
-      evLabel(pauseBtn, 'pause', 'Pause');
+      EV.label(pauseBtn, 'pause', 'Pause');
       start();
     }
   }
@@ -225,10 +227,9 @@
     state = makeInitialState();
     lengthSlider.value = state.length;
     massSlider.value = state.mass;
-    evLabel(pauseBtn, 'pause', 'Pause');
+    EV.label(pauseBtn, 'pause', 'Pause');
     massChanges = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
     render();
     start();
@@ -247,16 +248,12 @@
     massChanges++;
     syncReadout();
     if (state.paused) render();
-    if (massChanges >= 3) insightEl.hidden = false;
+    if (massChanges >= 3) EV.revealInsight();
   });
 
   pauseBtn.addEventListener('click', togglePause);
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
+  EV.onReset(reset);
 
   /* ── Init ──────────────────────────────────────────── */
 

@@ -28,13 +28,12 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas      = document.getElementById('stage');
-  const ctx         = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx         = stage.ctx;
   const distValue   = document.getElementById('distValue');
   const leftValue   = document.getElementById('leftValue');
   const rightValue  = document.getElementById('rightValue');
   const statusValue = document.getElementById('statusValue');
-  const helpEl      = document.getElementById('help');
-  const insightEl   = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -96,6 +95,9 @@
       drawDragHint();
     }
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawAtom(pos, label, b, isDraggable) {
     // Outer shell — a thin circle; grows slightly and fades when bonded
@@ -241,7 +243,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     // Advance electron orbit while unbonded. The orbit visually slows
@@ -256,7 +258,7 @@
     if (b > 0.85 && !bondFormed) {
       bondFormed = true;
       everBonded = true;
-      insightEl.hidden = false;
+      EV.revealInsight();
     } else if (b < 0.4 && bondFormed) {
       bondFormed = false;   // bond broke
     }
@@ -332,6 +334,14 @@
     try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
   });
 
+  // Keyboard equivalent of the drag: focus the canvas and nudge the atom
+  // with the arrow keys (hold Shift for a bigger step).
+  EV.onDragKey(canvas, (x, y) => {
+    right = clampRight(x, y);
+    syncReadout();
+    stage.paint();
+  }, { step: 12, bigStep: 40, start: () => right });
+
   /* ── Reset ──────────────────────────────────────────── */
 
   function reset() {
@@ -339,16 +349,12 @@
     orbitAngle = 0;
     everBonded = false;
     bondFormed = false;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
     render();
   }
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
+  EV.onReset(reset);
 
   /* ── Init ───────────────────────────────────────────── */
 

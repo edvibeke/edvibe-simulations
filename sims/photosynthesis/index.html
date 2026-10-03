@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23818cf8'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%23818cf8' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%23818cf8' stroke-width='2' transform='rotate(60 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%23818cf8' stroke-width='2' transform='rotate(120 16 16)'/%3E%3C/svg%3E">
+  <meta name="description" content="Shine light on an aquatic plant and count the oxygen bubbles it makes. Free interactive classroom simulation.">
   <title>Photosynthesis — EdVibe Simulation</title>
   <link rel="stylesheet" href="../../shared/edvibe-sim.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <a class="ev-skip" href="#main">Skip to the simulation</a>
 
   <header class="ev-header">
     <div class="ev-header__text">
@@ -28,8 +32,8 @@
     </div>
   </header>
 
-  <main class="ev-stage">
-    <canvas id="stage" width="900" height="540" aria-label="A lamp shining onto a beaker with an elodea plant releasing oxygen bubbles, plus a bubbles graph"></canvas>
+  <main class="ev-stage" id="main" tabindex="-1">
+    <canvas id="stage" width="900" height="540" role="img" aria-label="A lamp shining onto a beaker with an elodea plant releasing oxygen bubbles, plus a bubbles graph"></canvas>
   </main>
 
   <section class="ev-controls" aria-label="Controls">
@@ -59,7 +63,7 @@
     </div>
   </section>
 
-  <section class="ev-readout" aria-label="Measurements">
+  <section class="ev-readout" aria-label="Measurements" role="group">
     <div class="ev-readout__item">
       <span class="ev-readout__label">Rate</span>
       <span class="ev-readout__value" id="rateValue">0.0 bubbles/min</span>
@@ -94,18 +98,8 @@
     CO₂, and this sim only shows the light-dependent part: keep an eye on the bubbles.</span>
   </section>
 
-    <script>
-    function evLabel(el, icon, text) {
-      el.innerHTML = '<i data-lucide="' + icon + '" aria-hidden="true"></i> ' + text;
-      if (window.lucide) lucide.createIcons();
-    }
-  </script>
-
-  <script src="script.js"></script>
+  <script src="../../shared/edvibe-sim.js"></script>
   <script src="../../shared/lucide.min.js"></script>
-
-  <script>
-    if (window.lucide) lucide.createIcons();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>

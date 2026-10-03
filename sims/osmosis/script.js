@@ -20,7 +20,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas = document.getElementById('stage');
-  const ctx    = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx    = stage.ctx;
 
   const soluteLeftSlider  = document.getElementById('soluteLeft');
   const soluteRightSlider = document.getElementById('soluteRight');
@@ -30,8 +31,6 @@
   const waterRightValue   = document.getElementById('waterRightValue');
   const directionValue    = document.getElementById('directionValue');
   const pauseBtn          = document.getElementById('pauseBtn');
-  const helpEl            = document.getElementById('help');
-  const insightEl         = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -234,6 +233,9 @@
     drawLegend();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawBox() {
     // Container background
@@ -468,7 +470,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (!paused) {
@@ -519,19 +521,19 @@
     soluteLeftValue.textContent = soluteLeftSlider.value;
     adjustSolute('left', soluteLeftSlider.valueAsNumber);
     changeCount++;
-    if (changeCount >= 3) insightEl.hidden = false;
+    if (changeCount >= 3) EV.revealInsight();
   });
 
   soluteRightSlider.addEventListener('input', () => {
     soluteRightValue.textContent = soluteRightSlider.value;
     adjustSolute('right', soluteRightSlider.valueAsNumber);
     changeCount++;
-    if (changeCount >= 3) insightEl.hidden = false;
+    if (changeCount >= 3) EV.revealInsight();
   });
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
+    EV.label(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
   /* ── Reset / Help ───────────────────────────────────── */
@@ -547,18 +549,14 @@
     history = [];
     paused = false;
     changeCount = 0;
-    evLabel(pauseBtn, 'pause', 'Pause');
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.label(pauseBtn, 'pause', 'Pause');
+    EV.resetInsight();
 
     resetParticles();
     syncReadout();
   }
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
+  EV.onReset(reset);
 
   /* ── Init ───────────────────────────────────────────── */
 

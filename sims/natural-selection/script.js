@@ -30,7 +30,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas       = document.getElementById('stage');
-  const ctx          = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx          = stage.ctx;
   const bgSlider     = document.getElementById('bg');
   const predatorSlider = document.getElementById('predator');
   const bgValue      = document.getElementById('bgValue');
@@ -40,8 +41,6 @@
   const matchValue   = document.getElementById('matchValue');
   const pauseBtn     = document.getElementById('pauseBtn');
   const resetPopBtn  = document.getElementById('resetPopBtn');
-  const helpEl       = document.getElementById('help');
-  const insightEl    = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -196,6 +195,9 @@
     drawFieldLegend();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawField() {
     // Field background = the current environment
@@ -452,7 +454,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (!paused) {
@@ -475,38 +477,33 @@
 
   bgSlider.addEventListener('input', () => {
     changeCount++;
-    if (changeCount >= 3) insightEl.hidden = false;
+    if (changeCount >= 3) EV.revealInsight();
   });
 
   predatorSlider.addEventListener('input', () => {
     changeCount++;
-    if (changeCount >= 3) insightEl.hidden = false;
+    if (changeCount >= 3) EV.revealInsight();
   });
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
+    EV.label(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
   resetPopBtn.addEventListener('click', () => {
     initPopulation();
-    insightEl.hidden = true;
+    EV.resetInsight();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     bgSlider.value = 50;
     predatorSlider.value = 50;
     paused = false;
-    evLabel(pauseBtn, 'pause', 'Pause');
+    EV.label(pauseBtn, 'pause', 'Pause');
     changeCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     initPopulation();
     syncReadout();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

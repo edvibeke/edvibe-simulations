@@ -50,14 +50,13 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas     = document.getElementById('stage');
-  const ctx        = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx        = stage.ctx;
   const mixSlider  = document.getElementById('mix');
   const mixValue   = document.getElementById('mixValue');
   const phValue    = document.getElementById('phValue');
   const hValue     = document.getElementById('hValue');
   const kindValue  = document.getElementById('kindValue');
-  const helpEl     = document.getElementById('help');
-  const insightEl  = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -131,6 +130,9 @@
     drawScaleLabels();
     drawPHMarker();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawBeaker() {
     const b = BEAKER;
@@ -303,7 +305,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     // Smooth the pH toward its target (so slider jerks look nice)
@@ -339,23 +341,18 @@
   mixSlider.addEventListener('input', () => {
     mix = parseFloat(mixSlider.value);
     changeCount++;
-    if (changeCount >= 8) insightEl.hidden = false;
+    if (changeCount >= 8) EV.revealInsight();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     mixSlider.value = 0;
     mix = 0;
     displayedPH = 7;
     bubbles = [];
     changeCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     render();
     syncReadout();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

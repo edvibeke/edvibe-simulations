@@ -66,7 +66,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas      = document.getElementById('stage');
-  const ctx         = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx         = stage.ctx;
   const bpmSlider   = document.getElementById('bpm');
   const bpmValue    = document.getElementById('bpmValue');
   const labelsBtn   = document.getElementById('labelsBtn');
@@ -74,8 +75,6 @@
   const phaseValue  = document.getElementById('phaseValue');
   const beatValue   = document.getElementById('beatValue');
   const flowValue   = document.getElementById('flowValue');
-  const helpEl      = document.getElementById('help');
-  const insightEl   = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -141,6 +140,9 @@
     if (labelsOn) drawLabels();
     drawLegend();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawVessels() {
     // Vena cava (blue, top-left)
@@ -409,7 +411,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     update(dt);
@@ -429,39 +431,34 @@
 
   bpmSlider.addEventListener('input', () => {
     changeCount++;
-    if (changeCount >= 3) insightEl.hidden = false;
+    if (changeCount >= 3) EV.revealInsight();
   });
 
   labelsBtn.addEventListener('click', () => {
     labelsOn = !labelsOn;
     labelsBtn.setAttribute('aria-pressed', labelsOn ? 'true' : 'false');
-    evLabel(labelsBtn, 'tag', labelsOn ? 'Labels on' : 'Labels off');
+    EV.label(labelsBtn, 'tag', labelsOn ? 'Labels on' : 'Labels off');
   });
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
     pauseBtn.setAttribute('aria-pressed', paused ? 'true' : 'false');
-    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
+    EV.label(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     bpmSlider.value = 70;
     paused = false;
     labelsOn = true;
     pauseBtn.setAttribute('aria-pressed', 'false');
-    evLabel(pauseBtn, 'pause', 'Pause');
+    EV.label(pauseBtn, 'pause', 'Pause');
     labelsBtn.setAttribute('aria-pressed', 'true');
-    evLabel(labelsBtn, 'tag', 'Labels on');
+    EV.label(labelsBtn, 'tag', 'Labels on');
     phase = 0;
     changeCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     initParticles();
     syncReadout();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

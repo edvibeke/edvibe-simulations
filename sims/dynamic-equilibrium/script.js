@@ -22,7 +22,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas     = document.getElementById('stage');
-  const ctx        = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx        = stage.ctx;
   const tempSlider = document.getElementById('temp');
   const tempValue  = document.getElementById('tempValue');
   const aValue     = document.getElementById('aValue');
@@ -31,8 +32,6 @@
   const addABtn    = document.getElementById('addABtn');
   const addBBtn    = document.getElementById('addBBtn');
   const pauseBtn   = document.getElementById('pauseBtn');
-  const helpEl     = document.getElementById('help');
-  const insightEl  = document.getElementById('insight');
 
   /* ── Sim state ──────────────────────────────────────── */
 
@@ -163,6 +162,9 @@
     drawLegend();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(performance.now()); };
 
   function drawBox() {
     ctx.fillStyle = '#0b1220';
@@ -372,7 +374,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (!paused) {
@@ -396,43 +398,38 @@
   addABtn.addEventListener('click', () => {
     for (let i = 0; i < 10; i++) particles.push(spawnParticle('A'));
     changeCount++;
-    if (changeCount >= 4) insightEl.hidden = false;
+    if (changeCount >= 4) EV.revealInsight();
   });
 
   addBBtn.addEventListener('click', () => {
     for (let i = 0; i < 10; i++) particles.push(spawnParticle('B'));
     changeCount++;
-    if (changeCount >= 4) insightEl.hidden = false;
+    if (changeCount >= 4) EV.revealInsight();
   });
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
+    EV.label(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
   tempSlider.addEventListener('input', () => {
     syncReadout();
     changeCount++;
-    if (changeCount >= 4) insightEl.hidden = false;
+    if (changeCount >= 4) EV.revealInsight();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     particles = [];
     history = [];
     elapsed = 0;
     lastSample = 0;
     paused = false;
     changeCount = 0;
-    evLabel(pauseBtn, 'pause', 'Pause');
+    EV.label(pauseBtn, 'pause', 'Pause');
     tempSlider.value = INITIAL.temperature;
     resetParticles();
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

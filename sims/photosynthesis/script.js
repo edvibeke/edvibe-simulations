@@ -16,7 +16,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas       = document.getElementById('stage');
-  const ctx          = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx          = stage.ctx;
   const lightEl      = document.getElementById('light');
   const lightValue   = document.getElementById('lightValue');
   const tempEl       = document.getElementById('temp');
@@ -27,8 +28,6 @@
   const bubblesValue = document.getElementById('bubblesValue');
   const tempOutValue = document.getElementById('tempOutValue');
   const co2OutValue  = document.getElementById('co2OutValue');
-  const helpEl       = document.getElementById('help');
-  const insightEl    = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -287,6 +286,9 @@
     drawBubbles();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   /* ── Readout ────────────────────────────────────────── */
 
@@ -298,13 +300,13 @@
     tempOutValue.style.color = T > 40 ? '#f87171' : '';
     co2OutValue.textContent  = C + ' ppm';
 
-    if (total >= 25 && insightEl.hidden) insightEl.hidden = false;
+    if (total >= 25) EV.revealInsight();
   }
 
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
     simT += dt;
 
@@ -344,7 +346,7 @@
     total = 0;
     simT = 0;
     lastSampleT = -1;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
   }
 
@@ -363,7 +365,7 @@
     applySliders();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     lightEl.value = 60;
     tempEl.value = 25;
     co2El.value = 600;
@@ -371,10 +373,6 @@
     tempValue.textContent = '25 °C';
     co2Value.textContent = '600 ppm';
     resetRun();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

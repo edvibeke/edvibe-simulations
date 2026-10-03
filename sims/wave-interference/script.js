@@ -51,7 +51,8 @@
   /* ── DOM ───────────────────────────────────────────── */
 
   const canvas           = document.getElementById('stage');
-  const ctx              = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx              = stage.ctx;
   const wavelengthSlider = document.getElementById('wavelength');
   const separationSlider = document.getElementById('separation');
   const wavelengthValue  = document.getElementById('wavelengthValue');
@@ -60,8 +61,6 @@
   const rBValue          = document.getElementById('rBValue');
   const meetValue        = document.getElementById('meetValue');
   const pauseBtn         = document.getElementById('pauseBtn');
-  const helpEl           = document.getElementById('help');
-  const insightEl        = document.getElementById('insight');
 
   /* ── State ─────────────────────────────────────────── */
 
@@ -346,9 +345,12 @@
     renderFieldOverlays();
     renderTraces();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (!state.paused) {
@@ -375,9 +377,9 @@
     state.paused = !state.paused;
     if (state.paused) {
       stop();
-      evLabel(pauseBtn, 'play', 'Play');
+      EV.label(pauseBtn, 'play', 'Play');
     } else {
-      evLabel(pauseBtn, 'pause', 'Pause');
+      EV.label(pauseBtn, 'pause', 'Pause');
       start();
     }
   }
@@ -421,8 +423,17 @@
     dragging = false;
     try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
     dragCount++;
-    if (dragCount >= 3) insightEl.hidden = false;
+    if (dragCount >= 3) EV.revealInsight();
   });
+
+  // Keyboard equivalent: focus the canvas and move the probe with the
+  // arrow keys (hold Shift for a bigger step).
+  EV.onDragKey(canvas, (x, y) => {
+    state.probeX = Math.max(0, Math.min(CANVAS_W, x));
+    state.probeY = Math.max(0, Math.min(FIELD_H, y));
+    syncReadout();
+    if (state.paused) stage.paint();
+  }, { step: 15, bigStep: 50, start: () => ({ x: state.probeX, y: state.probeY }) });
 
   /* ── Sliders, buttons ─────────────────────────────── */
 
@@ -440,20 +451,16 @@
 
   pauseBtn.addEventListener('click', togglePause);
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
+  EV.onReset(reset);
 
   function reset() {
     stop();
     state = makeInitialState();
     wavelengthSlider.value = state.wavelength;
     separationSlider.value = state.separation;
-    evLabel(pauseBtn, 'pause', 'Pause');
+    EV.label(pauseBtn, 'pause', 'Pause');
     dragCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
     render();
     start();

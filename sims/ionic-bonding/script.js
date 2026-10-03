@@ -41,13 +41,12 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas      = document.getElementById('stage');
-  const ctx         = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx         = stage.ctx;
   const naValue     = document.getElementById('naValue');
   const clValue     = document.getElementById('clValue');
   const statusValue = document.getElementById('statusValue');
   const stepBtn     = document.getElementById('stepBtn');
-  const helpEl      = document.getElementById('help');
-  const insightEl   = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -114,7 +113,7 @@
     // Electron is now part of Cl — we no longer draw it as draggable.
     updateReadout();
     stepBtn.disabled = false;
-    evLabel(stepBtn, 'play', 'Bring ions together');
+    EV.label(stepBtn, 'play', 'Bring ions together');
   }
 
   function startBonding() {
@@ -123,15 +122,15 @@
     bonding = true;
     bondProgress = 0;
     stepBtn.disabled = true;
-    evLabel(stepBtn, 'check', 'Bond formed');
+    EV.label(stepBtn, 'check', 'Bond formed');
     updateReadout();
-    insightEl.hidden = false;
+    EV.revealInsight();
     lastTime = performance.now();
     rafId = requestAnimationFrame(bondTick);
   }
 
   function bondTick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     bondProgress = Math.min(1, bondProgress + dt * 0.9);   // ~1.1 s
@@ -196,6 +195,9 @@
     // Labels above each atom
     drawAtomLabels(pos.na, pos.cl);
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { render(); };
 
   function drawSodium(pos) {
     drawAtomSkeleton(pos, COLORS.metal, isIon('na'));
@@ -279,7 +281,7 @@
 
   function drawTargetZone() {
     const gap = clGapPosition();
-    const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.005);
+    const pulse = 0.5 + 0.5 * Math.sin(EV.visualTime(performance.now()) * 0.005);
 
     ctx.strokeStyle = `rgba(250,204,21,${0.35 + pulse * 0.35})`;
     ctx.lineWidth = 2;
@@ -409,6 +411,17 @@
     render();
   });
 
+  // Keyboard equivalent: focus the canvas and move the outer electron
+  // with the arrow keys (hold Shift for a bigger step). Only available in
+  // the atomic phase, matching the pointer interaction.
+  EV.onDragKey(canvas, (x, y) => {
+    if (phase !== 'atomic') return;
+    electron.x = Math.max(0, Math.min(W, x));
+    electron.y = Math.max(0, Math.min(H, y));
+    electron.everDragged = true;
+    stage.paint();
+  }, { step: 10, bigStep: 30, start: () => electron });
+
   canvas.addEventListener('pointerup', (e) => {
     if (!dragging) return;
     dragging = false;
@@ -434,7 +447,7 @@
     if (phase === 'ionic') startBonding();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     phase = 'atomic';
     bonding = false;
@@ -450,15 +463,10 @@
       everDragged: false
     };
     stepBtn.disabled = true;
-    evLabel(stepBtn, 'play', 'Continue');
-    insightEl.hidden = true;
-    helpEl.hidden = true;
+    EV.label(stepBtn, 'play', 'Continue');
+    EV.resetInsight();
     updateReadout();
     render();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Animated hint pulse ───────────────────────────── */

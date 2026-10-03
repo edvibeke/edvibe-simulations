@@ -25,15 +25,14 @@
   /* ── DOM ───────────────────────────────────────────── */
 
   const canvas            = document.getElementById('stage');
-  const ctx               = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx               = stage.ctx;
   const voltageSlider     = document.getElementById('voltage');
   const resistanceSlider  = document.getElementById('resistance');
   const voltageValue      = document.getElementById('voltageValue');
   const resistanceValue   = document.getElementById('resistanceValue');
   const currentValue      = document.getElementById('currentValue');
   const powerValue        = document.getElementById('powerValue');
-  const helpEl            = document.getElementById('help');
-  const insightEl         = document.getElementById('insight');
 
   /* ── State (§5, §15: one state object) ─────────────── */
 
@@ -74,13 +73,16 @@
   /* ── Drawing ───────────────────────────────────────── */
 
   function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, stage.w, stage.h);
     drawWires();
     drawBattery();
     drawResistor();
     drawLabels();
     drawElectrons();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawWires() {
     ctx.strokeStyle = '#64748b';       // --ev-neutral
@@ -223,7 +225,7 @@
   }
 
   function tick(now) {
-    const dt = Math.min((now - lastRenderTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastRenderTime);
     lastRenderTime = now;
     update(dt);
     render();
@@ -271,7 +273,7 @@
     syncReadout();
 
     if (resistanceChanges >= 3) {
-      insightEl.hidden = false;
+      EV.revealInsight();
     }
 
     if (state.current > 0) {
@@ -290,8 +292,7 @@
     voltageSlider.value    = state.voltage;
     resistanceSlider.value = state.resistance;
     resistanceChanges = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
     render();
     ensureLoop();
@@ -302,11 +303,7 @@
   voltageSlider.addEventListener('input', onVoltageInput);
   resistanceSlider.addEventListener('input', onResistanceInput);
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
+  EV.onReset(reset);
 
   /* ── Init ──────────────────────────────────────────── */
 

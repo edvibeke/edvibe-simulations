@@ -60,12 +60,11 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas       = document.getElementById('stage');
-  const ctx          = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx          = stage.ctx;
   const tempValue    = document.getElementById('tempValue');
   const stateValue   = document.getElementById('stateValue');
   const exampleValue = document.getElementById('exampleValue');
-  const helpEl       = document.getElementById('help');
-  const insightEl    = document.getElementById('insight');
   const stateBtns    = document.querySelectorAll('[data-state]');
 
   /* ── Sim state ──────────────────────────────────────── */
@@ -162,6 +161,9 @@
     drawCaption();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawBox() {
     ctx.fillStyle = '#0b1220';
@@ -336,7 +338,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
     updateParticles(dt);
     render();
@@ -370,7 +372,7 @@
 
     syncReadout();
     switches++;
-    if (switches >= 4) insightEl.hidden = false;
+    if (switches >= 4) EV.revealInsight();
   }
 
   /* ── Events ─────────────────────────────────────────── */
@@ -379,8 +381,12 @@
     btn.addEventListener('click', () => setState(btn.dataset.state));
   });
 
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
+  EV.onReset(() => {
+    switches = 0;
+    stateBtns.forEach(b => {
+      b.setAttribute('aria-pressed', b.dataset.state === INITIAL_STATE ? 'true' : 'false');
+    });
+    setState(INITIAL_STATE);
   });
 
   /* ── Init ───────────────────────────────────────────── */

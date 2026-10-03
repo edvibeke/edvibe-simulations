@@ -19,7 +19,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas     = document.getElementById('stage');
-  const ctx        = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx        = stage.ctx;
   const concEl     = document.getElementById('conc');
   const concValue  = document.getElementById('concValue');
   const dropBtn    = document.getElementById('dropBtn');
@@ -28,8 +29,6 @@
   const phValue    = document.getElementById('phValue');
   const dropsValue = document.getElementById('dropsValue');
   const eqValue    = document.getElementById('eqValue');
-  const helpEl     = document.getElementById('help');
-  const insightEl  = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -289,7 +288,7 @@
 
       // current point, pulsing
       const cx = xPos(VB), cy = yPos(pHAt(VB));
-      const pulse = 3 + 2 * Math.sin(performance.now() / 180);
+      const pulse = 3 + 2 * Math.sin(EV.visualTime(performance.now()) / 180);
       ctx.beginPath();
       ctx.arc(cx, cy, 6 + pulse, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(99,102,241,0.25)';
@@ -309,6 +308,9 @@
     drawDrops();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   /* ── Readout ────────────────────────────────────────── */
 
@@ -321,14 +323,14 @@
 
     if (!hitEquiv && VB >= equivalenceVolume()) {
       hitEquiv = true;
-      if (insightEl.hidden) insightEl.hidden = false;
+      EV.revealInsight();
     }
   }
 
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
     updateDrops(dt);
     render();
@@ -357,7 +359,7 @@
     drops = 0;
     hitEquiv = false;
     droplets = [];
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
   }
 
@@ -371,14 +373,10 @@
     resetRun();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     concEl.value = 1;
     concValue.textContent = '1.0 M';
     resetRun();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

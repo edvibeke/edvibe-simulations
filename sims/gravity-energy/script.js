@@ -24,7 +24,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas         = document.getElementById('stage');
-  const ctx            = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx            = stage.ctx;
   const massEl         = document.getElementById('mass');
   const massValue      = document.getElementById('massValue');
   const heightEl       = document.getElementById('height');
@@ -36,8 +37,6 @@
   const keValue        = document.getElementById('keValue');
   const speedValue     = document.getElementById('speedValue');
   const heightOutValue = document.getElementById('heightOutValue');
-  const helpEl         = document.getElementById('help');
-  const insightEl      = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -100,7 +99,11 @@
 
     // along-track speed → horizontal ground speed
     const dx = (v / Math.sqrt(groundSlope(state.x))) * dt * PX_PER_M;
-    let nx = state.x + state.dir * (dx < 0.03 ? 0.03 : dx);
+    /* Floor the step so the ball still creeps on very shallow slopes,
+       otherwise it stalls. Under reduced motion dt is 0 and the ball must
+       stay put, so the floor does not apply there. */
+    const stepPx = dt > 0 ? Math.max(dx, 0.03) : 0;
+    let nx = state.x + state.dir * stepPx;
 
     // zero-KE height (px) on each arm: where all energy is potential
     const hTurnPx = V.y - (state.eh / G) * PX_PER_M;
@@ -120,7 +123,7 @@
     if ((state.dir === 1 && state.x < V.x && nx >= V.x) ||
         (state.dir === -1 && state.x > V.x && nx <= V.x)) {
       state.swings++;
-      if (state.swings >= 4 && insightEl.hidden) insightEl.hidden = false;
+      if (state.swings >= 4) EV.revealInsight();
     }
 
     state.x = nx;
@@ -135,6 +138,9 @@
     drawBall();
     drawEnergyBar();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawTrack() {
     // ground hint
@@ -284,7 +290,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     update(dt);
@@ -318,7 +324,7 @@
   function togglePause() {
     state.paused = !state.paused;
     pauseBtn.setAttribute('aria-pressed', state.paused ? 'true' : 'false');
-    evLabel(pauseBtn, state.paused ? 'play' : 'pause', state.paused ? 'Play' : 'Pause');
+    EV.label(pauseBtn, state.paused ? 'play' : 'pause', state.paused ? 'Play' : 'Pause');
   }
 
   /* ── Events ─────────────────────────────────────────── */
@@ -338,7 +344,7 @@
     resetRun();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     massEl.value = 1;
     heightEl.value = 80;
     pushEl.value = 0;
@@ -347,19 +353,14 @@
     pushValue.textContent = '0 m/s';
     state.paused = false;
     pauseBtn.setAttribute('aria-pressed', 'false');
-    evLabel(pauseBtn, 'pause', 'Pause');
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.label(pauseBtn, 'pause', 'Pause');
+    EV.resetInsight();
     resetRun();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */
 
-  evLabel(pauseBtn, 'pause', 'Pause');
+  EV.label(pauseBtn, 'pause', 'Pause');
   resetRun();
   start();
 })();

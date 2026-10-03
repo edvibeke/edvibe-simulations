@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23818cf8'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%23818cf8' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%23818cf8' stroke-width='2' transform='rotate(60 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='13' ry='5.5' fill='none' stroke='%23818cf8' stroke-width='2' transform='rotate(120 16 16)'/%3E%3C/svg%3E">
+  <meta name="description" content="Two identical bulbs, two arrangements — which one is brighter? — free interactive classroom simulation.">
+  <title>Series vs Parallel Circuits — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <a class="ev-skip" href="#main">Skip to the simulation</a>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Series vs Parallel Circuits</h1>
+      <p>Two identical bulbs, two arrangements — which one is brighter?</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage" id="main" tabindex="-1">
+    <canvas id="stage" width="900" height="540" role="img" aria-label="A battery driving two bulbs in series or in parallel, with electron flow and brightness shown"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="voltage">Battery voltage</label>
+        <span class="ev-slider__value" id="voltageValue">6.0 V</span>
+      </div>
+      <input type="range" id="voltage" class="ev-slider"
+             min="3" max="12" step="0.5" value="6">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="resistance">Bulb resistance</label>
+        <span class="ev-slider__value" id="resistanceValue">4.0 Ω</span>
+      </div>
+      <input type="range" id="resistance" class="ev-slider"
+             min="1" max="10" step="0.5" value="4">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="modeBtn">
+        <i data-lucide="circuit-board" aria-hidden="true"></i> Switch to parallel
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements" role="group">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Circuit</span>
+      <span class="ev-readout__value" id="modeValue">Series</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Total current</span>
+      <span class="ev-readout__value" id="currentValue">0.75 A</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Voltage per bulb</span>
+      <span class="ev-readout__value" id="voltagePerBulbValue">3.0 V</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Power per bulb</span>
+      <span class="ev-readout__value" id="powerPerBulbValue">2.25 W</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Two identical bulbs run off one battery.
+    Start in <em>series</em> — the bulbs share the voltage, so each gets half.
+    Click <em>Switch to parallel</em> and each bulb spans the full battery by itself,
+    so the current through each one doubles and they glow much brighter. Try changing
+    the voltage and resistance in both arrangements and compare the numbers.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: in series the voltage is <em>shared</em> (each bulb gets half the battery),
+    so the power per bulb is a quarter of the parallel value. In parallel the voltage is
+    <em>the same</em> across each bulb, so each glows at full brightness — but the battery
+    now supplies double the current. That's why homes are wired in parallel: every
+    appliance gets the mains voltage.</span>
+  </section>
+
+  <script src="../../shared/edvibe-sim.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

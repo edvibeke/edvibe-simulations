@@ -21,7 +21,8 @@
   /* ── DOM ───────────────────────────────────────────── */
 
   const canvas = document.getElementById('stage');
-  const ctx    = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx    = stage.ctx;
 
   const n1Slider = document.getElementById('n1');
   const n2Slider = document.getElementById('n2');
@@ -30,8 +31,6 @@
   const theta1Value = document.getElementById('theta1Value');
   const theta2Value = document.getElementById('theta2Value');
   const ratioValue  = document.getElementById('ratioValue');
-  const helpEl      = document.getElementById('help');
-  const insightEl   = document.getElementById('insight');
 
   /* ── State ─────────────────────────────────────────── */
 
@@ -75,6 +74,9 @@
     drawTIRWarning();
     drawLabels();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawMedia() {
     ctx.fillStyle = '#1a2540';                    // top: darker
@@ -333,6 +335,13 @@
     };
   }
 
+  function handlePos() {
+    return {
+      x: NORMAL_X - RAY_LEN * Math.sin(state.theta1),
+      y: BOUNDARY_Y - RAY_LEN * Math.cos(state.theta1)
+    };
+  }
+
   function updateAngleFromDrag(p) {
     // Vector from hit point to cursor
     const dx = NORMAL_X - p.x;             // positive if left of hit
@@ -376,8 +385,17 @@
     dragging = false;
     try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
     dragCount++;
-    if (dragCount >= 6) insightEl.hidden = false;
+    if (dragCount >= 6) EV.revealInsight();
   });
+
+  // Keyboard equivalent: focus the canvas and swing the ray with the
+  // arrow keys (hold Shift for a bigger step, Home to recentre).
+  EV.onDragKey(canvas, (x, y) => {
+    updateAngleFromDrag({ x, y });
+    dragCount++;
+    if (dragCount >= 6) EV.revealInsight();
+    stage.paint();
+  }, { step: 8, bigStep: 25, start: handlePos });
 
   /* ── Presets & sliders ────────────────────────────── */
 
@@ -407,19 +425,14 @@
     render();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     state = makeInitialState();
     n1Slider.value = state.n1;
     n2Slider.value = state.n2;
     dragCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
     render();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ─────────────────────────────────────────── */

@@ -26,7 +26,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas      = document.getElementById('stage');
-  const ctx         = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx         = stage.ctx;
   const tempSlider  = document.getElementById('temp');
   const phSlider    = document.getElementById('ph');
   const tempValue   = document.getElementById('tempValue');
@@ -35,8 +36,6 @@
   const rateValue   = document.getElementById('rateValue');
   const shapeValue  = document.getElementById('shapeValue');
   const pauseBtn    = document.getElementById('pauseBtn');
-  const helpEl      = document.getElementById('help');
-  const insightEl   = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -219,6 +218,9 @@
     drawProducts();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(EV.visualTime(performance.now())); };
 
   function drawBox() {
     ctx.fillStyle = '#0b1220';
@@ -444,14 +446,15 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (!paused) {
       elapsed += dt;
       step(dt, now);
     }
-    render(now);
+    // Decorative pulse/noise holds still under reduced motion.
+    render(EV.visualTime(now));
     syncReadout();
 
     rafId = requestAnimationFrame(tick);
@@ -467,20 +470,20 @@
 
   tempSlider.addEventListener('input', () => {
     changeCount++;
-    if (changeCount >= 5) insightEl.hidden = false;
+    if (changeCount >= 5) EV.revealInsight();
   });
 
   phSlider.addEventListener('input', () => {
     changeCount++;
-    if (changeCount >= 5) insightEl.hidden = false;
+    if (changeCount >= 5) EV.revealInsight();
   });
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
-    evLabel(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
+    EV.label(pauseBtn, paused ? 'play' : 'pause', paused ? 'Play' : 'Pause');
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     tempSlider.value = INITIAL.temperature;
     phSlider.value = INITIAL.ph;
     substrates = [];
@@ -492,16 +495,11 @@
     lastSample = 0;
     paused = false;
     changeCount = 0;
-    evLabel(pauseBtn, 'pause', 'Pause');
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.label(pauseBtn, 'pause', 'Pause');
+    EV.resetInsight();
     ensureSubstrateCount();
     ensureProductCount();
     syncReadout();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

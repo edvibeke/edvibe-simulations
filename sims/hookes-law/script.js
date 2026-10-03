@@ -23,7 +23,8 @@
   /* ── DOM ───────────────────────────────────────────── */
 
   const canvas       = document.getElementById('stage');
-  const ctx          = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx          = stage.ctx;
   const massSlider   = document.getElementById('mass');
   const kSlider      = document.getElementById('k');
   const massValue    = document.getElementById('massValue');
@@ -31,8 +32,6 @@
   const forceValue   = document.getElementById('forceValue');
   const extensionValue = document.getElementById('extensionValue');
   const kOutValue    = document.getElementById('kOutValue');
-  const helpEl       = document.getElementById('help');
-  const insightEl    = document.getElementById('insight');
 
   /* ── State ─────────────────────────────────────────── */
 
@@ -60,6 +59,9 @@
     drawSpringPanel();
     drawGraphPanel();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawDivider() {
     ctx.strokeStyle = '#334155';
@@ -386,7 +388,7 @@
     syncReadout();
     render();
     massChangeCount++;
-    if (massChangeCount >= 8) insightEl.hidden = false;
+    if (massChangeCount >= 8) EV.revealInsight();
   });
 
   kSlider.addEventListener('input', () => {
@@ -421,27 +423,20 @@
       render();
 
       if (frac < 1) requestAnimationFrame(frame);
-      else {
-        insightEl.hidden = false;
-      }
+      else EV.revealInsight();
     }
 
     requestAnimationFrame(frame);
   }
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     state = makeInitialState();
     massSlider.value = state.mass;
     kSlider.value = state.k;
     massChangeCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
     render();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ─────────────────────────────────────────── */

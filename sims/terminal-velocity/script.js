@@ -25,7 +25,8 @@
   /* ── DOM ───────────────────────────────────────────── */
 
   const canvas     = document.getElementById('stage');
-  const ctx        = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx        = stage.ctx;
   const massSlider = document.getElementById('mass');
   const kSlider    = document.getElementById('k');
   const massValue  = document.getElementById('massValue');
@@ -34,8 +35,6 @@
   const dragValue  = document.getElementById('dragValue');
   const accelValue = document.getElementById('accelValue');
   const mainBtn    = document.getElementById('mainBtn');
-  const helpEl     = document.getElementById('help');
-  const insightEl  = document.getElementById('insight');
 
   /* ── State ─────────────────────────────────────────── */
 
@@ -85,8 +84,8 @@
       state.y = Math.min(state.y, COL.worldHeight);
       state.running = false;
       state.done = true;
-      insightEl.hidden = false;
-      evLabel(mainBtn, 'play', 'Drop again');
+      EV.revealInsight();
+      EV.label(mainBtn, 'play', 'Drop again');
     }
   }
 
@@ -99,6 +98,9 @@
     drawBallAndArrows();
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawDivider() {
     ctx.strokeStyle = '#334155';
@@ -327,7 +329,7 @@
   /* ── Loop ──────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (state.running && !state.paused) {
@@ -364,8 +366,8 @@
     state.k = k;
     state.running = true;
     state.paused = false;
-    evLabel(mainBtn, 'pause', 'Pause');
-    insightEl.hidden = true;
+    EV.label(mainBtn, 'pause', 'Pause');
+    EV.resetInsight();
     syncReadout();
     render();
     startLoop();
@@ -375,10 +377,10 @@
     if (!state.running || state.done) return;
     state.paused = !state.paused;
     if (state.paused) {
-      evLabel(mainBtn, 'play', 'Resume');
+      EV.label(mainBtn, 'play', 'Resume');
       stopLoop();
     } else {
-      evLabel(mainBtn, 'pause', 'Pause');
+      EV.label(mainBtn, 'pause', 'Pause');
       startLoop();
     }
   }
@@ -403,20 +405,15 @@
     if (!state.running) render();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     stopLoop();
     state = makeInitialState();
     massSlider.value = state.mass;
     kSlider.value = state.k;
-    evLabel(mainBtn, 'play', 'Drop');
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.label(mainBtn, 'play', 'Drop');
+    EV.resetInsight();
     syncReadout();
     render();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ──────────────────────────────────────────── */

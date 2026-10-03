@@ -144,7 +144,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas     = document.getElementById('stage');
-  const ctx        = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx        = stage.ctx;
   const prevBtn    = document.getElementById('prevBtn');
   const playBtn    = document.getElementById('playBtn');
   const nextBtn    = document.getElementById('nextBtn');
@@ -152,8 +153,6 @@
   const stageName  = document.getElementById('stageName');
   const stageDesc  = document.getElementById('stageDesc');
   const chromValue = document.getElementById('chromValue');
-  const helpEl     = document.getElementById('help');
-  const insightEl  = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -217,7 +216,7 @@
     updateDots();
     syncReadout();
 
-    if (currentStage === FRAMES.length - 1) insightEl.hidden = false;
+    if (currentStage === FRAMES.length - 1) EV.revealInsight();
   }
 
   prevBtn.addEventListener('click', () => {
@@ -234,14 +233,14 @@
 
   function startPlay() {
     playing = true;
-    evLabel(playBtn, 'pause', 'Pause');
+    EV.label(playBtn, 'pause', 'Pause');
     playTimer = 0;
     if (currentStage >= FRAMES.length - 1) goToStage(0);
   }
 
   function stopPlay() {
     playing = false;
-    evLabel(playBtn, 'play', 'Play');
+    EV.label(playBtn, 'play', 'Play');
   }
 
   playBtn.addEventListener('click', () => {
@@ -302,6 +301,9 @@
     drawStageTitle();
     drawLegend();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawCellMembrane() {
     const p = displayedParams;
@@ -499,7 +501,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     advanceToward(dt);
@@ -541,16 +543,12 @@
     currentStage = 0;
     displayedParams = snapshotOf(FRAMES[0]);
     targetParams = snapshotOf(FRAMES[0]);
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     updateDots();
     syncReadout();
   }
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
+  EV.onReset(reset);
 
   /* ── Init ───────────────────────────────────────────── */
 

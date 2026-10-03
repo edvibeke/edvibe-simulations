@@ -8,7 +8,7 @@
   const GRAPH = { x: 540, y: 90, w: 320, h: 380 };
 
   const PARTICLE_R = 7;
-  const FLASH_MS   = 400;
+  const FLASH_S    = 0.4;   // reaction flash, in simulation seconds
 
   /* ── Initial conditions ─────────────────────────────── */
 
@@ -21,7 +21,8 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas       = document.getElementById('stage');
-  const ctx          = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx          = stage.ctx;
   const tempSlider   = document.getElementById('temp');
   const countSlider  = document.getElementById('count');
   const tempValue    = document.getElementById('tempValue');
@@ -30,8 +31,6 @@
   const rateValue    = document.getElementById('rateValue');
   const tempOutValue = document.getElementById('tempOutValue');
   const catalystBtn  = document.getElementById('catalystBtn');
-  const helpEl       = document.getElementById('help');
-  const insightEl    = document.getElementById('insight');
 
   /* ── Sim state ──────────────────────────────────────── */
 
@@ -96,7 +95,9 @@
 
   /* ── Physics update ─────────────────────────────────── */
 
-  function step(dt, now) {
+  /* `t` is the simulation clock in seconds, not the wall clock, so the
+     reaction flash freezes along with everything else under reduced motion. */
+  function step(dt, t) {
     const targetSpeed = baseSpeed();
 
     // Move all particles, keep them at the current thermal speed
@@ -149,11 +150,11 @@
 
           // React only if different types and not already flashing
           if (a.type !== b.type &&
-              now > a.flashUntil &&
-              now > b.flashUntil) {
+              t > a.flashUntil &&
+              t > b.flashUntil) {
             if (Math.random() < pReact) {
-              a.flashUntil = now + FLASH_MS;
-              b.flashUntil = now + FLASH_MS;
+              a.flashUntil = t + FLASH_S;
+              b.flashUntil = t + FLASH_S;
               totalReactions++;
               reactionTimes.push(elapsed);
             }
@@ -176,12 +177,15 @@
 
   /* ── Rendering ──────────────────────────────────────── */
 
-  function render(now) {
+  function render(t) {
     ctx.clearRect(0, 0, W, H);
     drawBox();
-    drawParticles(now);
+    drawParticles(t);
     drawGraph();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(elapsed); };
 
   function drawBox() {
     ctx.fillStyle = '#0b1220';
@@ -229,13 +233,13 @@
     ctx.fillText('Reacting!', BOX.x + 258, ly);
   }
 
-  function drawParticles(now) {
+  function drawParticles(t) {
     for (const p of particles) {
-      const flashing = now < p.flashUntil;
+      const flashing = t < p.flashUntil;
 
       if (flashing) {
         // Glow ring
-        const age = 1 - (p.flashUntil - now) / FLASH_MS;
+        const age = 1 - (p.flashUntil - t) / FLASH_S;
         const glowR = p.r + 6 + age * 8;
         const alpha = (1 - age) * 0.7;
         ctx.fillStyle = `rgba(16,185,129,${alpha})`;
@@ -388,12 +392,12 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
     elapsed += dt;
 
-    step(dt, now);
-    render(now);
+    step(dt, elapsed);
+    render(elapsed);
     syncReadout();
 
     rafId = requestAnimationFrame(tick);
@@ -420,8 +424,7 @@
     elapsed = 0;
     lastSample = 0;
     changeCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     resetParticles();
     syncReadout();
     start();
@@ -432,34 +435,30 @@
   tempSlider.addEventListener('input', () => {
     syncReadout();
     changeCount++;
-    if (changeCount >= 5) insightEl.hidden = false;
+    if (changeCount >= 5) EV.revealInsight();
   });
 
   countSlider.addEventListener('input', () => {
     adjustParticleCount();
     syncReadout();
     changeCount++;
-    if (changeCount >= 5) insightEl.hidden = false;
+    if (changeCount >= 5) EV.revealInsight();
   });
 
   catalystBtn.addEventListener('click', () => {
     const on = catalystBtn.getAttribute('aria-pressed') === 'true';
     catalystBtn.setAttribute('aria-pressed', on ? 'false' : 'true');
-    evLabel(catalystBtn, on ? 'flask-conical' : 'check-circle', on ? 'Add catalyst' : 'Catalyst active');
+    EV.label(catalystBtn, on ? 'flask-conical' : 'check-circle', on ? 'Add catalyst' : 'Catalyst active');
     changeCount++;
-    if (changeCount >= 5) insightEl.hidden = false;
+    if (changeCount >= 5) EV.revealInsight();
   });
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     tempSlider.value = INITIAL.temperature;
     countSlider.value = INITIAL.count;
     catalystBtn.setAttribute('aria-pressed', 'false');
-    evLabel(catalystBtn, 'flask-conical', 'Add catalyst');
+    EV.label(catalystBtn, 'flask-conical', 'Add catalyst');
     reset();
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
   });
 
   /* ── Init ───────────────────────────────────────────── */

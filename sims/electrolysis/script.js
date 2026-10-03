@@ -32,13 +32,12 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas      = document.getElementById('stage');
-  const ctx         = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx         = stage.ctx;
   const powerBtn    = document.getElementById('powerBtn');
   const concValue   = document.getElementById('concValue');
   const depositValue= document.getElementById('depositValue');
   const timeValue   = document.getElementById('timeValue');
-  const helpEl      = document.getElementById('help');
-  const insightEl   = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -174,6 +173,9 @@
     drawLegend();
     drawPolarityLabels();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawWires() {
     ctx.strokeStyle = COLORS.wire;
@@ -439,7 +441,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     if (powered) {
@@ -466,7 +468,7 @@
   function setPower(on) {
     powered = on;
     powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    evLabel(powerBtn, on ? 'pause' : 'zap', on ? 'Switch off power' : 'Switch on power');
+    EV.label(powerBtn, on ? 'pause' : 'zap', on ? 'Switch off power' : 'Switch on power');
 
     if (on) {
       if (!everPowered) everPowered = true;
@@ -493,9 +495,8 @@
     everPowered = false;
     powered = false;
     powerBtn.setAttribute('aria-pressed', 'false');
-    evLabel(powerBtn, 'zap', 'Switch on power');
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.label(powerBtn, 'zap', 'Switch on power');
+    EV.resetInsight();
 
     for (let i = 0; i < INITIAL_CU; i++) ions.push(spawnIon('Cu'));
     for (let i = 0; i < INITIAL_SO4; i++) ions.push(spawnIon('SO4'));
@@ -504,18 +505,13 @@
     syncReadout();
   }
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
+  EV.onReset(reset);
 
   /* ── Insight trigger ───────────────────────────────── */
 
   function checkInsight() {
     // Show insight once enough copper has deposited
-    if (depositMass >= 0.30 && insightEl.hidden) {
-      insightEl.hidden = false;
-    }
+    if (depositMass >= 0.30) EV.revealInsight();
   }
 
   /* ── Init ───────────────────────────────────────────── */

@@ -53,14 +53,13 @@
   /* ── DOM ────────────────────────────────────────────── */
 
   const canvas         = document.getElementById('stage');
-  const ctx            = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx            = stage.ctx;
   const pickerEl       = document.getElementById('organismPicker');
   const clearBtn       = document.getElementById('clearBtn');
   const lengthValue    = document.getElementById('lengthValue');
   const energyValue    = document.getElementById('energyValue');
   const trophicValue   = document.getElementById('trophicValue');
-  const helpEl         = document.getElementById('help');
-  const insightEl      = document.getElementById('insight');
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -122,7 +121,7 @@
     }
 
     syncReadout();
-    if (chainCount >= 3) insightEl.hidden = false;
+    if (chainCount >= 3) EV.revealInsight();
   }
 
   function flashPickerError(msg) {
@@ -143,7 +142,7 @@
     chain = [];
     particles = [];
     syncReadout();
-    insightEl.hidden = true;
+    EV.resetInsight();
   }
 
   /* ── Energy particles ───────────────────────────────── */
@@ -192,6 +191,9 @@
     drawEnergyArrow();
     drawPyramid();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawChainArea() {
     ctx.fillStyle = 'rgba(30,41,59,0.5)';
@@ -439,7 +441,7 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     update(dt);
@@ -458,15 +460,10 @@
 
   clearBtn.addEventListener('click', clearChain);
 
-  document.querySelector('[data-action="reset"]').addEventListener('click', () => {
+  EV.onReset(() => {
     clearChain();
     chainCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
-  });
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
+    EV.resetInsight();
   });
 
   /* ── Init ───────────────────────────────────────────── */

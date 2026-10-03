@@ -16,7 +16,8 @@
   /* ── DOM ───────────────────────────────────────────── */
 
   const canvas          = document.getElementById('stage');
-  const ctx             = canvas.getContext('2d');
+  const stage     = EV.stage('stage');
+  const ctx             = stage.ctx;
   const angleSlider     = document.getElementById('angle');
   const speedSlider     = document.getElementById('speed');
   const angleValue      = document.getElementById('angleValue');
@@ -24,8 +25,6 @@
   const rangeValue      = document.getElementById('rangeValue');
   const heightValue     = document.getElementById('heightValue');
   const timeValue       = document.getElementById('timeValue');
-  const helpEl          = document.getElementById('help');
-  const insightEl       = document.getElementById('insight');
 
   /* ── State (§5, §15: one state object) ─────────────── */
 
@@ -77,7 +76,7 @@
   /* ── Render ────────────────────────────────────────── */
 
   function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, stage.w, stage.h);
     drawGrid();
     drawGround();
     drawGhost();
@@ -86,6 +85,9 @@
     drawCannon();
     drawAngleLabel();
   }
+  /* Repaint on demand — used by the shared runtime when
+     prefers-reduced-motion stops the animation clock. */
+  stage.onPaint = () => { syncReadout(); render(); };
 
   function drawGrid() {
     ctx.strokeStyle = 'rgba(100,116,139,0.18)';
@@ -94,7 +96,7 @@
     // Vertical lines every 20 m
     for (let m = 0; m <= 260; m += 20) {
       const x = WORLD.originX + m * WORLD.pxPerMeter;
-      if (x > canvas.width) break;
+      if (x > stage.w) break;
       ctx.beginPath();
       ctx.moveTo(x, 40);
       ctx.lineTo(x, WORLD.groundY);
@@ -107,20 +109,20 @@
       if (y < 20) break;
       ctx.beginPath();
       ctx.moveTo(WORLD.originX, y);
-      ctx.lineTo(canvas.width, y);
+      ctx.lineTo(stage.w, y);
       ctx.stroke();
     }
   }
 
   function drawGround() {
     ctx.fillStyle = '#334155';
-    ctx.fillRect(0, WORLD.groundY, canvas.width, canvas.height - WORLD.groundY);
+    ctx.fillRect(0, WORLD.groundY, stage.w, stage.h - WORLD.groundY);
 
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, WORLD.groundY);
-    ctx.lineTo(canvas.width, WORLD.groundY);
+    ctx.lineTo(stage.w, WORLD.groundY);
     ctx.stroke();
   }
 
@@ -232,13 +234,13 @@
       syncReadout();
 
       if (fireCount >= 2) {
-        insightEl.hidden = false;
+        EV.revealInsight();
       }
     }
   }
 
   function tick(now) {
-    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     update(dt);
@@ -287,8 +289,7 @@
     angleSlider.value = state.angle;
     speedSlider.value = state.speed;
     fireCount = 0;
-    helpEl.hidden = true;
-    insightEl.hidden = true;
+    EV.resetInsight();
     syncReadout();
     render();
   }
@@ -321,12 +322,8 @@
   });
 
   document.querySelector('[data-action="fire"]').addEventListener('click', fire);
-  document.querySelector('[data-action="reset"]').addEventListener('click', reset);
+  EV.onReset(reset);
   document.querySelector('[data-action="preset"]').addEventListener('click', applyPreset);
-
-  document.querySelector('[data-action="help"]').addEventListener('click', () => {
-    helpEl.hidden = !helpEl.hidden;
-  });
 
   /* ── Init ──────────────────────────────────────────── */
 
