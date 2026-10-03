@@ -96,6 +96,12 @@ window.EV = (() => {
       const sx = bw / logical.w;
       const sy = bh / logical.h;
       ctx.setTransform(sx, 0, 0, sy, 0, 0);
+
+      /* Resizing the backing store wiped the drawing, so repaint. Sims that
+         drive their own requestAnimationFrame loop recover on the next frame,
+         but the ones that paint on demand — via onPaint, with no loop — were
+         left blank until the learner touched a control. */
+      api.paint();
     }
 
     fit();
