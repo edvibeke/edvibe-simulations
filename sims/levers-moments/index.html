@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Cpath d='M5 14h22' stroke='%2394a3b8' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M16 14l-5 9h10z' fill='%23647569'/%3E%3Crect x='6' y='7' width='7' height='7' rx='1.6' fill='%23f59e0b'/%3E%3Cpath d='M26 4v10m-2.8-2.8L26 14l2.8-2.8' fill='none' stroke='%23818cf8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <meta name="description" content="Slide the load, push the effort and watch the moments balance — see what a lever really saves. Free interactive classroom simulation.">
+  <title>Levers &amp; Moments — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <a class="ev-skip" href="#main">Skip to the simulation</a>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Levers &amp; Moments</h1>
+      <p>Slide the load, push the effort and watch the two moments balance.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage" id="main" tabindex="-1">
+    <canvas id="stage" width="900" height="540" role="img"
+      aria-label="A beam resting on a triangular fulcrum, with an amber load block on its left and a downward effort arrow on its right. Each side is labelled with force times distance, and the beam tilts towards whichever side has the larger moment."></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="loadForce">Load force</label>
+        <span class="ev-slider__value" id="loadForceValue">400 N</span>
+      </div>
+      <input type="range" id="loadForce" class="ev-slider"
+             min="10" max="800" step="5" value="400">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="effortForce">Effort force</label>
+        <span class="ev-slider__value" id="effortForceValue">400 N</span>
+      </div>
+      <input type="range" id="effortForce" class="ev-slider"
+             min="10" max="1200" step="5" value="400">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="loadArm">Load arm</label>
+        <span class="ev-slider__value" id="loadArmValue">1.50 m</span>
+      </div>
+      <input type="range" id="loadArm" class="ev-slider"
+             min="0.15" max="1.5" step="0.01" value="1.5">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="effortArm">Effort arm</label>
+        <span class="ev-slider__value" id="effortArmValue">1.50 m</span>
+      </div>
+      <input type="range" id="effortArm" class="ev-slider"
+             min="0.15" max="1.5" step="0.01" value="1.5">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="seesaw" aria-pressed="true">Seesaw</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="wheelbarrow" aria-pressed="false">Wheelbarrow</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="elbow" aria-pressed="false">Elbow</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="crowbar" aria-pressed="false">Crowbar</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements" role="group">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Load moment</span>
+      <span class="ev-readout__value" id="loadMomentValue">600 N&middot;m</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Effort moment</span>
+      <span class="ev-readout__value" id="effortMomentValue">600 N&middot;m</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Effort needed</span>
+      <span class="ev-readout__value" id="effortNeededValue">400 N</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Advantage</span>
+      <span class="ev-readout__value" id="maValue">&times;1.00</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Work in / out</span>
+      <span class="ev-readout__value" id="workValue">600 J / 600 J</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Balance</span>
+      <span class="ev-readout__value ev-readout__value--text" id="verdictValue">Balanced</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> A moment is a force times the distance from the pivot to
+    where you push or pull, so moving something further out makes it stronger without
+    needing a bigger force. Drag the amber <em>load</em> or the <em>effort arrow</em>
+    along the beam, or use the sliders for exact values. The beam tips towards whichever
+    side has the larger moment, and turns level when the two match. The four buttons set
+    up real levers: a seesaw, a wheelbarrow, your elbow and a crowbar. Compare
+    <em>Advantage</em> across them, then watch <em>Work in / out</em>. On a level beam the
+    two numbers are equal, because a lever never saves work — it only trades distance
+    against force. Tip the beam off level and they part company: the surplus is what
+    would go into swinging the beam faster.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: the wheelbarrow lifts 500 N with 200 N and the crowbar does far better
+    again, yet in each case the work you put in exactly matches the work you get out. A
+    lever trades a long push for a short lift, never less work — which is why your bicep
+    has such a bad deal and still ends up taking the load.</span>
+  </section>
+
+  <script src="../../shared/edvibe-sim.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

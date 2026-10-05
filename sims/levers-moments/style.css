@@ -1,0 +1,16 @@
+/* Levers & Moments — sim-specific styles.
+   The shared theme handles everything except the six-column readout. */
+
+.ev-readout { grid-template-columns: repeat(6, 1fr); }
+.ev-readout__value { font-size: 1.15rem; }
+.ev-readout__value--text { font-size: 0.95rem !important; }
+
+@media (max-width: 900px) {
+  .ev-readout { grid-template-columns: repeat(3, 1fr); }
+  .ev-readout__value { font-size: 1.35rem; }
+}
+
+@media (max-width: 600px) {
+  .ev-readout { grid-template-columns: 1fr 1fr; }
+  .ev-actions { width: 100%; }
+}
