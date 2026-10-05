@@ -1,13 +1,50 @@
 /* Sim-specific styles — base shared by shared/edvibe-sim.css */
 
-.ev-toggle {
-  padding: 10px 16px;
-  font-size: 14px;
+/* A slider that owns a full row: arterial resistance is the odd
+   one out, and a half-width track reads as a mistake. */
+.ev-control--wide { grid-column: 1 / -1; }
+
+/* Preset conditions get their own row above the view toggles, so
+   the "what is happening to this heart" controls stay separate
+   from the "how am I looking at it" controls. */
+.ev-actions--scenarios .ev-preset {
+  background: transparent;
+  border-color: var(--ev-border);
+  color: var(--ev-text-dim);
 }
 
-.ev-toggle[aria-pressed="true"] {
+.ev-actions--scenarios .ev-preset[aria-pressed="true"] {
   background: var(--ev-primary);
   border-color: var(--ev-primary);
   color: #fff;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+}
+
+.ev-actions--scenarios .ev-preset:hover {
+  color: var(--ev-text);
+  border-color: var(--ev-primary-2);
+}
+
+.ev-actions--scenarios .ev-preset[aria-pressed="true"]:hover {
+  color: #fff;
+}
+
+/* The shared theme locks the readout to a fixed small column count; this
+   sim has six measurements and wants them side by side once there is room.
+   auto-fit rather than a hard column count, because a fixed six-across rule
+   overflowed the page between 601px and about 900px -- the widest value
+   ("126/80") plus the gap padding did not fit. */
+.ev-readout { grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); }
+
+/* Below the shared 600px breakpoint the theme drops to two columns and
+   spans the last card, which is right for an odd number of measurements.
+   Six divides evenly, so cancel the span -- otherwise the last card sits
+   alone on a row of its own. */
+@media (max-width: 600px) {
+  .ev-readout__item:last-child { grid-column: auto; }
+}
+
+/* Sized here rather than unconditionally, because this sheet loads after the
+   shared one and would otherwise beat its smaller-screen value. */
+@media (min-width: 601px) {
+  .ev-readout__value { font-size: 1.4rem; }
 }
