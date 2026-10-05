@@ -6,7 +6,7 @@ A collection of free, interactive science simulations for the classroom — phys
 
 ## Simulations
 
-26 in total: 10 physics, 8 chemistry, 8 biology.
+27 in total: 10 physics, 8 chemistry, 9 biology.
 
 ### Physics
 - [Ohm's Law](sims/ohms-law/)
@@ -39,6 +39,7 @@ A collection of free, interactive science simulations for the classroom — phys
 - [Osmosis](sims/osmosis/)
 - [Photosynthesis](sims/photosynthesis/)
 - [The Lungs & Gas Exchange](sims/lungs/)
+- [The Digestive System](sims/digestive-system/)
 
 ## Structure
 

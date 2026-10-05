@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Cpath d='M8 9c5 3 11 3 16 0M8 9v6c0 5 3 8 8 8s8-3 8-8V9c-5 3-11 3-16 0z' fill='none' stroke='%23f472b6' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M8 15h16' stroke='%23f472b6' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <meta name="description" content="Swallow a meal and follow it through stomach, small intestine and colon — enzymes, pH, bile and absorption. Free interactive classroom simulation.">
+  <title>The Digestive System — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <a class="ev-skip" href="#main">Skip to the simulation</a>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>The Digestive System</h1>
+      <p>Swallow a meal and follow it all the way through to waste.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage" id="main" tabindex="-1">
+    <canvas id="stage" width="900" height="540" role="img"
+            aria-label="A whole digestive tract from mouth to anus, showing a meal travelling down by peristalsis, being broken down by pH-gated enzymes in the stomach and small intestine, absorbed through the villi into the blood and lymph, and having its water reclaimed in the colon"></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="peristalsis">Peristalsis strength</label>
+        <span class="ev-slider__value" id="peristalsisValue">1.00&times;</span>
+      </div>
+      <input type="range" id="peristalsis" class="ev-slider"
+             min="40" max="250" step="5" value="100">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="acidity">Stomach acidity (pH)</label>
+        <span class="ev-slider__value" id="acidityValue">2.0</span>
+      </div>
+      <input type="range" id="acidity" class="ev-slider"
+             min="15" max="45" step="1" value="20">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="bile">Bile flow</label>
+        <span class="ev-slider__value" id="bileValue">60%</span>
+      </div>
+      <input type="range" id="bile" class="ev-slider"
+             min="0" max="100" step="5" value="60">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="fibre">Fibre in the meal</label>
+        <span class="ev-slider__value" id="fibreValue">10 g</span>
+      </div>
+      <input type="range" id="fibre" class="ev-slider"
+             min="0" max="40" step="5" value="10">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" id="chewBtn">
+        <i data-lucide="activity" aria-hidden="true"></i> Chew
+      </button>
+      <button type="button" class="ev-btn" id="feedBtn">
+        <i data-lucide="utensils" aria-hidden="true"></i> Feed a meal
+      </button>
+      <button type="button" class="ev-btn" id="pauseBtn" aria-pressed="false">
+        <i data-lucide="pause" aria-hidden="true"></i> Pause
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" id="labelsBtn" aria-pressed="true">
+        <i data-lucide="tag" aria-hidden="true"></i> Labels
+      </button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements" role="group">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Now in</span>
+      <span class="ev-readout__value ev-readout__value--text" id="whereValue">Mouth</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Digested</span>
+      <span class="ev-readout__value" id="digestedValue">0%</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Energy taken up</span>
+      <span class="ev-readout__value" id="energyValue">0 kcal</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Blood glucose</span>
+      <span class="ev-readout__value" id="glucoseValue">90 mg/dL</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Water reabsorbed</span>
+      <span class="ev-readout__value" id="waterValue">0 mL</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Transit time</span>
+      <span class="ev-readout__value" id="transitValue">0.0 h</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Press <em>Feed a meal</em> and the bolus waits in your mouth while
+    you chew — the clock does not start until the swallow carries it down. Chewing is not cosmetic,
+    it multiplies the surface area the enzymes can work on. Watch the pink bolus travel down by
+    peristalsis. The stomach is acid, so only pepsin
+    works there; the small intestine is neutralised by bicarbonate from the pancreas, which is when
+    amylase, trypsin and lipase get to act, while bile breaks fat into droplets so lipase has
+    something to grip. Watch for absorbed dots crossing the wall into the blood and lymph vessels.
+    Finally the colon reclaims water and you get the balance back. Turn peristalsis right up and
+    notice what happens to absorption; lower the stomach pH and watch salivary amylase die.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: digestion is not one step, it is a schedule. Each enzyme only works inside a
+    narrow pH window, so the stomach's acid has to be switched off again by bicarbonate before the
+    next set can act — and a bolus that moves too fast simply passes enzymes by. Absorption depends
+    on two things you can see here: how much surface area chewing created, and how long the food
+    lingers against the villi. And not everything takes the same route: sugars and amino acids go
+    straight to the liver through the portal vein, but fats are packaged and sent down the lymphatic
+    duct first.</span>
+  </section>
+
+  <script src="../../shared/edvibe-sim.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+/* Sim-specific styles — base shared by shared/edvibe-sim.css */
+
+.ev-readout { grid-template-columns: repeat(6, 1fr); }
+.ev-readout__value { font-size: 1.35rem; }
+
+@media (max-width: 900px) {
+  .ev-readout { grid-template-columns: repeat(3, 1fr); }
+  .ev-readout__value { font-size: 1.6rem; }
+}
+
+@media (max-width: 600px) {
+  .ev-readout { grid-template-columns: 1fr 1fr; }
+  .ev-actions { width: 100%; }
+}
