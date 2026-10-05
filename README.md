@@ -6,7 +6,7 @@ A collection of free, interactive science simulations for the classroom — phys
 
 ## Simulations
 
-27 in total: 10 physics, 8 chemistry, 9 biology.
+29 in total: 12 physics, 8 chemistry, 9 biology.
 
 ### Physics
 - [Ohm's Law](sims/ohms-law/)
@@ -19,6 +19,8 @@ A collection of free, interactive science simulations for the classroom — phys
 - [Gravity & Energy](sims/gravity-energy/)
 - [Gas Laws — Boyle's Law](sims/gas-laws/)
 - [Series vs Parallel Circuits](sims/series-parallel-circuits/)
+- [Levers & Moments](sims/levers-moments/)
+- [Newton's Laws](sims/newtons-laws/)
 
 ### Chemistry
 - [Covalent Bonding](sims/covalent-bonding/)

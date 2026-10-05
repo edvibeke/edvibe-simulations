@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Crect x='11' y='7' width='10' height='10' rx='2' fill='%23f59e0b'/%3E%3Cpath d='M5 21h22' stroke='%2394a3b8' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M22 21l-3-2.6v5.2z' fill='%23a5b4fc'/%3E%3C/svg%3E">
+  <meta name="description" content="Push and pull a crate, add friction, and watch the net force decide whether it moves. Free interactive classroom simulation.">
+  <title>Newton's Laws — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <a class="ev-skip" href="#main">Skip to the simulation</a>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Newton's Laws</h1>
+      <p>Push and pull a crate, add friction, and let the net force decide.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage" id="main" tabindex="-1">
+    <canvas id="stage" width="900" height="540" role="img"
+      aria-label="A crate resting on a floor, with an arrow for each applied force, a friction arrow pointing against the way it is moving, and a single net force arrow below the floor. A panel beside the scene shows the push, pull and friction bars, the resulting verdict, and a note about the setup."></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="push">Push</label>
+        <span class="ev-slider__value" id="pushValue">120 N</span>
+      </div>
+      <input type="range" id="push" class="ev-slider"
+             min="0" max="400" step="5" value="120">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="pull">Pull</label>
+        <span class="ev-slider__value" id="pullValue">0 N</span>
+      </div>
+      <input type="range" id="pull" class="ev-slider"
+             min="0" max="400" step="5" value="0">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="friction">Friction</label>
+        <span class="ev-slider__value" id="frictionValue">0.30</span>
+      </div>
+      <input type="range" id="friction" class="ev-slider"
+             min="0" max="1" step="0.01" value="0.3">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="mass">Mass</label>
+        <span class="ev-slider__value" id="massValue">20 kg</span>
+      </div>
+      <input type="range" id="mass" class="ev-slider"
+             min="5" max="60" step="1" value="20">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" data-action="release">
+        <i data-lucide="play" aria-hidden="true"></i> Release
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="push-cart" aria-pressed="false">Push the cart</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="pull-crate" aria-pressed="false">Pull the crate</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="bookshelf" aria-pressed="false">Shift the bookshelf</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="ice-rink" aria-pressed="false">Ice rink</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements" role="group">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Net force</span>
+      <span class="ev-readout__value" id="netValue">43 N</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Friction</span>
+      <span class="ev-readout__value" id="frictionForceValue">77 N</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Acceleration</span>
+      <span class="ev-readout__value" id="accelValue">2.17 m/s&sup2;</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Speed</span>
+      <span class="ev-readout__value" id="speedValue">0.00 m/s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Direction</span>
+      <span class="ev-readout__value" id="directionValue">Right</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Verdict</span>
+      <span class="ev-readout__value ev-readout__value--text" id="verdictValue">Ready — press Release</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> A crate sits on a floor. <em>Push</em> shoves it right,
+    <em>Pull</em> tugs it left, <em>Friction</em> says how slippery the floor is, and
+    <em>Mass</em> is how heavy the crate is. Press <em>Release</em> to let go. The net
+    force is the push and the pull added together, less the friction; divide that by
+    the mass and you get the acceleration (Newton's second law). A push too small to
+    beat the floor's grip does nothing at all. Once it is moving, forces that balance
+    leave the speed alone, a force along the motion speeds it up, and a force against
+    the motion slows it down (first law). Drag the crate on the canvas to shove it by
+    hand, or focus the canvas and use the arrow keys.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: it is the net force, not the push on its own, that sets the
+    acceleration. Raise friction and a big push can leave almost no net force at all —
+    which is exactly why a bookcase will not move no matter how hard you lean on it.</span>
+  </section>
+
+  <script src="../../shared/edvibe-sim.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

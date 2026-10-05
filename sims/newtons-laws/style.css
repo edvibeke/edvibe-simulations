@@ -1,0 +1,5 @@
+/* Newton's Laws — sim-specific styles.
+   The shared theme's three-column readout already lays six items out as two
+   tidy rows; only the verdict chip needs a smaller face than a number. */
+
+.ev-readout__value--text { font-size: 1rem !important; }
