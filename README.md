@@ -58,6 +58,12 @@ A collection of free, interactive science simulations for the classroom — phys
 │       ├── script.js         Simulation logic + canvas rendering
 │       ├── style.css         Only the sim's own extra styles (optional)
 │       └── thumbnail.jpg     1080×675 (16:10) preview — see Thumbnails
+├── tools/                    Checks that drive a real browser (see tools/README.md)
+│   ├── check.mjs             Runs every check; exits non-zero on failure
+│   ├── cdp.mjs               Chrome DevTools Protocol client + static server
+│   ├── paths.mjs             Locates the repo, so nothing hardcodes a path
+│   ├── card.mjs              Landing-page card layout
+│   └── sims/<sim-name>/      Static, behavioural and thumbnail checks
 └── .github/workflows/
     └── pages.yml             Deploys the repo to GitHub Pages
 ```
@@ -80,7 +86,7 @@ already.
 
 | Member | Purpose |
 | --- | --- |
-| `EV.stage(id)` | Wraps a canvas: sizes the backing store to CSS box × `devicePixelRatio`, pre-scales the context, and re-fits on resize or monitor change — re-fitting also calls the sim's `onPaint`, because resizing the backing store wipes the drawing. Returns `{ canvas, ctx, w, h, fit }` where `w`/`h` are the **logical** size all drawing code is written against. |
+| `EV.stage(id)` | Wraps a canvas: sizes the backing store to CSS box × `devicePixelRatio`, pre-scales the context, and re-fits on resize or monitor change — re-fitting also calls the sim's `onPaint`, because resizing the backing store wipes the drawing. Returns `{ canvas, ctx, w, h, fit, onPaint, paint }` where `w`/`h` are the **logical** size all drawing code is written against. Assign `onPaint`; call `paint()` to force a frame. |
 | `EV.delta(now, last)` | Frame delta in seconds, clamped to 0.05, and forced to `0` under `prefers-reduced-motion`. |
 | `EV.visualTime(now)` | Timestamp for purely decorative motion (pulses, glows, wobbles). Returns a constant under `prefers-reduced-motion`, so effects driven straight off `performance.now()` also hold still. |
 | `EV.reducedMotion()` | Whether the user prefers reduced motion. |
@@ -89,9 +95,13 @@ already.
 | `EV.say(msg)` | Speak a discrete event via a polite `role="status"` live region. |
 | `EV.onReset(fn)` | Wire `[data-action="reset"]`; hides `#help` and `#insight` for you. |
 | `EV.onToggle(btn, fn)` | Toggle button that keeps `aria-pressed` in step with the handler's return value. |
-| `EV.onDragKey(canvas, fn, opts)` | Makes a drag-driven canvas keyboard-operable: sets `tabindex="0"`, then arrow keys call `fn(x, y)` in logical coordinates (Shift for a bigger step). Pass `opts.start` — usually a getter returning the dragged object's live position — so the first press moves from where it actually is. The canvas is automatically repainted. |
+| `EV.onDragKey(canvas, fn, opts)` | Makes a drag-driven canvas keyboard-operable: sets `tabindex="0"`, then arrow keys call `fn(x, y)` in logical coordinates. `opts` is `{ step, bigStep, label }` — `step`/`bigStep` are logical px per press and per Shift press (default `20`/`60`), and `label` replaces the canvas `aria-label`. Pass `opts.start` — usually a getter returning the dragged object's live position — so the first press moves from where it actually is. Repainting is the handler's job: call `stage.paint()` inside it. |
 | `EV.revealInsight()` | Reveal `#insight` once and announce it. Idempotent. |
 | `EV.resetInsight()` | Re-arm the insight panel after a reset. |
+| `EV.repaintOnInteraction()` | Auto-wired on `DOMContentLoaded`. Under reduced motion it repaints every registered stage once per `input`/`change`/`click`/`pointerup`/`keyup`, so readouts that a frozen sim clock would otherwise leave stale still update. |
+| `EV.refitAll()` | Re-fit every canvas returned by `EV.stage()`. |
+| `EV.paintAll()` | Call `onPaint` on every registered stage. |
+| `EV.iconsReady()` | Run `EV.icons()` once the DOM is parsed. Auto-wired; you rarely need it. |
 | `EV.wireHelp()` | Auto-wired on `DOMContentLoaded`; keeps `aria-expanded` in sync. |
 
 Because the context is pre-scaled, draw in logical coordinates and use
@@ -111,9 +121,12 @@ function and register it:
 stage.onPaint = () => { syncReadout(); render(); };
 ```
 
-If your sim paints every frame anyway, you can skip `onPaint` entirely; it is
-only the fallback for when the loop is not running (a resize, or
-`prefers-reduced-motion`).
+Register `onPaint` even if your sim paints every frame — it costs one
+assignment. It is what saves the sims that have no `requestAnimationFrame`
+loop at all, since a resize leaves those blank until the learner touches a
+control, and it is what `EV.paintAll()` and `EV.repaintOnInteraction()` call.
+`prefers-reduced-motion` is not a case you need to handle yourself: the loop
+keeps running with a zero delta, so `onPaint` there is belt and braces.
 
 ## Thumbnails
 
@@ -171,7 +184,13 @@ the animation settle, then crop to 1080×675. Two things to watch:
    sim. See [Thumbnails](#thumbnails).
 5. Add a card to the landing page (`index.html`) under the right subject. The
    "All (n)" count updates itself.
-6. Commit and push to `main` — the GitHub Actions workflow deploys
+6. Add checks under `tools/sims/<sim-name>/`, copying the closest existing sim's
+   files and renaming them to `<sim-name>-verify.mjs` and `<sim-name>-audit.mjs`.
+   Then run `node tools/check.mjs <sim-name>` and fix whatever it finds — it
+   drives the real page in a browser, so it catches the things reading the
+   source does not. Needs `chromium` on the path, or set `CHROME`.
+   See [tools/README.md](tools/README.md).
+7. Commit and push to `main` — the GitHub Actions workflow deploys
    automatically.
 
 ## Conventions
@@ -181,8 +200,8 @@ the animation settle, then crop to 1080×675. Two things to watch:
 - Every sim has a hidden `#help` panel and a hidden `#insight` panel that
   reveals a take-home concept after a few interactions.
 - Interactions are keyboard/focus friendly: real `<button>` elements,
-  `:focus-visible` outlines, `aria-pressed` on toggles, `aria-expanded` on the
-  help button, and a skip link to the canvas.
+  `:focus-visible` outlines, `aria-pressed` on toggles, `aria-expanded` on
+  the help button, and a skip link to the main content.
 - Simulations driven by dragging the canvas are also keyboard-operable via
   `EV.onDragKey()`, so the interaction is reachable without a pointer. The
   affected canvases take focus and say so in their `aria-label` and help text.
