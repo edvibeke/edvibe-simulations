@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f172a'/%3E%3Crect x='4' y='13' width='11' height='8' rx='2' fill='%230ea5e9'/%3E%3Crect x='18' y='12' width='8' height='7' rx='2' fill='%23f472b6'/%3E%3Cpath d='M2 25h28' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M16 4l2.6 5.4L24 12l-5.4 2.6L16 20l-2.6-5.4L8 12l5.4-2.6z' fill='%23fbbf24'/%3E%3C/svg%3E">
+  <meta name="description" content="Launch one cart into another and watch momentum carry over while the energy does not. Free interactive classroom simulation.">
+  <title>Momentum &amp; Collisions — EdVibe Simulation</title>
+  <link rel="stylesheet" href="../../shared/edvibe-sim.css">
+</head>
+<body>
+
+  <a class="ev-skip" href="#main">Skip to the simulation</a>
+
+  <header class="ev-header">
+    <div class="ev-header__text">
+      <h1>Momentum &amp; Collisions</h1>
+      <p>Launch one cart into another and see what the impact hands over.</p>
+    </div>
+    <div class="ev-header__actions">
+      <a class="ev-btn ev-btn--ghost" href="../../index.html">
+        <i data-lucide="arrow-left" aria-hidden="true"></i> All simulations
+      </a>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="reset">
+        <i data-lucide="rotate-ccw" aria-hidden="true"></i> Reset
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-action="help">
+        <i data-lucide="help-circle" aria-hidden="true"></i> Help
+      </button>
+    </div>
+  </header>
+
+  <main class="ev-stage" id="main" tabindex="-1">
+    <canvas id="stage" width="900" height="540" role="img"
+      aria-label="Two carts on one track, the left one heavier or lighter than the right, each with an arrow showing its velocity. After they collide the carts change speed, a mark is left where they met, and during the moment of contact each cart has an arrow of equal length pointing away from the other. A panel beside the scene shows how much momentum each cart carries away, the kinetic energy before and after, the size of the push on each cart, and a note about the collision."></canvas>
+  </main>
+
+  <section class="ev-controls" aria-label="Controls">
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="massA">Left cart</label>
+        <span class="ev-slider__value" id="massAValue">20 kg</span>
+      </div>
+      <input type="range" id="massA" class="ev-slider"
+             min="1" max="120" step="1" value="20">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="massB">Right cart</label>
+        <span class="ev-slider__value" id="massBValue">20 kg</span>
+      </div>
+      <input type="range" id="massB" class="ev-slider"
+             min="1" max="120" step="1" value="20">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="speedA">Left cart speed</label>
+        <span class="ev-slider__value" id="speedAValue">8 m/s</span>
+      </div>
+      <input type="range" id="speedA" class="ev-slider"
+             min="0" max="20" step="0.5" value="8">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="speedB">Right cart speed</label>
+        <span class="ev-slider__value" id="speedBValue">0 m/s</span>
+      </div>
+      <input type="range" id="speedB" class="ev-slider"
+             min="0" max="20" step="0.5" value="0">
+    </div>
+    <div class="ev-control">
+      <div class="ev-control__row">
+        <label for="bounce">Bounciness</label>
+        <span class="ev-slider__value" id="bounceValue">1.00</span>
+      </div>
+      <input type="range" id="bounce" class="ev-slider"
+             min="0" max="1" step="0.05" value="1">
+    </div>
+    <div class="ev-actions">
+      <button type="button" class="ev-btn ev-btn--primary" data-action="launch">
+        <i data-lucide="play" aria-hidden="true"></i> Launch
+      </button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="equal-carts" aria-pressed="false">Two equal carts</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="truck-bike" aria-pressed="false">Truck and bicycle</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="cue-ball" aria-pressed="false">Cue ball</button>
+      <button type="button" class="ev-btn ev-btn--ghost" data-preset="clay-block" aria-pressed="false">Clay on a cart</button>
+    </div>
+  </section>
+
+  <section class="ev-readout" aria-label="Measurements" role="group">
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Momentum in</span>
+      <span class="ev-readout__value" id="momentumInValue">160 kg&middot;m/s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Momentum out</span>
+      <span class="ev-readout__value" id="momentumOutValue">160 kg&middot;m/s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Energy kept</span>
+      <span class="ev-readout__value" id="energyKeptValue">—</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Left cart speed</span>
+      <span class="ev-readout__value" id="leftSpeedValue">8.00 m/s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Right cart speed</span>
+      <span class="ev-readout__value" id="rightSpeedValue">0.00 m/s</span>
+    </div>
+    <div class="ev-readout__item">
+      <span class="ev-readout__label">Verdict</span>
+      <span class="ev-readout__value ev-readout__value--text" id="verdictValue">Ready — press Launch</span>
+    </div>
+  </section>
+
+  <section class="ev-help" id="help" hidden>
+    <strong>How to use:</strong> Two carts sit on one track, facing each other.
+    The left cart sets off <em>right</em> at the speed you give it and the right
+    cart sets off <em>left</em> at its own speed, so you can send one into a
+    parked cart, meet one head on, or watch one overtake the other. Set both
+    speeds to zero and nothing will happen at all. <em>Left cart</em> and
+    <em>Right cart</em> are their masses. <em>Bounciness</em> decides how much of
+    the closing speed comes back: at <strong>1.00</strong> the impact is
+    perfectly springy and the carts bounce apart, at <strong>0</strong> they lock
+    together and stay locked. Press <em>Launch</em>.
+    <br><br>
+    Momentum is mass times velocity, added up across both carts. It comes out
+    of a collision exactly as it went in — that is Newton's third law, and the
+    arrows on each cart during the impact are the two halves of it: the same
+    size, opposite ways. Kinetic energy is the other matter. Only a perfectly
+    bouncy collision gives all of it back; a squashed one turns the missing
+    share into heat, sound and dented metal.
+    <br><br>
+    The push quoted is the average force over the impact, worked out from each
+    cart's change in momentum spread over a contact time of 0.02 s.
+  </section>
+
+  <section class="ev-insight" id="insight" hidden>
+    <i data-lucide="lightbulb" aria-hidden="true"></i>
+    <span>Notice: momentum is always handed over, but energy is only handed over
+    when the carts bounce. A soft collision keeps every last bit of momentum and
+    throws away energy — which is why a brick dropped from a height hurts more
+    than the same brick stopping gently against your hands, even though in both
+    cases the momentum going into your hands is the same.</span>
+  </section>
+
+  <script src="../../shared/edvibe-sim.js"></script>
+  <script src="../../shared/lucide.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
