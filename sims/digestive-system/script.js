@@ -1,8 +1,15 @@
 (() => {
   'use strict';
 
-  /* ── Layout ─────────────────────────────────────────────
-     Two coordinate spaces, on purpose.
+  /* ── Renderer selection (Phase 1) ────────────────────────
+     WebGL/Three.js path is opt-in behind a feature flag while the
+     Canvas2D path remains the default. Enable with ?renderer=webgl or
+     localStorage.evRenderer='webgl'. */
+  const _params = new URLSearchParams(location.search);
+  const RENDERER = (_params.get('renderer') || localStorage.getItem('evRenderer') || 'canvas2d').toLowerCase();
+  const USE_WEBGL = RENDERER === 'webgl' || RENDERER === 'three' || RENDERER === '3d';
+
+  /* ── Layout ─────────────────────────────────────
 
      The tract is authored in a roomy design space and mapped into
      the canvas by gx()/gy()/gs(), which leaves a clear column on the
@@ -715,28 +722,28 @@
   const TUBE_W = 24;
 
   /* One layer's worth of the centreline, as a canvas path. */
-  function traceLayer(L) {
-    ctx.beginPath();
+  function traceLayer(L, c = ctx) {
+    c.beginPath();
     const a = sampleAt(L.s0), b = sampleAt(L.s1);
-    ctx.moveTo(a.x, a.y);
+    c.moveTo(a.x, a.y);
     for (let i = 0; i < path.length; i++) {
-      if (cum[i] > L.s0 && cum[i] < L.s1) ctx.lineTo(path[i].x, path[i].y);
+      if (cum[i] > L.s0 && cum[i] < L.s1) c.lineTo(path[i].x, path[i].y);
     }
-    ctx.lineTo(b.x, b.y);
+    c.lineTo(b.x, b.y);
   }
 
-  function drawWall(L) {
-    ctx.save();
-    traceLayer(L);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = gs(TUBE_W);
-    ctx.strokeStyle = COL.wallFull;
-    ctx.stroke();
-    ctx.lineWidth = gs(TUBE_W - 6);
-    ctx.strokeStyle = COL.lumenFull;
-    ctx.stroke();
-    ctx.restore();
+  function drawWall(L, c = ctx) {
+    c.save();
+    traceLayer(L, c);
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.lineWidth = gs(TUBE_W);
+    c.strokeStyle = COL.wallFull;
+    c.stroke();
+    c.lineWidth = gs(TUBE_W - 6);
+    c.strokeStyle = COL.lumenFull;
+    c.stroke();
+    c.restore();
   }
 
   /* Villi, clipped to whichever layer is being drawn and to the stretch
@@ -763,92 +770,272 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawHaustra(L) {
+  function drawHaustra(L, c = ctx) {
     const s0 = Math.max(L.s0, ARC.caecum);
     const s1 = Math.min(L.s1, TUBE_END);
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 2.4;
+    c.strokeStyle = 'rgba(0,0,0,0.3)';
+    c.lineWidth = 2.4;
     for (let s = s0; s < s1; s += 22) {
       const p = sampleAt(s);
       const nx = -Math.sin(p.a), ny = Math.cos(p.a);
       for (const side of [-1, 1]) {
-        ctx.beginPath();
-        ctx.moveTo(p.x + nx * side * gs(3), p.y + ny * side * gs(3));
-        ctx.lineTo(p.x + nx * side * gs(10), p.y + ny * side * gs(10));
-        ctx.stroke();
+        c.beginPath();
+        c.moveTo(p.x + nx * side * gs(3), p.y + ny * side * gs(3));
+        c.lineTo(p.x + nx * side * gs(10), p.y + ny * side * gs(10));
+        c.stroke();
       }
     }
   }
 
-  function drawStomach() {
+  function drawStomach(c = ctx) {
     const sh = STOMACH_SHAPE;
-    ctx.save();
-    ctx.translate(gx(sh.cx), gy(sh.cy));
-    ctx.rotate(sh.rot);
-    ctx.fillStyle = COL.wallFull;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, gs(sh.rx), gs(sh.ry), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = COL.lumenFull;
-    ctx.beginPath();
-    ctx.ellipse(gs(4), gs(2), gs(sh.rx - 9), gs(sh.ry - 9), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(251,207,232,0.3)';
-    ctx.lineWidth = 1.6;
+    const cos = Math.cos(sh.rot), sin = Math.sin(sh.rot);
+    const at = (u, v, inset, endpoint) => {
+      const k = endpoint ? inset * 0.15 : inset;
+      const lx = u * sh.rx * (1 - k);
+      const ly = v * sh.ry * (1 - k);
+      return {
+        x: gx(sh.cx + lx * cos - ly * sin),
+        y: gy(sh.cy + lx * sin + ly * cos)
+      };
+    };
+    const nodes = [
+      [-0.52, -1.82], [0.06, -1.30], [0.72, -0.95], [1.05, -0.15],
+      [0.92, 0.78], [0.40, 1.18], [-0.25, 1.12], [-0.42, 0.62],
+      [-0.55, 0], [-0.58, -0.85]
+    ];
+    const path = (p, inset) => {
+      const q = nodes.map((n, i) => at(n[0], n[1], inset, i === 0 || i === 6));
+      const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      const start = mid(q[q.length - 1], q[0]);
+      p.beginPath();
+      p.moveTo(start.x, start.y);
+      for (let i = 0; i < q.length; i++) {
+        const m = mid(q[i], q[(i + 1) % q.length]);
+        p.quadraticCurveTo(q[i].x, q[i].y, m.x, m.y);
+      }
+      p.closePath();
+    };
+    const ca = Math.abs(cos), sa = Math.abs(sin);
+    const hx = sh.rx * ca + sh.ry * sa, hy = sh.rx * sa + sh.ry * ca;
+    const bounds = { x: gx(sh.cx) - gs(hx), y: gy(sh.cy) - gs(hy), w: gs(hx * 2), h: gs(hy * 2) };
+    c.save();
+    path(c, 0);
+    c.fillStyle = organGradient(c, bounds, GLOW.stomach.inner, GLOW.stomach.outer);
+    c.fill();
+    rimGlow(c, GLOW.stomach.rim, GLOW.stomach.blur, (p) => { path(p, 0); p.stroke(); });
+    path(c, 0.14);
+    c.fillStyle = COL.lumenFull;
+    c.fill();
+    c.save();
+    path(c, 0.14);
+    c.clip();
+    const fundus = at(0.05, -1.02, 0.14, false);
+    c.fillStyle = GLOW.stomach.fundus;
+    c.beginPath();
+    c.ellipse(fundus.x, fundus.y, gs(sh.rx * 0.36), gs(sh.ry * 0.28), sh.rot, 0, Math.PI * 2);
+    c.fill();
+    const shine = at(0.34, -0.62, 0.14, false);
+    c.fillStyle = GLOW.stomach.highlight;
+    c.beginPath();
+    c.ellipse(shine.x, shine.y, gs(sh.rx * 0.24), gs(sh.ry * 0.12), sh.rot, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = GLOW.stomach.rugae;
+    c.lineWidth = 1.1;
     for (let i = -3; i <= 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-gs(sh.rx), gs(i * 10));
-      ctx.quadraticCurveTo(0, gs(i * 10 + 6), gs(sh.rx), gs(i * 10));
-      ctx.stroke();
+      const v = i * 0.16;
+      const a = at(-0.86, v, 0.14, false);
+      const b = at(0.82, v + 0.05, 0.14, false);
+      const m = at(-0.05, v + 0.12, 0.14, false);
+      c.beginPath();
+      c.moveTo(a.x, a.y);
+      c.quadraticCurveTo(m.x, m.y, b.x, b.y);
+      c.stroke();
     }
-    ctx.restore();
-    ctx.save();
-    ctx.translate(gx(sh.cx), gy(sh.cy));
-    ctx.rotate(sh.rot);
-    ctx.strokeStyle = COL.wall;
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, gs(sh.rx), gs(sh.ry), 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+    c.restore();
+    c.restore();
   }
 
-  function drawLiver() {
-    ctx.beginPath();
-    ctx.ellipse(gx(LIVER.x), gy(LIVER.y), gs(LIVER.rx), gs(LIVER.ry), 0, 0, Math.PI * 2);
-    ctx.ellipse(gx(LIVER.lobe.x), gy(LIVER.lobe.y), gs(LIVER.lobe.rx), gs(LIVER.lobe.ry), 0.4, 0, Math.PI * 2);
-    ctx.fillStyle = COL.liver;
-    ctx.fill();
-    ctx.strokeStyle = '#fb7185';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
+  function drawLiver(c = ctx) {
+    const L = LIVER;
+    const bx0 = gx(L.x - L.rx);
+    const by0 = gy(L.y - L.ry);
+    const bx1 = gx(L.lobe.x + L.lobe.rx);
+    const by1 = gy(Math.max(L.y + L.ry, L.lobe.y + L.lobe.ry));
+    const path = (p) => {
+      p.beginPath();
+      p.moveTo(gx(L.x - L.rx), gy(L.y));
+      p.bezierCurveTo(
+        gx(L.x - L.rx * 0.86), gy(L.y - L.ry * 0.92),
+        gx(L.x + L.rx * 0.28), gy(L.y - L.ry),
+        gx(L.x + L.rx * 0.66), gy(L.y - L.ry * 0.62)
+      );
+      p.quadraticCurveTo(
+        gx(L.x + L.rx * 0.84), gy(L.y - L.ry * 0.18),
+        gx(L.lobe.x - L.lobe.rx * 0.42), gy(L.lobe.y - L.lobe.ry * 0.88)
+      );
+      p.bezierCurveTo(
+        gx(L.lobe.x + L.lobe.rx * 0.42), gy(L.lobe.y - L.lobe.ry),
+        gx(L.lobe.x + L.lobe.rx), gy(L.lobe.y - L.lobe.ry * 0.36),
+        gx(L.lobe.x + L.lobe.rx), gy(L.lobe.y)
+      );
+      p.bezierCurveTo(
+        gx(L.lobe.x + L.lobe.rx), gy(L.lobe.y + L.lobe.ry * 0.56),
+        gx(L.lobe.x + L.lobe.rx * 0.42), gy(L.lobe.y + L.lobe.ry),
+        gx(L.lobe.x), gy(L.lobe.y + L.lobe.ry)
+      );
+      p.quadraticCurveTo(
+        gx(L.x + L.rx * 0.42), gy(L.y + L.ry),
+        gx(L.x + L.rx * 0.18), gy(L.y + L.ry * 0.92)
+      );
+      p.bezierCurveTo(
+        gx(L.x - L.rx * 0.28), gy(L.y + L.ry * 0.98),
+        gx(L.x - L.rx * 0.82), gy(L.y + L.ry * 0.72),
+        gx(L.x - L.rx), gy(L.y)
+      );
+      p.closePath();
+    };
+    c.save();
+    path(c);
+    c.fillStyle = organGradient(c, { x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0 },
+      GLOW.liver.inner, GLOW.liver.outer);
+    c.fill();
+    rimGlow(c, GLOW.liver.rim, GLOW.liver.blur, (p) => { path(p); p.stroke(); });
+    c.save();
+    path(c);
+    c.clip();
+    c.fillStyle = GLOW.liver.highlight;
+    c.beginPath();
+    c.ellipse(gx(L.x - L.rx * 0.25), gy(L.y - L.ry * 0.42),
+      gs(L.rx * 0.45), gs(L.ry * 0.28), -0.15, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+    const lp = (u, v) => [L.x + u * L.rx, L.y + v * L.ry];
+    const lo = (u, v) => [L.lobe.x + u * L.lobe.rx, L.lobe.y + v * L.lobe.ry];
+    veinStroke(c, [lp(-0.78, -0.02), lp(-0.34, -0.18), lp(0.14, -0.24), lp(0.6, -0.5)],
+      GLOW.liver.vein, 1.1);
+    veinStroke(c, [lp(-0.34, -0.18), lp(-0.42, 0.34), lp(-0.2, 0.66)],
+      GLOW.liver.vein, 0.9);
+    veinStroke(c, [lp(0.14, -0.24), lp(0.34, 0.26), lp(0.18, 0.7)],
+      GLOW.liver.vein, 0.9);
+    veinStroke(c, [lo(-0.82, 0.06), lo(-0.05, -0.04), lo(0.78, -0.12)],
+      GLOW.liver.vein, 0.9);
+    c.restore();
   }
 
   /* Bile and pancreatic juice both arrive at the duodenum, so the ducts
      are drawn to the duodenum's own coordinates rather than to numbers
      typed in here. */
-  function drawGlands(t) {
+  function drawGlandsUpper(c = ctx) {
     const gb = GALLBLADDER;
+    const du = DUODENUM;
+    const bx0 = gx(gb.x - gb.rx);
+    const by0 = gy(gb.y - gb.ry);
+    const bx1 = gx(gb.x + gb.rx);
+    const by1 = gy(gb.y + gb.ry);
+    const shape = (p) => {
+      p.beginPath();
+      p.moveTo(gx(gb.x + gb.rx * 0.72), gy(gb.y - gb.ry * 0.86));
+      p.bezierCurveTo(
+        gx(gb.x + gb.rx * 0.2), gy(gb.y - gb.ry * 0.6),
+        gx(gb.x - gb.rx * 0.35), gy(gb.y - gb.ry * 0.5),
+        gx(gb.x - gb.rx * 0.78), gy(gb.y + gb.ry * 0.05)
+      );
+      p.bezierCurveTo(
+        gx(gb.x - gb.rx * 0.95), gy(gb.y + gb.ry * 0.72),
+        gx(gb.x - gb.rx * 0.2), gy(gb.y + gb.ry),
+        gx(gb.x + gb.rx * 0.28), gy(gb.y + gb.ry * 0.72)
+      );
+      p.bezierCurveTo(
+        gx(gb.x + gb.rx * 0.86), gy(gb.y + gb.ry * 0.35),
+        gx(gb.x + gb.rx * 0.92), gy(gb.y - gb.ry * 0.2),
+        gx(gb.x + gb.rx * 0.72), gy(gb.y - gb.ry * 0.86)
+      );
+      p.closePath();
+    };
+    c.save();
+    shape(c);
+    c.fillStyle = organGradient(c, { x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0 },
+      GLOW.gall.inner, GLOW.gall.outer);
+    c.fill();
+    rimGlow(c, GLOW.gall.rim, GLOW.gall.blur, (p) => { shape(p); p.stroke(); });
+    c.save();
+    shape(c);
+    c.clip();
+    c.fillStyle = GLOW.gall.highlight;
+    c.beginPath();
+    c.ellipse(gx(gb.x - gb.rx * 0.32), gy(gb.y - gb.ry * 0.28),
+      gs(gb.rx * 0.26), gs(gb.ry * 0.17), -0.5, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+    c.restore();
+    c.strokeStyle = COL.bile;
+    c.lineWidth = 2.6;
+    c.beginPath();
+    c.moveTo(gx(gb.x - 4), gy(gb.y + 8));
+    c.quadraticCurveTo(gx(du.x + 30), gy(du.y - 40), gx(du.x + 6), gy(du.y - 2));
+    c.stroke();
+  }
+
+  function drawGlandsLower(c = ctx) {
     const pa = PANCREAS;
     const du = DUODENUM;
+    const cos = Math.cos(pa.rot), sin = Math.sin(pa.rot);
+    const at = (u, v) => ({
+      x: gx(pa.x + u * pa.rx * cos - v * pa.ry * sin),
+      y: gy(pa.y + u * pa.rx * sin + v * pa.ry * cos)
+    });
+    const nodes = [
+      [-0.88, -0.75], [-0.62, -0.55], [-0.25, -0.85], [0.15, -0.65],
+      [0.55, -0.78], [0.98, -0.20], [1.00, 0.18], [0.60, 0.55],
+      [0.18, 0.72], [-0.22, 0.62], [-0.60, 0.85], [-0.92, 0.70]
+    ];
+    const path = (p) => {
+      const q = nodes.map((n) => at(n[0], n[1]));
+      const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      const start = mid(q[q.length - 1], q[0]);
+      p.beginPath();
+      p.moveTo(start.x, start.y);
+      for (let i = 0; i < q.length; i++) {
+        const m = mid(q[i], q[(i + 1) % q.length]);
+        p.quadraticCurveTo(q[i].x, q[i].y, m.x, m.y);
+      }
+      p.closePath();
+    };
+    const ca = Math.abs(cos), sa = Math.abs(sin);
+    const hx = pa.rx * ca + pa.ry * sa, hy = pa.rx * sa + pa.ry * ca;
+    const bounds = { x: gx(pa.x) - gs(hx), y: gy(pa.y) - gs(hy), w: gs(hx * 2), h: gs(hy * 2) };
+    c.save();
+    path(c);
+    c.fillStyle = organGradient(c, bounds, GLOW.pancreas.inner, GLOW.pancreas.outer);
+    c.fill();
+    rimGlow(c, GLOW.pancreas.rim, GLOW.pancreas.blur, (p) => { path(p); p.stroke(); });
+    c.save();
+    path(c);
+    c.clip();
+    c.strokeStyle = GLOW.pancreas.lobule;
+    c.lineWidth = 0.9;
+    for (let u = -0.55; u <= 0.8; u += 0.22) {
+      const a = at(u, -0.5), m = at(u + 0.04, 0), b = at(u, 0.5);
+      c.beginPath();
+      c.moveTo(a.x, a.y);
+      c.quadraticCurveTo(m.x, m.y, b.x, b.y);
+      c.stroke();
+    }
+    c.restore();
+    c.restore();
+    c.strokeStyle = COL.pancreas;
+    c.lineWidth = 2.2;
+    c.beginPath();
+    c.moveTo(gx(PANCREATIC_HEAD.x), gy(PANCREATIC_HEAD.y));
+    c.quadraticCurveTo(gx(du.x + 2), gy(du.y - 26), gx(du.x + 2), gy(du.y - 6));
+    c.stroke();
+  }
 
-    ctx.fillStyle = '#65a30d';
-    ctx.beginPath();
-    ctx.ellipse(gx(gb.x), gy(gb.y), gs(gb.rx), gs(gb.ry), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#a3e635';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-
-    /* bile duct: gallbladder -> behind the pancreas -> the duodenum */
-    ctx.strokeStyle = COL.bile;
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    ctx.moveTo(gx(gb.x - 4), gy(gb.y + 8));
-    ctx.quadraticCurveTo(gx(du.x + 30), gy(du.y - 40), gx(du.x + 6), gy(du.y - 2));
-    ctx.stroke();
-
+  function drawGlands(t) {
+    const gb = GALLBLADDER;
+    const du = DUODENUM;
+    drawGlandsUpper(ctx);
     const flow = 0.15 + 0.85 * bileFlow;
     ctx.fillStyle = 'rgba(163,230,53,0.85)';
     for (let i = 0; i < 6; i++) {
@@ -857,28 +1044,7 @@
       ctx.arc(gx(gb.x - 10 - u * 130), gy(gb.y + 14 + u * 156) + Math.sin(u * 7) * gs(4), 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    ctx.save();
-    ctx.translate(gx(pa.x), gy(pa.y));
-    ctx.rotate(pa.rot);
-    ctx.fillStyle = COL.pancreas;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, gs(pa.rx), gs(pa.ry), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#e879f9';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.restore();
-
-    /* pancreatic duct: head -> the duodenum */
-    ctx.strokeStyle = COL.pancreas;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(gx(PANCREATIC_HEAD.x), gy(PANCREATIC_HEAD.y));
-    ctx.quadraticCurveTo(gx(du.x + 2), gy(du.y - 26), gx(du.x + 2), gy(du.y - 6));
-    ctx.stroke();
-
-    /* bicarbonate flushing the acid out of the duodenum */
+    drawGlandsLower(ctx);
     ctx.fillStyle = 'rgba(192,132,252,0.8)';
     for (let i = 0; i < 7; i++) {
       const u = (t * 0.26 + i / 7) % 1;
@@ -888,21 +1054,21 @@
     }
   }
 
-  function drawVessels() {
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalAlpha = 0.5;
-    ctx.strokeStyle = COL.portal;
-    ctx.lineWidth = 3.4;
-    ctx.beginPath();
-    PORTAL.forEach((p, i) => (i ? ctx.lineTo(gx(p[0]), gy(p[1])) : ctx.moveTo(gx(p[0]), gy(p[1]))));
-    ctx.stroke();
-    ctx.strokeStyle = COL.lymph;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    LYMPH.forEach((p, i) => (i ? ctx.lineTo(gx(p[0]), gy(p[1])) : ctx.moveTo(gx(p[0]), gy(p[1]))));
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+  function drawVessels(c = ctx) {
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.globalAlpha = 0.5;
+    c.strokeStyle = COL.portal;
+    c.lineWidth = 3.4;
+    c.beginPath();
+    PORTAL.forEach((p, i) => (i ? c.lineTo(gx(p[0]), gy(p[1])) : c.moveTo(gx(p[0]), gy(p[1]))));
+    c.stroke();
+    c.strokeStyle = COL.lymph;
+    c.lineWidth = 3;
+    c.beginPath();
+    LYMPH.forEach((p, i) => (i ? c.lineTo(gx(p[0]), gy(p[1])) : c.moveTo(gx(p[0]), gy(p[1]))));
+    c.stroke();
+    c.globalAlpha = 1;
   }
 
   /* Capillary stubs reaching from the lumen out past the villi, drawn per
@@ -986,6 +1152,208 @@
     ctx.globalAlpha = 1;
   }
 
+  const GLOW = {
+    liver: {
+      inner: 'rgba(249,115,22,0.96)',
+      outer: 'rgba(69,10,10,0.72)',
+      rim: 'rgba(249,115,22,0.30)',
+      vein: 'rgba(253,186,116,0.28)',
+      highlight: 'rgba(253,224,171,0.30)',
+      blur: 12
+    },
+    gall: {
+      inner: 'rgba(163,230,53,0.98)',
+      outer: 'rgba(34,77,14,0.70)',
+      rim: 'rgba(163,230,53,0.36)',
+      highlight: 'rgba(236,253,245,0.45)',
+      blur: 10
+    },
+    stomach: {
+      inner: 'rgba(190,18,60,0.94)',
+      outer: 'rgba(76,5,25,0.60)',
+      rim: 'rgba(244,63,94,0.40)',
+      rugae: 'rgba(255,228,230,0.16)',
+      highlight: 'rgba(255,228,230,0.20)',
+      fundus: 'rgba(244,63,94,0.22)',
+      blur: 12
+    },
+    pancreas: {
+      inner: 'rgba(232,121,249,0.92)',
+      outer: 'rgba(112,26,117,0.62)',
+      rim: 'rgba(232,121,249,0.30)',
+      lobule: 'rgba(255,241,255,0.18)',
+      blur: 10
+    },
+    tube: {
+      small: {
+        outer: 'rgba(127,29,29,0.82)',
+        inner: 'rgba(248,113,113,0.52)',
+        rim: 'rgba(248,113,113,0.26)',
+        gloss: 'rgba(254,205,211,0.34)',
+        wave: 'rgba(254,205,211,0.45)',
+        capillary: 'rgba(248,113,113,0.26)',
+        villus: 'rgba(251,182,182,0.38)',
+        blur: 10
+      },
+      large: {
+        outer: 'rgba(109,70,117,0.72)',
+        inner: 'rgba(233,213,255,0.46)',
+        rim: 'rgba(216,180,254,0.28)',
+        gloss: 'rgba(250,232,255,0.36)',
+        haustra: 'rgba(109,70,117,0.45)',
+        wave: 'rgba(250,232,255,0.40)',
+        blur: 10
+      },
+      smooth: {
+        outer: 'rgba(136,70,80,0.72)',
+        inner: 'rgba(253,186,200,0.40)',
+        rim: 'rgba(251,113,133,0.24)',
+        gloss: 'rgba(255,228,230,0.32)',
+        wave: 'rgba(255,228,230,0.38)',
+        blur: 8
+      }
+    }
+  };
+
+  function organGradient(c, bounds, innerColour, outerColour) {
+    const cx = bounds.x + bounds.w * 0.36;
+    const cy = bounds.y + bounds.h * 0.3;
+    const r = Math.max(bounds.w, bounds.h) * 0.78;
+    const g = c.createRadialGradient(cx, cy, Math.min(bounds.w, bounds.h) * 0.06, cx, cy, r);
+    g.addColorStop(0, innerColour);
+    g.addColorStop(1, outerColour);
+    return g;
+  }
+
+  function rimGlow(c, colour, blur, paint) {
+    c.save();
+    c.shadowColor = colour;
+    c.shadowBlur = clamp(gs(blur), 6, 14);
+    c.strokeStyle = colour;
+    c.lineWidth = 1.4;
+    paint(c);
+    c.restore();
+  }
+
+  function veinStroke(c, points, colour, width) {
+    c.save();
+    c.strokeStyle = colour;
+    c.lineWidth = width;
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.beginPath();
+    for (let i = 0; i < points.length; i++) {
+      if (i) c.lineTo(gx(points[i][0]), gy(points[i][1]));
+      else c.moveTo(gx(points[i][0]), gy(points[i][1]));
+    }
+    c.stroke();
+    c.restore();
+  }
+
+  const STATIC_CACHE = { scale: 0, layers: {} };
+
+  function staticCacheScale() {
+    return Math.max(
+      window.devicePixelRatio || 1,
+      stage.canvas.width / W,
+      stage.canvas.height / H
+    );
+  }
+
+  function cacheRect(x0, y0, x1, y1) {
+    return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
+  }
+
+  function cacheUnion(a, b) {
+    return cacheRect(Math.min(a.x, b.x), Math.min(a.y, b.y),
+      Math.max(a.x + a.w, b.x + b.w), Math.max(a.y + a.h, b.y + b.h));
+  }
+
+  function cachePoints(points, pad) {
+    const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+    return cacheRect(Math.min(...xs) - pad, Math.min(...ys) - pad,
+      Math.max(...xs) + pad, Math.max(...ys) + pad);
+  }
+
+  function cacheTract(L, pad) {
+    const pts = [];
+    const a = sampleAt(L.s0), b = sampleAt(L.s1);
+    pts.push([a.x, a.y], [b.x, b.y]);
+    for (let i = 0; i < path.length; i++) {
+      if (cum[i] > L.s0 && cum[i] < L.s1) pts.push([path[i].x, path[i].y]);
+    }
+    return cachePoints(pts, pad);
+  }
+
+  function cacheEllipse(cx, cy, rx, ry, rot, pad) {
+    const c = Math.abs(Math.cos(rot || 0)), s = Math.abs(Math.sin(rot || 0));
+    const hx = rx * c + ry * s, hy = rx * s + ry * c;
+    return cacheRect(gx(cx) - hx - pad, gy(cy) - hy - pad,
+      gx(cx) + hx + pad, gy(cy) + hy + pad);
+  }
+
+  function buildStaticCache() {
+    const scale = staticCacheScale();
+    const layers = {};
+    const make = (bounds, draw) => {
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(bounds.w * scale);
+      cv.height = Math.round(bounds.h * scale);
+      const cc = cv.getContext('2d');
+      cc.setTransform(scale, 0, 0, scale, -bounds.x * scale, -bounds.y * scale);
+      draw(cc);
+      return { canvas: cv, x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h };
+    };
+    LAYERS.forEach((L, i) => {
+      layers['wall-' + i] = make(cacheTract(L, gs(TUBE_W / 2) + 3),
+        (c) => drawWall(L, c));
+      layers['haustra-' + i] = make(cacheTract(L, 14),
+        (c) => drawHaustra(L, c));
+    });
+    const sh = STOMACH_SHAPE;
+    layers.stomach = make(cacheEllipse(sh.cx, sh.cy, sh.rx, sh.ry, sh.rot, 12),
+      (c) => drawStomach(c));
+    const L = LIVER;
+    const liverBox = cacheRect(gx(L.x - L.rx), gy(L.y - L.ry),
+      gx(L.lobe.x + L.lobe.rx), gy(Math.max(L.y + L.ry, L.lobe.y + L.lobe.ry)));
+    layers.liver = make(cacheRect(liverBox.x - 14, liverBox.y - 14,
+      liverBox.x + liverBox.w + 14, liverBox.y + liverBox.h + 14),
+      (c) => drawLiver(c));
+    layers.vessels = make(cachePoints(PORTAL.concat(LYMPH).map((p) => [gx(p[0]), gy(p[1])]), 6),
+      (c) => drawVessels(c));
+    const gb = GALLBLADDER, du = DUODENUM;
+    const gallPts = [
+      [gx(gb.x - gb.rx), gy(gb.y - gb.ry)], [gx(gb.x + gb.rx), gy(gb.y + gb.ry)],
+      [gx(gb.x - 4), gy(gb.y + 8)],
+      [gx(du.x + 30), gy(du.y - 40)], [gx(du.x + 6), gy(du.y - 2)]
+    ];
+    layers['glands-upper'] = make(cachePoints(gallPts, 12),
+      (c) => drawGlandsUpper(c));
+    const pa = PANCREAS;
+    layers['glands-lower'] = make(cacheUnion(cacheEllipse(pa.x, pa.y, pa.rx, pa.ry, pa.rot, 12),
+      cachePoints([
+        [gx(PANCREATIC_HEAD.x), gy(PANCREATIC_HEAD.y)],
+        [gx(du.x + 2), gy(du.y - 26)], [gx(du.x + 2), gy(du.y - 6)]
+      ], 4)), (c) => drawGlandsLower(c));
+    LABELS.forEach((l, i) => {
+      layers['leader-' + i] = make(cachePoints([
+        [gx(l.at[0]), gy(l.at[1])], [gx(l.to[0]), gy(l.to[1])]
+      ], 3), (c) => leaderLine(l.at[0], l.at[1], l.to[0], l.to[1], c));
+    });
+    STATIC_CACHE.scale = scale;
+    STATIC_CACHE.layers = layers;
+  }
+
+  function ensureStaticCache() {
+    if (STATIC_CACHE.layers.liver && STATIC_CACHE.scale === staticCacheScale()) return;
+    buildStaticCache();
+  }
+
+  function blit(key) {
+    const layer = STATIC_CACHE.layers[key];
+    if (layer) ctx.drawImage(layer.canvas, layer.x, layer.y, layer.w, layer.h);
+  }
+
   /* ── Labels ──────────────────────────────────────────────
      Each label is placed in open space with a leader line back to the
      structure it names. The positions are all outside the tube's own
@@ -1009,34 +1377,27 @@
     { text: 'lymph duct',          at: [ 716, 258], colour: 'rgba(252,211,77,0.9)' }
   ];
 
-  function label(text, x, y, colour) {
-    ctx.font = '700 11px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = colour || COL.labelDim;
-    ctx.fillText(text, x, y);
+  function label(text, x, y, colour, c = ctx) {
+    c.font = '700 11px system-ui, sans-serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillStyle = colour || COL.labelDim;
+    c.fillText(text, x, y);
   }
 
-  function leader(text, dx, dy, lx, ly, colour) {
-    const tx = gx(dx), ty = gy(dy);
-    const ex = gx(lx), ey = gy(ly);
-    ctx.strokeStyle = 'rgba(148,163,184,0.32)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(tx, ty);
-    ctx.lineTo(ex, ey);
-    ctx.stroke();
-    label(text, ex, ey - 9, colour);
-  }
-
-  function drawLabels() {
-    if (!labels) return;
-    for (const l of LABELS) leader(l.text, l.at[0], l.at[1], l.to[0], l.to[1], l.colour);
-    for (const l of VESSEL_LABELS) label(l.text, gx(l.at[0]), gy(l.at[1]), l.colour);
+  function leaderLine(dx, dy, lx, ly, c = ctx) {
+    c.strokeStyle = 'rgba(148,163,184,0.32)';
+    c.lineWidth = 1;
+    c.beginPath();
+    c.moveTo(gx(dx), gy(dy));
+    c.lineTo(gx(lx), gy(ly));
+    c.stroke();
   }
 
   function drawBadge() {
-    const s = clamp(headS === null ? 0 : headS, TUBE_END);
+    // No meal means no location to badge — the readout says "No meal yet".
+    if (headS === null) return;
+    const s = clamp(headS, 0, TUBE_END);
     const spot = sampleAt(s);
     const text = mouthHold > 0
       ? (mouthHold > SWALLOW_SEC
@@ -1251,21 +1612,28 @@
   /* ── Render ─────────────────────────────────────────── */
 
   function render(t) {
+    ensureStaticCache();
     ctx.clearRect(0, 0, W, H);
-    for (const L of LAYERS) {
-      drawWall(L);
+    LAYERS.forEach((L, i) => {
+      blit('wall-' + i);
       drawVilli(L, t * 1.3);
       drawCapillaries(L);
-      drawHaustra(L);
+      blit('haustra-' + i);
       drawWaves(L, t);
-    }
-    drawStomach();
-    drawLiver();
-    drawVessels();
+    });
+    blit('stomach');
+    blit('liver');
+    blit('vessels');
     drawGlands(t);
     drawParticles();
     drawDots();
-    drawLabels();
+    if (labels) {
+      for (let i = 0; i < LABELS.length; i++) {
+        blit('leader-' + i);
+        label(LABELS[i].text, gx(LABELS[i].to[0]), gy(LABELS[i].to[1]) - 9, LABELS[i].colour);
+      }
+      for (const l of VESSEL_LABELS) label(l.text, gx(l.at[0]), gy(l.at[1]), l.colour);
+    }
     drawBadge();
     drawLegend();
     drawFooter();
@@ -1310,7 +1678,7 @@
     const dt = EV.delta(now, lastTime);
     lastTime = now;
     if (!paused && dt > 0) step(dt);
-    render(EV.visualTime(dt));
+    render(EV.visualTime(now));
     syncReadout();
     rafId = requestAnimationFrame(tick);
   }
@@ -1414,13 +1782,87 @@
     resetRun();
   });
 
-  /* ── Init ───────────────────────────────────────────── */
+  /* Phase 1 overlay parity check */
+  const _c = document.getElementById('stage');
+  if (_c.width !== W || _c.height !== H) console.warn('Canvas size mismatch', _c.width, _c.height, 'expected', W, H);
 
   periValue.textContent = '1.00×';
   acidValue.textContent = '2.0';
   bileValue.textContent = '60%';
   fibreValue.textContent = '10 g';
   EV.onToggle(labelsBtn, () => { labels = !labels; return labels; });
-  resetRun();
-  start();
+
+  stage.onPaint = () => {
+    ensureStaticCache();
+    render(EV.visualTime(performance.now()));
+    syncReadout();
+  };
+
+  if (USE_WEBGL) {
+    (async () => {
+      try {
+        const THREE = await import('https://unpkg.com/three@0.160.0/build/three.module.js');
+        const canvas = document.getElementById('stage');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(W, H, false);
+        scene.fog = new THREE.Fog(0x0f172a, 300, 900);
+        window.__scene = scene; window.__THREE = THREE; window.__camera = camera; window.__renderer = renderer;
+        const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
+        camera.position.set(0, 0, 600);
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(200, 300, 400);
+        const sh = { cx: 560, cy: 244, rx: 68, ry: 48, rot: -0.42 };
+        const geo = new THREE.SphereGeometry(1, 32, 16);
+        geo.scale(sh.rx, sh.ry, (sh.rx + sh.ry) / 2);
+        const mat = new THREE.MeshPhysicalMaterial({ color: 0xf472b6, roughness: 0.45, clearcoat: 0.6, clearcoatRoughness: 0.3, transmission: 0.15, thickness: 2 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sh.cx - 450, -(sh.cy - 270), 0);
+        mesh.rotation.z = sh.rot;
+        const liver = { x: 262, y: 118, rx: 92, ry: 44 };
+        const lgeo = new THREE.SphereGeometry(1, 32, 16);
+        lgeo.scale(liver.rx, liver.ry, (liver.rx + liver.ry) / 2);
+        const lmat = new THREE.MeshPhysicalMaterial({ color: 0x9f1239, roughness: 0.4, clearcoat: 0.3 });
+        const lmesh = new THREE.Mesh(lgeo, lmat);
+        lmesh.position.set(liver.x - 450, -(liver.y - 270), 0);
+        const gb = { x: 212, y: 174, rx: 12, ry: 9 };
+        const ggeo = new THREE.SphereGeometry(1, 16, 12);
+        ggeo.scale(gb.rx, gb.ry, (gb.rx + gb.ry) / 2);
+        const gmat = new THREE.MeshPhysicalMaterial({ color: 0x84cc16, roughness: 0.35, clearcoat: 0.5 });
+        const gmesh = new THREE.Mesh(ggeo, gmat);
+        gmesh.position.set(gb.x - 450, -(gb.y - 270), 0);
+        const pz = { x: 470, y: 318, rx: 82, ry: 13, rot: -0.12 };
+        const pgeo = new THREE.SphereGeometry(1, 24, 12);
+        pgeo.scale(pz.rx, pz.ry, (pz.rx + pz.ry) / 2);
+        const pmat = new THREE.MeshPhysicalMaterial({ color: 0xfbbf24, roughness: 0.4, clearcoat: 0.3 });
+        const pmesh = new THREE.Mesh(pgeo, pmat);
+        pmesh.position.set(pz.x - 450, -(pz.y - 270), 0);
+        pmesh.rotation.z = pz.rot;
+        const pts = [
+          [462,74],[460,98],[544,196],[622,250],[566,300],[414,372],[432,410],[480,466],[430,518],[232,518],[150,452],[366,361],[730,334],[800,428],[604,514]
+        ].map(p => new THREE.Vector3(p[0]-450, -(p[1]-270), 0));
+        const curve = new THREE.CatmullRomCurve3(pts);
+        const tgeo = new THREE.TubeGeometry(curve, 120, 6, 8, false);
+        const tmat = new THREE.MeshPhysicalMaterial({ color: 0xf472b6, roughness: 0.55, clearcoat: 0.4 });
+        const tmesh = new THREE.Mesh(tgeo, tmat);
+        scene.add(tmesh);
+        const bolusGeo = new THREE.SphereGeometry(8, 16, 12);
+        const bolusMat = new THREE.MeshPhysicalMaterial({ color: 0xec4899, roughness: 0.3, clearcoat: 0.8 });
+        const bolus = new THREE.Mesh(bolusGeo, bolusMat);
+        scene.add(bolus);
+        let bt = 0;
+        const origLoop = loop;
+        function loop2() {
+          bt = (bt + 0.002) % 1;
+          const p = curve.getPoint(bt);
+          bolus.position.copy(p);
+          renderer.render(scene, camera);
+          requestAnimationFrame(loop2);
+        }
+        loop2();
+      } catch (e) { console.warn('WebGL init failed, falling back to Canvas2D', e); resetRun(); start(); }
+    })();
+  } else {
+    resetRun();
+    start();
+  }
 })();
