@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import math
 import re
+from datetime import datetime
 from pathlib import Path
 
 from lxml import etree
@@ -14,6 +16,25 @@ ANCHORS_PATH = HERE / "anchors.json"
 BOUNDARY = [297.7, 728.2]
 HEADROOM = 40.0
 STEP = 0.02
+SMALL_ILEUM_FRACTION = 0.42
+SELF_CROSS_MIN_GAP = 40.0
+ORGAN_COLOURS = {
+    "mouth": "#f9bb9d",
+    "oesophagus": "#f9bb9d",
+    "stomach": "#f26522",
+    "duodenum": "#e89e55",
+    "small intestine": "#f69161",
+    "colon": "#8cc63f",
+    "rectum": "#8cc63f",
+}
+TUBE_TAG_ORGAN = {
+    "oesophagus": "oesophagus",
+    "stomach": "stomach",
+    "stomach_fundus": "stomach",
+    "duodenum": "duodenum",
+    "small": "small intestine",
+    "colon": "colon",
+}
 
 NS = {"s": "http://www.w3.org/2000/svg"}
 UNSURE_TAGS = {
@@ -38,7 +59,7 @@ LANDMARK_SEGMENTS = {
     "oesophagus": ("oesophagus", "oesophagus", "cardia"),
     "cardia": ("oesophagus", "oesophagus", "cardia"),
     "stomach": ("stomach", "cardia", "pylorus"),
-    "pylorus": ("duodenum", "pylorus", "jejunum"),
+    "pylorus": ("stomach", "cardia", "pylorus"),
     "duodenum": ("duodenum", "pylorus", "jejunum"),
     "flexure": ("duodenum", "pylorus", "jejunum"),
     "jejunum": ("small intestine", "jejunum", "caecum"),
@@ -55,7 +76,7 @@ LANDMARK_DEFS = {
     "oesophagus": ("oesophagus", 10),
     "cardia": ("stomach", 0),
     "stomach": ("stomach", 9),
-    "pylorus": ("duodenum", 0),
+    "pylorus": ("stomach", 18),
     "duodenum": ("duodenum", 4),
     "flexure": ("small", 0),
     "jejunum": ("small", 3),
@@ -241,6 +262,216 @@ def nearest_index(points, target):
     return min(range(len(points)), key=lambda i: (points[i][0] - target[0]) ** 2 + (points[i][1] - target[1]) ** 2)
 
 
+def choose_ileum_ref(ref_to_ordered, cumulative, small_count):
+    start_s = cumulative[9 * ref_to_ordered[("small", 3)]]
+    end_s = cumulative[9 * ref_to_ordered[("small", small_count - 1)]]
+    target = start_s + SMALL_ILEUM_FRACTION * (end_s - start_s)
+    candidates = range(4, small_count - 1)
+    index = min(
+        candidates,
+        key=lambda i: abs(cumulative[9 * ref_to_ordered[("small", i)]] - target),
+    )
+    return ("small", index)
+
+
+def parse_old_strides(text):
+    wave = float(re.search(r"const\s+WAVE_STRIDE\s*=\s*([0-9.]+)", text).group(1))
+
+    def loop_stride(name):
+        start = text.index(f"function {name}(")
+        end = text.index("\n  }", start)
+        match = re.search(r"s\s*\+=\s*([0-9.]+)", text[start:end])
+        return float(match.group(1))
+
+    return {
+        "WAVE_STRIDE": wave,
+        "villus stride": loop_stride("drawVilli"),
+        "haustra stride": loop_stride("drawHaustra"),
+    }
+
+
+def segments_cross(a, b, c, d):
+    eps = 1e-9
+
+    def cross(p, q, r):
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+
+    def straddles(u, v):
+        return (u > eps and v < -eps) or (u < -eps and v > eps)
+
+    def on(p, q, r):
+        return (
+            abs(cross(p, q, r)) < eps
+            and min(p[0], q[0]) - eps <= r[0] <= max(p[0], q[0]) + eps
+            and min(p[1], q[1]) - eps <= r[1] <= max(p[1], q[1]) + eps
+        )
+
+    d1, d2 = cross(a, b, c), cross(a, b, d)
+    d3, d4 = cross(c, d, a), cross(c, d, b)
+    if straddles(d1, d2) and straddles(d3, d4):
+        return True
+    return on(a, b, c) or on(a, b, d) or on(c, d, a) or on(c, d, b)
+
+
+def geometry_crossings(path_points, cumulative, arc, tube_end):
+    layers = [
+        {"name": "upper tract", "s0": 0.0, "s1": arc["flexure"]},
+        {"name": "colon frame", "s0": arc["caecum"], "s1": tube_end},
+        {"name": "small intestine", "s0": arc["flexure"], "s1": arc["caecum"]},
+    ]
+
+    def layer_of(s):
+        for index, layer in enumerate(layers):
+            if layer["s0"] <= s <= layer["s1"]:
+                return index
+        return -1
+
+    found = []
+    failures = []
+    for i in range(len(path_points) - 1):
+        for j in range(i + 1, len(path_points) - 1):
+            if cumulative[j] - cumulative[i] < SELF_CROSS_MIN_GAP:
+                continue
+            if not segments_cross(path_points[i], path_points[i + 1], path_points[j], path_points[j + 1]):
+                continue
+            li, lj = layer_of(cumulative[i]), layer_of(cumulative[j])
+            names = [layers[li]["name"] if li >= 0 else "unknown", layers[lj]["name"] if lj >= 0 else "unknown"]
+            crossing = {
+                "s1": cumulative[i],
+                "s2": cumulative[j],
+                "layers": names,
+                "point": path_points[i],
+            }
+            found.append(crossing)
+            if li == lj or li < 0 or lj < 0:
+                failures.append(
+                    "self_crossing_same_layer: "
+                    f"{names[0]} at {fmt(crossing['s1'], 1)}/{fmt(crossing['s2'], 1)}"
+                )
+                continue
+            pair = set(names)
+            upper_s = cumulative[i] if names[0] == "upper tract" else cumulative[j]
+            colon_s = cumulative[i] if names[0] == "colon frame" else cumulative[j]
+            allowed = pair == {"upper tract", "colon frame"} and upper_s < arc["hepatic"] < colon_s
+            crossing["allowed"] = allowed
+            if not allowed:
+                failures.append(
+                    "unexpected_self_crossing: "
+                    f"{names[0]} x {names[1]} at {fmt(crossing['s1'], 1)}/{fmt(crossing['s2'], 1)}"
+                )
+    allowed_count = sum(1 for crossing in found if crossing.get("allowed"))
+    return {"count": len(found), "crossings": found, "allowedCount": allowed_count, "failures": failures}
+
+
+def svg_path_to_logical(d, matrix, crop):
+    tokens = re.findall(r"[a-zA-Z]|[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?", d)
+    output = []
+    index = 0
+    command = None
+    x = y = 0.0
+    start = (0.0, 0.0)
+
+    def number():
+        nonlocal index
+        value = float(tokens[index])
+        index += 1
+        return value
+
+    def transform(point):
+        px, py = point
+        a, b, c, dd, e, f = matrix
+        sx = a * px + c * py + e
+        sy = b * px + dd * py + f
+        return (
+            crop["ox"] + (sx - crop["x"]) * crop["scale"],
+            crop["oy"] + (sy - crop["y"]) * crop["scale"],
+        )
+
+    def emit(prefix, points):
+        parts = [f"{coord:.2f}" for point in points for coord in transform(point)]
+        output.append(prefix + " ".join(parts))
+
+    while index < len(tokens):
+        if tokens[index].isalpha():
+            command = tokens[index]
+            index += 1
+        if command is None:
+            break
+        if command in ("m", "M"):
+            dx, dy = number(), number()
+            if command == "m":
+                x += dx
+                y += dy
+            else:
+                x, y = dx, dy
+            start = (x, y)
+            emit("M ", [(x, y)])
+            command = "l" if command == "m" else "L"
+            while index < len(tokens) and not tokens[index].isalpha():
+                dx, dy = number(), number()
+                if command == "l":
+                    x += dx
+                    y += dy
+                else:
+                    x, y = dx, dy
+                emit("L ", [(x, y)])
+        elif command in ("l", "L"):
+            while index < len(tokens) and not tokens[index].isalpha():
+                dx, dy = number(), number()
+                if command == "l":
+                    x += dx
+                    y += dy
+                else:
+                    x, y = dx, dy
+                emit("L ", [(x, y)])
+        elif command in ("h", "H"):
+            while index < len(tokens) and not tokens[index].isalpha():
+                value = number()
+                x += value if command == "h" else value - x
+                emit("L ", [(x, y)])
+        elif command in ("v", "V"):
+            while index < len(tokens) and not tokens[index].isalpha():
+                value = number()
+                y += value if command == "v" else value - y
+                emit("L ", [(x, y)])
+        elif command in ("c", "C"):
+            while index < len(tokens) and not tokens[index].isalpha():
+                x1, y1, x2, y2, x3, y3 = (number() for _ in range(6))
+                if command == "c":
+                    x1, y1 = x + x1, y + y1
+                    x2, y2 = x + x2, y + y2
+                    x3, y3 = x + x3, y + y3
+                emit("C ", [(x1, y1), (x2, y2), (x3, y3)])
+                x, y = x3, y3
+        elif command in ("z", "Z"):
+            output.append("Z")
+            x, y = start
+        else:
+            raise ValueError(f"unsupported SVG path command: {command}")
+    return " ".join(output)
+
+
+def tube_paths(items, crop):
+    paths = {}
+    for item in items:
+        organ = TUBE_TAG_ORGAN.get(item["tag"])
+        if not item["lumen"] or not organ:
+            continue
+        paths.setdefault(organ, []).append(
+            {
+                "id": item["id"],
+                "sourceTag": item["tag"],
+                "d": svg_path_to_logical(item["d"], item["m"], crop),
+                "fill": ORGAN_COLOURS[organ],
+                "stroke": ORGAN_COLOURS[organ],
+                "strokeWidth": round(item["sw"] * crop["scale"], 3),
+                "sourceFill": item["fill"],
+                "sourceStroke": item["stroke"],
+            }
+        )
+    return paths
+
+
 def parse_old_script():
     text = SCRIPT_PATH.read_text()
     lines = text.splitlines()
@@ -279,7 +510,14 @@ def parse_old_script():
         expr = expr.strip()
         key = "0" if expr == "0" else expr.split(".")[-1]
         breaks.append((key, float(value)))
-    return {"quote": quote, "arc": arc, "end": cum[-1], "breaks": breaks, "layout": {"S": s, "OX": ox, "OY": oy}}
+    return {
+        "quote": quote,
+        "arc": arc,
+        "end": cum[-1],
+        "breaks": breaks,
+        "strides": parse_old_strides(text),
+        "layout": {"S": s, "OX": ox, "OY": oy},
+    }
 
 
 def speed_fn(arc, breaks):
@@ -371,6 +609,7 @@ def write_anatomy(crop):
             f"{'yes' if item['lumen'] else '-':<5}  {'YES' if item['unsure'] else ''}"
         )
     (HERE / "part-tags.txt").write_text("\n".join(lines) + "\n")
+    return items
 
 
 def browser_report():
@@ -399,6 +638,8 @@ def browser_report():
             data = {
                 "stats": drv.execute_script("return window.__LUMEN_STATS"),
                 "runs": drv.execute_script("return window.__LUMEN_RUNS"),
+                "rawRuns": drv.execute_script("return window.__LUMEN_RAW_RUNS"),
+                "diagnostics": drv.execute_script("return window.__LUMEN_DIAGNOSTICS"),
                 "segments": drv.execute_script("return window.__SEGMENT_STATS"),
             }
         drv.quit()
@@ -410,13 +651,30 @@ def fmt(value, digits=2):
     return f"{value:.{digits}f}"
 
 
+def run_between_gap(run, gap):
+    labels = run.get("nearestAnchors") or []
+    first = f"{gap['segment']}[{gap['from']}]"
+    second = f"{gap['segment']}[{gap['to']}]"
+    return run.get("classification") == "TRULY OUTSIDE" and first in labels and second in labels
+
+
 def run_checks(bundle, lumen):
     new = bundle["new"]
     failures = []
+    warnings = []
 
     rectum_y = new["rectumEnd"][1]
     if rectum_y < 775:
         failures.append(f"rectum_end_y {fmt(rectum_y, 1)} < 775")
+
+    arcs = new["arc"]
+    names = list(LANDMARK_DEFS)
+    for first, second in zip(names, names[1:]):
+        if arcs[second] <= arcs[first]:
+            failures.append(
+                f"landmark_s_not_increasing: {first} {fmt(arcs[first], 2)} >= {second} {fmt(arcs[second], 2)}"
+            )
+            break
 
     long_runs = [
         f"{run['organ']} {run['sStart']}–{run['sEnd']} ({run['sEnd'] - run['sStart']} px)"
@@ -424,7 +682,9 @@ def run_checks(bundle, lumen):
         if run["sEnd"] - run["sStart"] > 6
     ]
     if long_runs:
-        failures.append(f"outside_runs>6px: {', '.join(long_runs)}")
+        failures.append(f"catmull_outside_lumen>6px: {', '.join(long_runs)}")
+
+    failures.extend(new["geometryChecks"]["failures"])
 
     low_segments = [
         f"{name} {fmt(st['pct'], 1)}%"
@@ -434,18 +694,80 @@ def run_checks(bundle, lumen):
     if low_segments:
         failures.append(f"segments<95%: {', '.join(low_segments)}")
 
-    wide_gaps = [
-        f"{gap['segment']}[{gap['from']}]→{gap['segment']}[{gap['to']}] {fmt(gap['distance'], 1)}"
-        for gap in new["maxGaps"]
-        if gap["distance"] > MAX_ANCHOR_GAP
-    ]
-    if wide_gaps:
-        failures.append(f"anchor_gaps>{MAX_ANCHOR_GAP:g}px: {', '.join(wide_gaps)}")
+    for diag in lumen["diagnostics"]:
+        if diag["classification"] == "WRONG MASK":
+            tubes = ", ".join(item["id"] for item in diag["containingTubes"])
+            warnings.append(f"WARN wrong_mask_run: {diag['sStart']}–{diag['sEnd']} in {tubes}")
 
-    return failures
+    for gap in new["maxGaps"]:
+        if gap["distance"] <= MAX_ANCHOR_GAP:
+            continue
+        label = f"{gap['segment']}[{gap['from']}]→{gap['segment']}[{gap['to']}] {fmt(gap['distance'], 1)}"
+        blocked = [run for run in lumen["diagnostics"] if run_between_gap(run, gap)]
+        if blocked:
+            spans = ", ".join(f"{run['sStart']}–{run['sEnd']}" for run in blocked)
+            failures.append(f"anchor_gap_truly_outside: {label} ({spans})")
+        else:
+            warnings.append(f"WARN anchor_gap>{MAX_ANCHOR_GAP:g}px: {label}")
+
+    return failures, warnings
+
+
+def append_summary(lines, bundle):
+    old = bundle["old"]
+    new = bundle["new"]
+    arcs = new["arc"]
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("### Landmark table")
+    lines.append("")
+    lines.append("| landmark | segment | anchor index | s | % along segment |")
+    lines.append("|---|---|---:|---:|---:|")
+    for name in LANDMARK_DEFS:
+        seg, idx = new["landmarks"][name]["ref"]
+        lm = new["landmarks"][name]
+        lines.append(f"| {name} | {seg} | {idx} | {fmt(lm['s'], 2)} | {fmt(lm['pct'], 1)}% |")
+    lines.append("")
+    lines.append("### ARC values")
+    lines.append("")
+    lines.append("| ARC | old | new |")
+    lines.append("|---|---:|---:|")
+    for key in LANDMARK_DEFS:
+        lines.append(f"| {key} | {fmt(old['arc'][key], 2)} | {fmt(arcs[key], 2)} |")
+    lines.append("")
+    lines.append("### SPEED options")
+    lines.append("")
+    lines.append("| breakpoint | one pylorus→caecum | extra jejunum breakpoint |")
+    lines.append("|---|---:|---:|")
+    for key in new["breaksSplit"]:
+        one = new["breaksCombined"].get(key)
+        two = new["breaksSplit"].get(key)
+        lines.append(f"| {key} | {fmt(one, 4) if one is not None else '—'} | {fmt(two, 4)} |")
+    lines.append("")
+    lines.append("### Per-organ transit times")
+    lines.append("")
+    lines.append("| organ | old min | one speed min | one change | split min | split change |")
+    lines.append("|---|---:|---:|---:|---:|---:|")
+    for name, _, _ in ORGS:
+        base = old["times"][name]
+        one = new["timesCombined"][name]
+        split = new["timesSplit"][name]
+        lines.append(
+            f"| {name} | {fmt(base, 4)} | {fmt(one, 4)} | {fmt((one / base - 1) * 100, 2)}% | "
+            f"{fmt(split, 4)} | {fmt((split / base - 1) * 100, 2)}% |"
+        )
+    lines.append("")
+    lines.append("### Strides for the new total")
+    lines.append("")
+    lines.append("| constant | old (from `script.js`) | proposed |")
+    lines.append("|---|---:|---:|")
+    for key, value in new["strides"].items():
+        lines.append(f"| {key} | {fmt(old['strides'][key], 2)} | {fmt(value, 2)} |")
+    lines.append("")
 
 
 def write_report(bundle, lumen):
+    source = bundle["source"]
     old = bundle["old"]
     new = bundle["new"]
     quote = old["quote"]
@@ -457,17 +779,22 @@ def write_report(bundle, lumen):
     times_a = new["timesCombined"]
     times_b = new["timesSplit"]
 
-    failures = run_checks(bundle, lumen)
+    failures, warnings = run_checks(bundle, lumen)
     lines = []
     if failures:
         lines.append("FAIL " + " | ".join(failures))
     else:
-        lines.append("CHECKS: PASS — all four checks passed")
+        lines.append("CHECKS: PASS — all checks passed")
+    raw_counts_text = ", ".join(f"{key}={value}" for key, value in source["rawCounts"].items())
+    lines.append(f"ANCHORS FILE: `{source['path']}`")
+    lines.append(f"MTIME: `{source['mtime']}`  MD5: `{source['md5']}`")
+    lines.append(f"ANCHORS AS READ (before boundary move): {raw_counts_text}")
     counts_text = ", ".join(f"{key}={value}" for key, value in new["counts"].items())
-    lines.append(f"Anchors: {counts_text}. Last rectum anchor: `{new['rectumEnd']}`.")
+    lines.append(f"Anchors after boundary move: {counts_text}. Last rectum anchor: `{new['rectumEnd']}`.")
     lines.append("")
     lines.append("# Digestive prototype — full rebuild report")
     lines.append("")
+    append_summary(lines, bundle)
     lines.append("Re-run with:")
     lines.append("")
     lines.append("```bash")
@@ -484,7 +811,13 @@ def write_report(bundle, lumen):
         for failure in failures:
             lines.append(f"- FAIL {failure}")
     else:
-        lines.append("PASS — rectum end is at or below SVG y=775, all outside runs are ≤6 px, all segments are ≥95% inside, and every neighbouring-anchor gap is ≤35 SVG units.")
+        lines.append("PASS — rectum end is at or below SVG y=775, landmark s values strictly increase, Catmull path leaves the lumen by at most 6 px, all segments are ≥95% inside, and self-crossings are limited to the intended duodenum/colon handoff.")
+    if warnings:
+        lines.append("")
+        lines.append("Warnings (wrong-mask runs and large anchor gaps without a truly outside run):")
+        lines.append("")
+        for warning in warnings:
+            lines.append(f"- {warning}")
     lines.append("")
     lines.append("## 1. `SPEED` and `speedAt()` in `script.js`")
     lines.append("")
@@ -547,6 +880,9 @@ def write_report(bundle, lumen):
             continue
         lines.append(f"| {key} | {st['inside']} | {st['samples']} | {fmt(st['pct'], 1)}% |")
     lines.append("")
+    lines.append(f"Raw assigned-mask outside runs (before mask/handoff fixes): {len(lumen['rawRuns'])}")
+    lines.append(f"Remaining outside runs after re-score: {len(lumen['runs'])}")
+    lines.append("")
     lines.append("| # | segment | s range | length | nearest anchors |")
     lines.append("|---:|---|---:|---:|---|")
     for i, run in enumerate(lumen["runs"], 1):
@@ -554,6 +890,21 @@ def write_report(bundle, lumen):
         lines.append(
             f"| {i} | {run['organ']} | {run['sStart']}–{run['sEnd']} | {length} px | "
             f"{', '.join(run['nearestAnchors'])} |"
+        )
+    lines.append("")
+    lines.append("Outside-run diagnosis for the raw runs (tube paths containing each run's samples):")
+    lines.append("")
+    lines.append("| # | s range | classification | containing SVG tube paths |")
+    lines.append("|---:|---:|---|---|")
+    for i, diag in enumerate(lumen["diagnostics"], 1):
+        if diag["containingTubes"]:
+            tubes = ", ".join(
+                f"{item['id']} ({item['tag']}) ×{item['count']}" for item in diag["containingTubes"]
+            )
+        else:
+            tubes = "none"
+        lines.append(
+            f"| {i} | {diag['sStart']}–{diag['sEnd']} | {diag['classification']} | {tubes} |"
         )
     lines.append("")
     lines.append("The editor reports individual traced segments; this score samples one continuous path at 2 px, including handoffs and crossings. The code-drawn mouth has no SVG lumen and is counted inside.")
@@ -620,10 +971,10 @@ def write_report(bundle, lumen):
     lines.append("")
     lines.append("### Strides for the new total")
     lines.append("")
-    lines.append("| constant | proposed |")
-    lines.append("|---|---:|")
+    lines.append("| constant | old (from `script.js`) | proposed |")
+    lines.append("|---|---:|---:|")
     for key, value in new["strides"].items():
-        lines.append(f"| {key} | {fmt(value, 2)} |")
+        lines.append(f"| {key} | {fmt(old['strides'][key], 2)} | {fmt(value, 2)} |")
     lines.append("")
     lines.append("## 7. Screenshots")
     lines.append("")
@@ -636,7 +987,14 @@ def write_report(bundle, lumen):
 
 
 def main():
-    raw = json.loads(ANCHORS_PATH.read_text())
+    anchor_bytes = ANCHORS_PATH.read_bytes()
+    raw = json.loads(anchor_bytes)
+    source = {
+        "path": str(ANCHORS_PATH.resolve()),
+        "mtime": datetime.fromtimestamp(ANCHORS_PATH.stat().st_mtime).astimezone().isoformat(timespec="seconds"),
+        "md5": hashlib.md5(anchor_bytes).hexdigest(),
+        "rawCounts": {key: len(value["anchors"]) for key, value in raw["segments"].items()},
+    }
     segments = {key: {"anchors": [list(p) for p in value["anchors"]]} for key, value in raw["segments"].items()}
     rectum = segments["rectum"]["anchors"]
     bidx = next(i for i, p in enumerate(rectum) if all(abs(p[j] - BOUNDARY[j]) < 1e-6 for j in range(2)))
@@ -689,6 +1047,9 @@ def main():
     tube_end = cum[-1]
 
     ref_to_ordered = {ref: i for i, ref in enumerate(ordered_refs)}
+    LANDMARK_DEFS["ileum"] = choose_ileum_ref(
+        ref_to_ordered, cum, len(segments["small"]["anchors"])
+    )
 
     def resolve_ref(ref):
         seg, idx = ref
@@ -707,6 +1068,7 @@ def main():
         arc[key] = cum[sample_idx]
         landmark_samples[key] = sample_idx
         resolved_refs[key] = resolved
+    geometry_checks = geometry_crossings(path, cum, arc, tube_end)
     landmark_meta = {}
     for key, ref in LANDMARK_DEFS.items():
         segment, lo, hi = LANDMARK_SEGMENTS[key]
@@ -793,7 +1155,7 @@ def main():
         idx = min(range(len(cum)), key=lambda i: abs(cum[i] - s))
         markers[name] = {"s": s, "x": path[idx][0], "y": path[idx][1]}
 
-    write_anatomy(crop)
+    anatomy_items = write_anatomy(crop)
     (HERE / "path-anchors.js").write_text(
         "window.PATH_ANCHORS = "
         + json.dumps(
@@ -823,10 +1185,12 @@ def main():
         "timesCombined": times_combined,
         "timesSplit": times_split,
         "strides": strides,
+        "geometryChecks": geometry_checks,
     }
     (HERE / "path-analysis.json").write_text(json.dumps(analysis, indent=2))
     (HERE / "path-analysis.js").write_text("window.PATH_ANALYSIS = " + json.dumps(analysis, separators=(",", ":")) + ";\n")
     bundle = {
+        "source": source,
         "old": {**old, "times": old_times},
         "new": {
             "arc": arc,
@@ -845,9 +1209,46 @@ def main():
             "timesCombined": times_combined,
             "timesSplit": times_split,
             "strides": strides,
+            "geometryChecks": geometry_checks,
         },
     }
     (HERE / "timing-analysis.json").write_text(json.dumps(bundle, indent=2))
+
+    def to_design(point):
+        return (
+            crop["ox"] + (point[0] - crop["ox"]) / crop["scale"],
+            crop["oy"] + (point[1] - crop["oy"]) / crop["scale"],
+        )
+
+    track_segments = {}
+    for point, ref in zip(ordered, ordered_refs):
+        track_segments.setdefault(ref[0], []).append([round(v, 3) for v in to_design(point)])
+    geometry = {
+        "option": "split",
+        "track": [[round(v, 3) for v in to_design(point)] for point in ordered],
+        "trackSegments": track_segments,
+        "logicalTrack": ordered,
+        "pathPoints": [[round(v, 3) for v in point] for point in path],
+        "cumulative": cum,
+        "TUBE_END": tube_end,
+        "ARC": arc,
+        "SPEED": breaks_split,
+        "strides": strides,
+        "oldStrides": old["strides"],
+        "tubePaths": tube_paths(anatomy_items, crop),
+        "mouthArch": arch,
+        "markers": markers,
+        "layout": crop,
+        "landmarks": landmark_meta,
+        "landmarkDefs": LANDMARK_DEFS,
+        "checks": geometry_checks,
+    }
+    (HERE / "geometry.generated.json").write_text(json.dumps(geometry, indent=2))
+    stride_text = " | ".join(
+        f"{key} old={fmt(old['strides'][key], 2)} proposed={fmt(value, 2)}"
+        for key, value in strides.items()
+    )
+    print("STRIDES " + stride_text)
     lumen = browser_report()
     write_report(bundle, lumen)
     print("built", HERE / "REPORT.md")

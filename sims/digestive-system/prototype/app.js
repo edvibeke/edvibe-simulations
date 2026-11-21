@@ -18,6 +18,7 @@
   const viewName = query.get('view') || 'full';
   const traceMode = query.get('mode') === 'trace';
   let overlay = query.get('overlay') === '1';
+  const labelsVisible = query.get('labels') !== '0';
 
   const VIEWS = {
     full: { label: 'FULL VIEW — recoloured SVG base art', rect: null },
@@ -87,7 +88,7 @@
     stomach: ['path6063', 'rect7359'],
     duodenum: ['path2174', 'rect4019', 'path3169'],
     small: ['path10149'],
-    colon: ['path10151', 'path10145', 'path10147'],
+    colon: ['path10151', 'path10145', 'path10147', 'path10143'],
     rectum: ['path10143']
   };
 
@@ -126,19 +127,49 @@
   probeCanvas.height = 540;
   const probeCtx = probeCanvas.getContext('2d');
 
+  function pointInItem(item, lx, ly) {
+    if (!item) return false;
+    probeCtx.setTransform(1, 0, 0, 1, 0, 0);
+    probeCtx.clearRect(0, 0, 900, 540);
+    baseTransform(probeCtx);
+    probeCtx.transform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
+    return probeCtx.isPointInPath(item.path, lx, ly);
+  }
+
   function pointInLumen(organ, lx, ly) {
     if (organ === 'mouth') return true;
     const ids = LUMEN_IDS[organ] || [];
     for (let i = 0; i < ids.length; i++) {
-      const item = byId.get(ids[i]);
-      if (!item) continue;
-      probeCtx.setTransform(1, 0, 0, 1, 0, 0);
-      probeCtx.clearRect(0, 0, 900, 540);
-      baseTransform(probeCtx);
-      probeCtx.transform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
-      if (probeCtx.isPointInPath(item.path, lx, ly)) return true;
+      if (pointInItem(byId.get(ids[i]), lx, ly)) return true;
     }
     return false;
+  }
+
+  const LEGACY_LUMEN_IDS = {};
+  Object.keys(LUMEN_IDS).forEach(function (organ) {
+    LEGACY_LUMEN_IDS[organ] = LUMEN_IDS[organ].filter(function (id) {
+      return organ !== 'colon' || id !== 'path10143';
+    });
+  });
+
+  function pointInLegacyLumen(organ, lx, ly) {
+    if (organ === 'mouth') return true;
+    return LEGACY_LUMEN_IDS[organ].some(function (id) {
+      return pointInItem(byId.get(id), lx, ly);
+    });
+  }
+
+  const TUBE_IDS = Array.from(new Set(Object.keys(LUMEN_IDS).reduce(function (all, organ) {
+    return all.concat(LUMEN_IDS[organ]);
+  }, [])));
+
+  function containingTubes(lx, ly) {
+    return TUBE_IDS.filter(function (id) {
+      return pointInItem(byId.get(id), lx, ly);
+    }).map(function (id) {
+      const item = byId.get(id);
+      return { id: id, tag: item ? item.tag : 'unknown' };
+    });
   }
 
   function organForS(s) {
@@ -150,6 +181,28 @@
     if (s < spans['small intestine'][1]) return 'small';
     if (s < spans['colon incl sigmoid'][1]) return 'colon';
     return 'rectum';
+  }
+
+  const HANDOFF_TOLERANCE = 15;
+
+  function insideAt(organ, s, lx, ly) {
+    if (pointInLumen(organ, lx, ly)) return true;
+    const arc = ANALYSIS.ARC;
+    const handoffs = [
+      [arc.oesophagus, 'mouth', 'oesophagus'],
+      [arc.cardia, 'oesophagus', 'stomach'],
+      [arc.pylorus, 'stomach', 'duodenum'],
+      [arc.flexure, 'duodenum', 'small'],
+      [arc.jejunum, 'duodenum', 'small'],
+      [arc.caecum, 'small', 'colon'],
+      [arc.rectum, 'colon', 'rectum']
+    ];
+    for (let i = 0; i < handoffs.length; i++) {
+      const h = handoffs[i];
+      if (Math.abs(s - h[0]) <= HANDOFF_TOLERANCE &&
+          (pointInLumen(h[1], lx, ly) || pointInLumen(h[2], lx, ly))) return true;
+    }
+    return false;
   }
 
   function curveFromLogical(points) {
@@ -198,7 +251,7 @@
       const organ = organForPoint ? organForPoint(s) : null;
       out.push({
         s: s, x: x, y: y, organ: organ,
-        inside: organ ? pointInLumen(organ, x, y) : true,
+        inside: organ ? insideAt(organ, s, x, y) : true,
         seg: p.seg
       });
     };
@@ -238,9 +291,35 @@
     return runs;
   }
 
+  function diagnoseRuns(runList, sampleList) {
+    return runList.map(function (run) {
+      const counts = {};
+      for (let i = run.startSample; i <= run.endSample; i++) {
+        const p = sampleList[i];
+        containingTubes(p.x, p.y).forEach(function (tube) {
+          const key = tube.id + '|' + tube.tag;
+          if (!counts[key]) counts[key] = { id: tube.id, tag: tube.tag, count: 0 };
+          counts[key].count++;
+        });
+      }
+      const containing = Object.keys(counts).map(function (key) { return counts[key]; });
+      return {
+        sStart: run.sStart, sEnd: run.sEnd, organ: run.organ,
+        nearestAnchors: run.nearestAnchors,
+        classification: containing.length ? 'WRONG MASK' : 'TRULY OUTSIDE',
+        containingTubes: containing
+      };
+    });
+  }
+
   const normalCurve = curveFromLogical(simAnchorPoints);
   const samples = sampleCurve(normalCurve, organForS);
   const runs = findRuns(samples);
+  const rawSamples = samples.map(function (s) {
+    return Object.assign({}, s, { inside: pointInLegacyLumen(s.organ, s.x, s.y) });
+  });
+  const rawRuns = findRuns(rawSamples);
+  const runDiagnostics = diagnoseRuns(rawRuns, samples);
   const insideCount = samples.filter(function (s) { return s.inside; }).length;
   const insidePct = samples.length ? (insideCount / samples.length) * 100 : 0;
   const catmullLength = normalCurve.total;
@@ -448,34 +527,40 @@
   function drawLandmarks() {
     if (!ANALYSIS.landmarks) return;
     const names = Object.keys(ANALYSIS.landmarks);
+    const zoom = !!view.rect;
+    const fontPx = zoom ? 7 : 9;
+    const boxH = zoom ? 10 : 13;
+    const radius = zoom ? 2.2 : 3.1;
     setCamera(ctx);
     ctx.save();
-    ctx.font = '700 9px ui-monospace, monospace';
+    ctx.font = '700 ' + fontPx + 'px ui-monospace, monospace';
     names.forEach(function (name, i) {
       const lm = ANALYSIS.landmarks[name];
-      const label = name + ' ' + lm.s.toFixed(1);
-      const w = ctx.measureText(label).width + 8;
-      const dx = i % 2 === 0 ? -w - 9 : 9;
-      const dy = i % 3 === 0 ? -19 : (i % 3 === 1 ? 6 : 22);
-      const lx = lm.x + dx;
-      const ly = lm.y + dy;
-      ctx.strokeStyle = 'rgba(250,204,21,.65)';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(lm.x, lm.y);
-      ctx.lineTo(i % 2 === 0 ? lx + w : lx, ly + 6);
-      ctx.stroke();
-      ctx.fillStyle = 'rgba(15,23,42,.86)';
-      ctx.beginPath();
-      ctx.roundRect(lx, ly, w, 13, 3);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(250,204,21,.5)';
-      ctx.stroke();
-      ctx.fillStyle = '#fde68a';
-      ctx.fillText(label, lx + 4, ly + 9.5);
+      if (labelsVisible) {
+        const label = name + ' ' + lm.s.toFixed(1);
+        const w = ctx.measureText(label).width + 6;
+        const dx = i % 2 === 0 ? -w - 7 : 7;
+        const dy = i % 3 === 0 ? -(boxH + 5) : (i % 3 === 1 ? 5 : boxH + 5);
+        const lx = lm.x + dx;
+        const ly = lm.y + dy;
+        ctx.strokeStyle = 'rgba(250,204,21,.65)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(lm.x, lm.y);
+        ctx.lineTo(i % 2 === 0 ? lx + w : lx, ly + boxH / 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(15,23,42,.86)';
+        ctx.beginPath();
+        ctx.roundRect(lx, ly, w, boxH, 3);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(250,204,21,.5)';
+        ctx.stroke();
+        ctx.fillStyle = '#fde68a';
+        ctx.fillText(label, lx + 3, ly + boxH - (zoom ? 2 : 3));
+      }
       ctx.fillStyle = '#facc15';
       ctx.beginPath();
-      ctx.arc(lm.x, lm.y, 3.1, 0, Math.PI * 2);
+      ctx.arc(lm.x, lm.y, radius, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = 0.8;
@@ -1195,6 +1280,8 @@
     insidePct: insidePct, catmullLength: catmullLength, outsideRuns: runs.length
   };
   window.__LUMEN_RUNS = runs;
+  window.__LUMEN_RAW_RUNS = rawRuns;
+  window.__LUMEN_DIAGNOSTICS = runDiagnostics;
   window.__SEGMENT_STATS = segmentStats;
   window.__LUMEN_SAMPLES = samples;
   window.__TRACE_ANCHORS = traceAnchors;

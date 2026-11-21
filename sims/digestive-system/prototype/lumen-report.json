@@ -1,13 +1,14 @@
 {
   "stats": {
     "catmullLength": 1726.4824209135336,
-    "inside": 813,
-    "insidePct": 93.98843930635839,
-    "outsideRuns": 2,
+    "inside": 861,
+    "insidePct": 99.53757225433526,
+    "outsideRuns": 0,
     "samples": 865,
     "stepPx": 2
   },
-  "runs": [
+  "runs": [],
+  "rawRuns": [
     {
       "count": 14,
       "endSample": 241,
@@ -45,15 +46,66 @@
       "yStart": 320
     }
   ],
+  "diagnostics": [
+    {
+      "classification": "WRONG MASK",
+      "containingTubes": [
+        {
+          "count": 1,
+          "id": "path6063",
+          "tag": "stomach"
+        },
+        {
+          "count": 13,
+          "id": "path10149",
+          "tag": "small"
+        },
+        {
+          "count": 8,
+          "id": "path10151",
+          "tag": "colon"
+        }
+      ],
+      "nearestAnchors": [
+        "small[2]",
+        "small[3]"
+      ],
+      "organ": "duodenum",
+      "sEnd": 482,
+      "sStart": 456
+    },
+    {
+      "classification": "WRONG MASK",
+      "containingTubes": [
+        {
+          "count": 32,
+          "id": "path10143",
+          "tag": "colon"
+        },
+        {
+          "count": 10,
+          "id": "path10149",
+          "tag": "small"
+        }
+      ],
+      "nearestAnchors": [
+        "colon[21]",
+        "colon[22]"
+      ],
+      "organ": "colon",
+      "sEnd": 1678,
+      "sStart": 1616
+    }
+  ],
   "segments": {
     "colon": {
-      "inside": 203,
-      "pct": 86.38297872340426,
+      "inside": 235,
+      "pct": 100,
       "samples": 235
     },
     "duodenum": {
-      "inside": 73,
-      "pct": 82.02247191011236,
+      "inside": 87,
+      "pct": 97.75280898876404,
       "samples": 89
     },
     "mouth": {
@@ -77,8 +129,8 @@
       "samples": 363
     },
     "stomach": {
-      "inside": 96,
-      "pct": 97.95918367346938,
+      "inside": 98,
+      "pct": 100,
       "samples": 98
     }
   }

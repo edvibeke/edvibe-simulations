@@ -8,7 +8,7 @@
     "duodenum": 349.0493503585977,
     "flexure": 451.3912064807437,
     "jejunum": 482.0282687407831,
-    "ileum": 881.4219268884947,
+    "ileum": 780.2816616460475,
     "caecum": 1209.0296703106515,
     "hepatic": 1329.5959387617472,
     "transverse": 1406.3767615877732,
@@ -145,11 +145,11 @@
       "s": 305.4729717926129,
       "x": 301.54549301735085,
       "y": 185.01565806178584,
-      "segment": "duodenum",
-      "pct": 0.0,
+      "segment": "stomach",
+      "pct": 100.0,
       "ref": [
-        "duodenum",
-        0
+        "stomach",
+        18
       ],
       "resolvedRef": [
         "stomach",
@@ -158,7 +158,7 @@
       "orderedIndex": 33,
       "sampleIndex": 297,
       "oldS": 253.40879227187122,
-      "oldPct": 0.0
+      "oldPct": 100.0
     },
     "duodenum": {
       "s": 349.0493503585977,
@@ -218,21 +218,21 @@
       "oldPct": 0.0
     },
     "ileum": {
-      "s": 881.4219268884947,
-      "x": 341.0960643250106,
-      "y": 273.9517562420652,
+      "s": 780.2816616460475,
+      "x": 372.5679221328819,
+      "y": 218.80575539568343,
       "segment": "small intestine",
-      "pct": 54.93712354409098,
+      "pct": 41.025146892595195,
       "ref": [
         "small",
-        41
+        33
       ],
       "resolvedRef": [
         "small",
-        41
+        33
       ],
-      "orderedIndex": 86,
-      "sampleIndex": 774,
+      "orderedIndex": 78,
+      "sampleIndex": 702,
       "oldS": 801.4897135845993,
       "oldPct": 44.76746647204706
     },
@@ -369,8 +369,8 @@
       9
     ],
     "pylorus": [
-      "duodenum",
-      0
+      "stomach",
+      18
     ],
     "duodenum": [
       "duodenum",
@@ -386,7 +386,7 @@
     ],
     "ileum": [
       "small",
-      41
+      33
     ],
     "caecum": [
       "colon",
@@ -537,5 +537,51 @@
     "WAVE_STRIDE": 208.0621412392197,
     "villus stride": 11.45460181785784,
     "haustra stride": 13.052304917623076
+  },
+  "geometryChecks": {
+    "count": 3,
+    "crossings": [
+      {
+        "s1": 380.63135448855485,
+        "s2": 1369.8296599174846,
+        "layers": [
+          "upper tract",
+          "colon frame"
+        ],
+        "point": [
+          285.36397490576894,
+          227.07546323144823
+        ],
+        "allowed": true
+      },
+      {
+        "s1": 418.8121057992304,
+        "s2": 1402.4384370103282,
+        "layers": [
+          "upper tract",
+          "colon frame"
+        ],
+        "point": [
+          315.9649871968801,
+          230.48647559802558
+        ],
+        "allowed": true
+      },
+      {
+        "s1": 435.4644923388535,
+        "s2": 1418.9173225673837,
+        "layers": [
+          "upper tract",
+          "colon frame"
+        ],
+        "point": [
+          331.5464438906391,
+          227.01215178909882
+        ],
+        "allowed": true
+      }
+    ],
+    "allowedCount": 3,
+    "failures": []
   }
 }
