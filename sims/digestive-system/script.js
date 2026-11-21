@@ -284,9 +284,9 @@
     const at = (key) => {
       if (key === 'mouth') ARC[key] = 20.445337601799142;
       if (key === 'oesophagus') ARC[key] = 51.158475765998766;
-      if (key === 'cardia') ARC[key] = 109.11641908334575;
-      if (key === 'stomach') ARC[key] = 222.33817763792325;
-      if (key === 'pylorus') ARC[key] = 305.4729717926129;
+      if (key === 'cardia') ARC[key] = 130.0;
+      if (key === 'stomach') ARC[key] = 70.0;
+      if (key === 'pylorus') ARC[key] = 345.0;
       if (key === 'duodenum') ARC[key] = 349.0493503585977;
       if (key === 'flexure') ARC[key] = 451.3912064807437;
       if (key === 'jejunum') ARC[key] = 482.0282687407831;
@@ -296,7 +296,7 @@
       if (key === 'transverse') ARC[key] = 1406.3767615877732;
       if (key === 'splenic') ARC[key] = 1483.0258655103014;
       if (key === 'descending') ARC[key] = 1563.4619465556823;
-      if (key === 'rectum') ARC[key] = 1679.0892325111606;
+      if (key === 'rectum') ARC[key] = 1690.0;
     };
     at('mouth', 277.171, 289.466);
     at('oesophagus', 297.1, 327.9);
@@ -553,7 +553,7 @@
   const SPEED = [
     { s: 0, v: 53.44401183503034 },
     { s: ARC.oesophagus, v: 81.9415566895024 },
-    { s: ARC.stomach, v: 2.417133210617217 },
+    { s: ARC.stomach, v: 14.0 },
     { s: ARC.pylorus, v: 2.898670180683945 },
     { s: ARC.jejunum, v: 6.109120969524182 },
     { s: ARC.caecum, v: 0.8306012220305593 },
