@@ -35,6 +35,28 @@ TUBE_TAG_ORGAN = {
     "small": "small intestine",
     "colon": "colon",
 }
+ART_COLOURS = {
+    "mouth": "#f9bb9d",
+    "salivary": "#f9bb9d",
+    "teeth": "#fde68a",
+    "oesophagus": "#f9bb9d",
+    "stomach": "#f26522",
+    "stomach_fundus": "#f26522",
+    "duodenum": "#e89e55",
+    "small": "#f69161",
+    "colon": "#8cc63f",
+    "rectum": "#8cc63f",
+    "liver": "#9f1239",
+    "liver_detail": "#fb7185",
+    "liver_glow": "#fb7185",
+    "gallbladder": "#a3e635",
+    "pancreas": "#f0abfc",
+    "portal": "#60a5fa",
+    "lymph": "#fcd34d",
+    "outline": "#64748b",
+    "annotation": "#64748b",
+    "detail": "#94a3b8",
+}
 
 NS = {"s": "http://www.w3.org/2000/svg"}
 UNSURE_TAGS = {
@@ -470,6 +492,59 @@ def tube_paths(items, crop):
             }
         )
     return paths
+
+
+ART_ORDER = [
+    "outline",
+    "annotation",
+    "liver_glow",
+    "liver_detail",
+    "liver",
+    "salivary",
+    "teeth",
+    "mouth",
+    "oesophagus",
+    "stomach_fundus",
+    "stomach",
+    "gallbladder",
+    "pancreas",
+    "duodenum",
+    "colon",
+    "small",
+    "rectum",
+    "detail",
+]
+
+
+def svg_art(items, crop):
+    groups = {}
+    scale = crop["scale"]
+    crop_matrix = (
+        scale,
+        0.0,
+        0.0,
+        scale,
+        crop["ox"] - scale * crop["x"],
+        crop["oy"] - scale * crop["y"],
+    )
+    for item in items:
+        colour = ART_COLOURS.get(item["tag"], "#94a3b8")
+        groups.setdefault(item["tag"], []).append(
+            {
+                "id": item["id"],
+                "d": item["d"],
+                "m": [round(v, 6) for v in mul(crop_matrix, item["m"])],
+                "fill": colour,
+                "stroke": colour,
+                "strokeWidth": round(item["sw"] * scale, 3),
+                "lumen": bool(item["lumen"]),
+            }
+        )
+    return [
+        {"tag": tag, "items": groups[tag]}
+        for tag in ART_ORDER
+        if tag in groups
+    ]
 
 
 def parse_old_script():
@@ -1236,6 +1311,7 @@ def main():
         "strides": strides,
         "oldStrides": old["strides"],
         "tubePaths": tube_paths(anatomy_items, crop),
+        "svgArt": svg_art(anatomy_items, crop),
         "mouthArch": arch,
         "markers": markers,
         "layout": crop,
@@ -1244,6 +1320,9 @@ def main():
         "checks": geometry_checks,
     }
     (HERE / "geometry.generated.json").write_text(json.dumps(geometry, indent=2))
+    (HERE / "geometry.generated.js").write_text(
+        "window.EV_GEOMETRY = " + json.dumps(geometry, separators=(",", ":")) + ";\n"
+    )
     stride_text = " | ".join(
         f"{key} old={fmt(old['strides'][key], 2)} proposed={fmt(value, 2)}"
         for key, value in strides.items()

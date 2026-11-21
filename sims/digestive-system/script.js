@@ -8,6 +8,8 @@
   const _params = new URLSearchParams(location.search);
   const RENDERER = (_params.get('renderer') || localStorage.getItem('evRenderer') || 'canvas2d').toLowerCase();
   const USE_WEBGL = RENDERER === 'webgl' || RENDERER === 'three' || RENDERER === '3d';
+  const USE_SVG_ART = true;
+  const GEOM = window.EV_GEOMETRY;
 
   /* ── Layout ─────────────────────────────────────
 
@@ -37,7 +39,7 @@
     w: RAIL.x - MARGIN * 2,
     h: FOOT.y - MARGIN * 2
   };
-  const FIGURE = { x: 60, y: 44, w: 750, h: 516 };
+  const FIGURE = { x: 191.1129919593737, y: 14, w: 310.0, h: 529.5397590361446 };
 
   const S = Math.min(AREA.w / FIGURE.w, AREA.h / FIGURE.h);
   const OX = (AREA.x + AREA.w / 2 - S * (FIGURE.x + FIGURE.w / 2)) / (1 - S);
@@ -76,45 +78,161 @@
      and one single stroke cannot say both at once. */
 
   const TRACK = {
-    /* mouth and pharynx, then down to the cardia */
     upper: [
-      [ 462,  74], [ 460,  98], [ 464, 124], [ 472, 152], [ 492, 178],
-      /* stomach: fundus high on the patient's left, body, then the antrum */
-      [ 544, 196], [ 594, 214], [ 622, 250], [ 610, 282],
-      /* pylorus, then the duodenum across to the patient's right, level with
-         the pylorus the way the first part really runs */
-      [ 566, 300], [ 532, 310], [ 498, 312], [ 466, 310],
-      /* then the descending part: a steep dive down the patient's right,
-         behind the sagging transverse colon, and on to the flexure. Steep on
-         purpose — a shallow descent would run alongside the transverse colon
-         instead of crossing it, and the pair would read as one fat tube. */
-      [ 446, 312], [ 430, 330], [ 420, 350], [ 414, 372],
-      [ 418, 396], [ 432, 410], [ 452, 416], [ 478, 416]
+      [358.213, 16.847],
+      [343.978, 19.694],
+      [338.284, 32.505],
+      [343.978, 48.164],
+      [352.519, 62.399],
+      [358.213, 70.94],
+      [358.413, 82.04],
+      [358.413, 91.14],
+      [358.413, 96.64],
+      [358.413, 102.94],
+      [358.413, 113.24],
+      [358.413, 120.04],
+      [358.813, 130.34],
+      [359.613, 138.24],
+      [360.413, 142.94],
+      [364.413, 152.44],
+      [367.013, 165.14],
+      [371.913, 180.14],
+      [373.513, 189.54],
+      [378.913, 201.84],
+      [393.413, 220.14],
+      [406.313, 207.24],
+      [426.513, 191.14],
+      [444.213, 198.74],
+      [443.913, 218.94],
+      [438.213, 237.24],
+      [421.513, 249.24],
+      [404.813, 259.04],
+      [387.113, 265.64],
+      [375.713, 263.14],
+      [370.013, 261.54],
+      [362.513, 260.54],
+      [356.513, 258.34],
+      [348.313, 257.44],
+      [335.413, 252.74],
+      [326.613, 251.44],
+      [314.513, 253.44],
+      [305.013, 277.84],
+      [311.813, 295.34],
+      [336.113, 331.84],
+      [346.913, 328.44],
+      [365.813, 323.04],
+      [377.313, 319.74],
+      [390.213, 316.34],
+      [393.513, 331.14],
+      [393.513, 339.34],
     ],
-    /* jejunum and ileum: three sweeps, each one further to the patient's
-       right, which is where they sit in the abdomen. The rows are 54 apart
-       so that a villus on one row cannot reach the row below it. */
     small: [
-      [ 520, 412], [ 600, 412], [ 690, 412], [ 736, 418],
-      [ 740, 440],
-      [ 734, 466], [ 660, 466], [ 570, 466], [ 480, 466],
-      [ 428, 470], [ 412, 486],
-      /* terminal ileum, across to the caecum in the right iliac fossa */
-      [ 430, 518], [ 380, 520], [ 300, 520], [ 232, 518]
+      [384.613, 341.24],
+      [366.413, 342.64],
+      [350.513, 340.44],
+      [331.713, 337.44],
+      [322.113, 335.84],
+      [315.913, 334.14],
+      [304.913, 333.34],
+      [293.713, 343.14],
+      [288.313, 361.74],
+      [291.313, 381.94],
+      [305.813, 390.14],
+      [309.813, 375.14],
+      [324.613, 372.94],
+      [342.113, 375.64],
+      [348.113, 377.34],
+      [349.713, 381.44],
+      [346.213, 385.24],
+      [338.013, 385.74],
+      [316.413, 393.94],
+      [318.313, 402.94],
+      [324.313, 411.14],
+      [347.213, 396.64],
+      [354.913, 389.54],
+      [360.613, 383.54],
+      [371.313, 388.24],
+      [377.713, 385.74],
+      [393.813, 372.34],
+      [401.913, 351.94],
+      [405.013, 344.74],
+      [404.213, 336.24],
+      [411.113, 326.64],
+      [437.213, 302.54],
+      [449.413, 305.54],
+      [440.213, 327.04],
+      [424.513, 336.64],
+      [433.713, 349.64],
+      [435.313, 368.84],
+      [424.313, 371.94],
+      [425.813, 390.94],
+      [420.513, 399.94],
+      [404.613, 384.04],
+      [391.013, 381.04],
+      [370.613, 398.44],
+      [379.613, 398.44],
+      [389.513, 390.14],
+      [394.013, 401.54],
+      [399.313, 412.14],
+      [409.213, 421.14],
+      [412.213, 435.54],
+      [399.313, 443.84],
+      [391.013, 435.54],
+      [383.413, 421.14],
+      [366.013, 414.34],
+      [353.213, 412.14],
+      [341.013, 416.64],
+      [359.213, 421.14],
+      [370.613, 431.04],
+      [370.613, 446.14],
+      [349.413, 431.74],
+      [335.713, 428.74],
+      [335.713, 438.54],
+      [353.913, 443.84],
+      [378.113, 456.04],
+      [369.013, 459.04],
+      [342.613, 457.54],
+      [325.113, 453.74],
+      [313.813, 440.84],
+      [310.813, 417.34],
+      [300.213, 412.14],
     ],
-    /* caecum, colon frame, sigmoid and rectum */
     colon: [
-      [ 198, 518], [ 168, 510], [ 152, 484], [ 150, 452],
-      [ 154, 418], [ 170, 374], [ 206, 342],
-      /* transverse colon, sagging under the pancreas, lowest just right of
-         centre — which is also what keeps it clear of the descending
-         duodenum, which has to dive behind it */
-      [ 288, 353], [ 366, 361], [ 446, 363], [ 540, 358], [ 662, 347], [ 730, 334],
-      /* splenic flexure, the high point, then down the patient's left */
-      [ 768, 328], [ 792, 352], [ 800, 390], [ 800, 428],
-      /* sigmoid and rectum, finishing near the midline */
-      [ 800, 462], [ 792, 486], [ 762, 502], [ 716, 510], [ 662, 514],
-      [ 604, 514], [ 548, 512]
+      [265.313, 416.64],
+      [267.613, 402.24],
+      [265.313, 379.54],
+      [253.213, 347.04],
+      [263.813, 302.34],
+      [270.613, 290.94],
+      [307.013, 314.44],
+      [372.113, 322.04],
+      [396.513, 315.74],
+      [427.513, 307.04],
+      [461.913, 269.54],
+      [464.213, 293.74],
+      [463.013, 312.34],
+      [463.013, 333.84],
+      [462.213, 351.24],
+      [456.013, 381.14],
+      [459.913, 398.04],
+      [455.113, 409.64],
+      [451.513, 422.54],
+      [446.413, 443.94],
+      [415.713, 465.14],
+      [381.913, 459.64],
+      [358.813, 471.24],
+      [356.813, 485.84],
+      [356.113, 502.24],
+      [355.913, 505.64],
+      [357.913, 510.54],
+      [358.213, 515.64],
+      [358.713, 518.54],
+      [358.813, 522.84],
+      [358.813, 526.34],
+      [359.013, 529.44],
+      [359.013, 532.14],
+      [359.113, 535.14],
+      [359.113, 537.54],
     ]
   };
 
@@ -155,7 +273,7 @@
     push(a[a.length - 1][0], a[a.length - 1][1]);
   })();
 
-  const TUBE_END = cum[cum.length - 1];
+  const TUBE_END = 1726.4824209135334;
 
   /* Arclength of the landmark nearest each design point. The names are
      what the rest of the file refers to, so the organ boundaries and
@@ -163,30 +281,38 @@
   const ARC = {};
 
   (function findArcs() {
-    const at = (key, dx, dy) => {
-      const x = gx(dx), y = gy(dy);
-      let best = 0, bd = 1e9;
-      for (let i = 0; i < path.length; i++) {
-        const d = Math.hypot(path[i].x - x, path[i].y - y);
-        if (d < bd) { bd = d; best = i; }
-      }
-      ARC[key] = cum[best];
+    const at = (key) => {
+      if (key === 'mouth') ARC[key] = 20.445337601799142;
+      if (key === 'oesophagus') ARC[key] = 51.158475765998766;
+      if (key === 'cardia') ARC[key] = 109.11641908334575;
+      if (key === 'stomach') ARC[key] = 222.33817763792325;
+      if (key === 'pylorus') ARC[key] = 305.4729717926129;
+      if (key === 'duodenum') ARC[key] = 349.0493503585977;
+      if (key === 'flexure') ARC[key] = 451.3912064807437;
+      if (key === 'jejunum') ARC[key] = 482.0282687407831;
+      if (key === 'ileum') ARC[key] = 780.2816616460475;
+      if (key === 'caecum') ARC[key] = 1209.0296703106515;
+      if (key === 'hepatic') ARC[key] = 1329.5959387617472;
+      if (key === 'transverse') ARC[key] = 1406.3767615877732;
+      if (key === 'splenic') ARC[key] = 1483.0258655103014;
+      if (key === 'descending') ARC[key] = 1563.4619465556823;
+      if (key === 'rectum') ARC[key] = 1679.0892325111606;
     };
-    at('mouth', 460, 98);
-    at('oesophagus', 472, 152);
-    at('cardia', 492, 178);
-    at('stomach', 594, 214);
-    at('pylorus', 566, 302);
-    at('duodenum', 452, 330);
-    at('flexure', 478, 412);
-    at('jejunum', 600, 412);
-    at('ileum', 570, 466);
-    at('caecum', 198, 518);
-    at('hepatic', 206, 342);
-    at('transverse', 540, 356);
-    at('splenic', 768, 328);
-    at('descending', 800, 428);
-    at('rectum', 662, 514);
+    at('mouth', 277.171, 289.466);
+    at('oesophagus', 297.1, 327.9);
+    at('cardia', 303.3, 409.4);
+    at('stomach', 382.8, 475.9);
+    at('pylorus', 287.2, 514.4);
+    at('duodenum', 243.9, 534.8);
+    at('flexure', 332.4, 596.3);
+    at('jejunum', 289.4, 597.4);
+    at('ileum', 388.3, 562.5);
+    at('caecum', 239.1, 669.1);
+    at('hepatic', 209.5, 547.9);
+    at('transverse', 311.0, 579.0);
+    at('splenic', 400.8, 526.5);
+    at('descending', 394.9, 638.1);
+    at('rectum', 297.7, 728.2);
   })();
 
   /* Depth layers, back to front. The transverse colon crosses the
@@ -425,12 +551,13 @@
 
   const MIN_PER_SEC = 46;
   const SPEED = [
-    { s: 0,               v: 60 },
-    { s: ARC.oesophagus,  v: 34 },
-    { s: ARC.stomach,     v: 2.8 },
-    { s: ARC.pylorus,     v: 4.8 },
-    { s: ARC.caecum,      v: 1.4 },
-    { s: ARC.rectum,      v: 2.0 }
+    { s: 0, v: 53.44401183503034 },
+    { s: ARC.oesophagus, v: 81.9415566895024 },
+    { s: ARC.stomach, v: 2.417133210617217 },
+    { s: ARC.pylorus, v: 2.898670180683945 },
+    { s: ARC.jejunum, v: 6.109120969524182 },
+    { s: ARC.caecum, v: 0.8306012220305593 },
+    { s: ARC.rectum, v: 1.1528721185954312 }
   ];
 
   function speedAt(s) {
@@ -439,7 +566,7 @@
     return v;
   }
 
-  const WAVE_STRIDE = 240;
+  const WAVE_STRIDE = 208.0621412392197;
   const waveDrift = (s, t) => t * speedAt(s) * MIN_PER_SEC * 0.5;
 
   function waveIntensityAt(s, t) {
@@ -753,7 +880,7 @@
     const outer = gs(VILLUS_OUTER);
     const s0 = Math.max(L.s0, ARC.pylorus);
     const s1 = Math.min(L.s1, ARC.caecum);
-    for (let s = s0; s < s1; s += 9) {
+    for (let s = s0; s < s1; s += 11.45460181785784) {
       const p = sampleAt(s);
       const grow = 0.6 + 0.4 * Math.sin(s * 0.06 + t);
       const reach = inner + (outer - inner) * grow;
@@ -775,7 +902,7 @@
     const s1 = Math.min(L.s1, TUBE_END);
     c.strokeStyle = 'rgba(0,0,0,0.3)';
     c.lineWidth = 2.4;
-    for (let s = s0; s < s1; s += 22) {
+    for (let s = s0; s < s1; s += 13.052304917623076) {
       const p = sampleAt(s);
       const nx = -Math.sin(p.a), ny = Math.cos(p.a);
       for (const side of [-1, 1]) {
@@ -1120,8 +1247,17 @@
 
   function drawParticles() {
     const shrink = 1 / Math.pow(chewFactor, 0.3);
+    const first = GEOM && GEOM.markers['feed first'];
+    const last = GEOM && GEOM.markers['feed last'];
     for (const p of particles) {
-      const sp = sampleAt(p.s);
+      const inMouth = USE_SVG_ART && first && last && mouthHold > 0 && p.s <= ARC.mouth;
+      const sp = inMouth
+        ? {
+            x: first.x + (last.x - first.x) * clamp((p.s - 2) / 16, 0, 1),
+            y: first.y + (last.y - first.y) * clamp((p.s - 2) / 16, 0, 1),
+            a: -Math.PI / 2
+          }
+        : sampleAt(p.s);
       const nx = -Math.sin(sp.a), ny = Math.cos(sp.a);
       const churn = p.s > ARC.stomach && p.s < ARC.pylorus
         ? Math.sin(simMin * 0.09 + p.phase) * gs(4)
@@ -1345,6 +1481,7 @@
   }
 
   function ensureStaticCache() {
+    if (USE_SVG_ART && GEOM) return;
     if (STATIC_CACHE.layers.liver && STATIC_CACHE.scale === staticCacheScale()) return;
     buildStaticCache();
   }
@@ -1398,7 +1535,8 @@
     // No meal means no location to badge — the readout says "No meal yet".
     if (headS === null) return;
     const s = clamp(headS, 0, TUBE_END);
-    const spot = sampleAt(s);
+    const mouthSpot = USE_SVG_ART && GEOM && mouthHold > 0 && GEOM.markers['Mouth badge'];
+    const spot = mouthSpot || sampleAt(s);
     const text = mouthHold > 0
       ? (mouthHold > SWALLOW_SEC
         ? 'In the mouth — chewing, amylase at work'
@@ -1609,30 +1747,119 @@
     return passed.reduce((a, p) => a + p.grams * (1 - p.dig * 0.65), 0);
   }
 
+  const SVG_ART = { groups: null, arch: null };
+
+  function svgColour(hex, alpha) {
+    const v = hex.replace('#', '');
+    const n = parseInt(v.length === 3 ? v.replace(/./g, (c) => c + c) : v, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + alpha + ')';
+  }
+
+  function svgArtGroups() {
+    if (SVG_ART.groups) return SVG_ART.groups;
+    if (!GEOM || !GEOM.svgArt) return [];
+    SVG_ART.groups = GEOM.svgArt.map((group) => ({
+      tag: group.tag,
+      items: group.items.map((item) => ({
+        m: item.m,
+        fill: item.fill,
+        stroke: item.stroke,
+        strokeWidth: item.strokeWidth,
+        path: new Path2D(item.d)
+      }))
+    }));
+    return SVG_ART.groups;
+  }
+
+  function svgArchPath() {
+    if (SVG_ART.arch) return SVG_ART.arch;
+    const pts = GEOM.mouthArch;
+    const p = new Path2D();
+    p.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i][0] + pts[i + 1][0]) / 2;
+      const my = (pts[i][1] + pts[i + 1][1]) / 2;
+      p.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+    }
+    const last = pts[pts.length - 1];
+    p.lineTo(last[0], last[1]);
+    SVG_ART.arch = p;
+    return p;
+  }
+
+  function drawSvgArt() {
+    if (!GEOM) return;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const group of svgArtGroups()) {
+      const flat = group.tag === 'outline' || group.tag === 'annotation' || group.tag === 'detail';
+      const fillAlpha = flat ? 0.07 : group.tag === 'teeth' ? 0.36 : 0.26;
+      const strokeAlpha = flat ? 0.22 : 0.62;
+      const blur = flat ? 0 : 7;
+      for (const item of group.items) {
+        ctx.save();
+        ctx.transform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
+        ctx.fillStyle = 'rgba(15,23,42,' + (fillAlpha + 0.34) + ')';
+        ctx.fill(item.path);
+        ctx.shadowColor = svgColour(item.stroke, 0.75);
+        ctx.shadowBlur = blur;
+        ctx.strokeStyle = svgColour(item.stroke, strokeAlpha);
+        ctx.lineWidth = Math.max(0.7, item.strokeWidth);
+        ctx.stroke(item.path);
+        ctx.restore();
+      }
+    }
+    ctx.save();
+    ctx.fillStyle = 'rgba(15,23,42,0.86)';
+    ctx.shadowColor = svgColour(ART_COLOURS.mouth, 0.7);
+    ctx.shadowBlur = 8;
+    ctx.strokeStyle = svgColour(ART_COLOURS.mouth, 0.68);
+    ctx.lineWidth = 2.2;
+    ctx.fill(svgArchPath());
+    ctx.stroke(svgArchPath());
+    ctx.restore();
+    ctx.restore();
+  }
+
+  const ART_COLOURS = { mouth: '#f9bb9d' };
+
   /* ── Render ─────────────────────────────────────────── */
 
   function render(t) {
-    ensureStaticCache();
     ctx.clearRect(0, 0, W, H);
-    LAYERS.forEach((L, i) => {
-      blit('wall-' + i);
-      drawVilli(L, t * 1.3);
-      drawCapillaries(L);
-      blit('haustra-' + i);
-      drawWaves(L, t);
-    });
-    blit('stomach');
-    blit('liver');
-    blit('vessels');
-    drawGlands(t);
-    drawParticles();
-    drawDots();
-    if (labels) {
-      for (let i = 0; i < LABELS.length; i++) {
-        blit('leader-' + i);
-        label(LABELS[i].text, gx(LABELS[i].to[0]), gy(LABELS[i].to[1]) - 9, LABELS[i].colour);
+    if (USE_SVG_ART && GEOM) {
+      drawSvgArt();
+      LAYERS.forEach((L) => {
+        drawVilli(L, t * 1.3);
+        drawCapillaries(L);
+        drawHaustra(L);
+        drawWaves(L, t);
+      });
+      drawParticles();
+      drawDots();
+    } else {
+      ensureStaticCache();
+      LAYERS.forEach((L, i) => {
+        blit('wall-' + i);
+        drawVilli(L, t * 1.3);
+        drawCapillaries(L);
+        blit('haustra-' + i);
+        drawWaves(L, t);
+      });
+      blit('stomach');
+      blit('liver');
+      blit('vessels');
+      drawGlands(t);
+      drawParticles();
+      drawDots();
+      if (labels) {
+        for (let i = 0; i < LABELS.length; i++) {
+          blit('leader-' + i);
+          label(LABELS[i].text, gx(LABELS[i].to[0]), gy(LABELS[i].to[1]) - 9, LABELS[i].colour);
+        }
+        for (const l of VESSEL_LABELS) label(l.text, gx(l.at[0]), gy(l.at[1]), l.colour);
       }
-      for (const l of VESSEL_LABELS) label(l.text, gx(l.at[0]), gy(l.at[1]), l.colour);
     }
     drawBadge();
     drawLegend();
