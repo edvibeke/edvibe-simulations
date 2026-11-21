@@ -1,0 +1,85 @@
+{
+  "stats": {
+    "catmullLength": 1726.4824209135336,
+    "inside": 813,
+    "insidePct": 93.98843930635839,
+    "outsideRuns": 2,
+    "samples": 865,
+    "stepPx": 2
+  },
+  "runs": [
+    {
+      "count": 14,
+      "endSample": 241,
+      "nearestAnchors": [
+        "small[2]",
+        "small[3]"
+      ],
+      "organ": "duodenum",
+      "sEnd": 482,
+      "sStart": 456,
+      "startSample": 228,
+      "xEnd": 303,
+      "xMid": 315,
+      "xStart": 329,
+      "yEnd": 243,
+      "yMid": 245,
+      "yStart": 244
+    },
+    {
+      "count": 32,
+      "endSample": 839,
+      "nearestAnchors": [
+        "colon[21]",
+        "colon[22]"
+      ],
+      "organ": "colon",
+      "sEnd": 1678,
+      "sStart": 1616,
+      "startSample": 808,
+      "xEnd": 310,
+      "xMid": 337,
+      "xStart": 366,
+      "yEnd": 334,
+      "yMid": 330,
+      "yStart": 320
+    }
+  ],
+  "segments": {
+    "colon": {
+      "inside": 203,
+      "pct": 86.38297872340426,
+      "samples": 235
+    },
+    "duodenum": {
+      "inside": 73,
+      "pct": 82.02247191011236,
+      "samples": 89
+    },
+    "mouth": {
+      "inside": 26,
+      "pct": 100,
+      "samples": 26
+    },
+    "oesophagus": {
+      "inside": 29,
+      "pct": 100,
+      "samples": 29
+    },
+    "rectum": {
+      "inside": 25,
+      "pct": 100,
+      "samples": 25
+    },
+    "small": {
+      "inside": 361,
+      "pct": 99.44903581267218,
+      "samples": 363
+    },
+    "stomach": {
+      "inside": 96,
+      "pct": 97.95918367346938,
+      "samples": 98
+    }
+  }
+}

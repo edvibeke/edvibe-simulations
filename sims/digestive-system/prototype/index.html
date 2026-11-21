@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digestive system — SVG art look prototype</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #050813;
+      color: #dbeafe;
+      font: 13px/1.4 system-ui, -apple-system, Segoe UI, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+    .bar {
+      width: 900px;
+      max-width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .bar strong { flex: 1; font-weight: 650; letter-spacing: .02em; }
+    button {
+      background: #12304a;
+      color: #a5f3fc;
+      border: 1px solid #22d3ee;
+      border-radius: 6px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+    button:hover { background: #17425f; }
+    #status { color: #94a3b8; min-width: 210px; text-align: right; }
+    #trace-ui {
+      width: 900px;
+      max-width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      border: 1px solid #1e3a5f;
+      border-radius: 6px;
+      background: #0b1226;
+      flex-wrap: wrap;
+    }
+    #trace-ui[hidden] { display: none; }
+    #trace-ui label { color: #94a3b8; }
+    #trace-ui select { background: #0f2036; color: #e0f2fe; border: 1px solid #334155; padding: 4px; border-radius: 4px; }
+    #trace-ui input[type=file] { color: #94a3b8; font-size: 11px; max-width: 190px; }
+    #trace-ui label.check { color: #cbd5e1; }
+    #trace-counts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+    #trace-counts span { color: #64748b; font-size: 11px; }
+    #trace-counts span.active { color: #a5f3fc; font-weight: 650; }
+    #trace-msg { flex-basis: 100%; color: #fbbf24; font-size: 11px; min-height: 15px; }
+    #trace-help { color: #64748b; font-size: 11px; flex-basis: 100%; }
+    canvas {
+      width: 900px;
+      height: 540px;
+      max-width: 100%;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      display: block;
+    }
+    pre { display: none; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <strong>SVG ART LOOK PROTOTYPE — local only, licence unverified</strong>
+    <button id="toggle" type="button">Show centreline</button>
+    <span id="status">loading…</span>
+  </div>
+  <div id="trace-ui" hidden>
+    <label for="segment">Segment</label>
+    <select id="segment">
+      <option value="oesophagus">oesophagus</option>
+      <option value="stomach">stomach</option>
+      <option value="duodenum">duodenum</option>
+      <option value="small">small intestine</option>
+      <option value="colon">colon</option>
+      <option value="rectum">rectum</option>
+    </select>
+    <button id="undo" type="button">Undo</button>
+    <button id="auto-centre" type="button">Auto-centre</button>
+    <button id="clear" type="button">Clear segment</button>
+    <button id="export" type="button">Export anchors.json</button>
+    <input id="import" type="file" accept="application/json,.json" />
+    <label class="check" for="reference"><input id="reference" type="checkbox" /> Show old reference</label>
+    <div id="trace-counts"></div>
+    <span id="trace-msg"></span>
+    <span id="trace-help">Click empty space to add · drag anchor to move · drag empty space to pan · wheel to zoom · Backspace to undo</span>
+  </div>
+  <canvas id="stage" width="900" height="540" aria-label="Digestive system SVG art prototype"></canvas>
+  <pre id="diag" hidden></pre>
+  <script src="anatomy-data.js"></script>
+  <script src="path-anchors.js"></script>
+  <script src="path-analysis.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
