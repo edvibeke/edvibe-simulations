@@ -1,0 +1,162 @@
+line  id                         tag               lumen  unsure
+----  --------------------------  ----------------  -----  ------
+ 149  rect4987                    oesophagus        yes    
+ 151  path2176                    liver             -      
+ 152  path2348                    liver             -      
+ 153  path4717                    gallbladder       -      
+ 154  rect7015                    gallbladder       -      
+ 155  path4743                    gallbladder       -      
+ 156  path7013                    gallbladder       -      
+ 157  rect7010                    gallbladder       -      
+ 158  rect6053                    gallbladder       -      
+ 159  path2174                    duodenum          yes    
+ 160  path2254                    liver_detail      -      YES
+ 161  path2256                    liver_detail      -      YES
+ 162  path2259                    liver_detail      -      YES
+ 163  path2261                    liver_detail      -      YES
+ 164  path2263                    liver_detail      -      YES
+ 165  path2265                    liver_detail      -      YES
+ 166  path2268                    liver_detail      -      YES
+ 167  path2271                    liver_detail      -      YES
+ 168  path2304                    liver_detail      -      YES
+ 169  path2346                    liver_detail      -      YES
+ 170  path2533                    liver_detail      -      YES
+ 171  path7189                    liver             -      
+ 172  path4622-7                  liver             -      
+ 173  path7192                    gallbladder       -      
+ 174  path4783                    gallbladder       -      
+ 175  rect3146                    liver_detail      -      YES
+ 176  rect3146-7                  liver_detail      -      YES
+ 177  path3954                    pancreas          -      
+ 178  path3954-6                  pancreas          -      
+ 179  path3954-0                  pancreas          -      
+ 180  path3954-2                  pancreas          -      
+ 181  path3954-05                 pancreas          -      
+ 182  path3954-8                  pancreas          -      
+ 183  path3954-8-2                pancreas          -      
+ 184  path3954-8-2-9              pancreas          -      
+ 185  path3954-05-1               pancreas          -      
+ 186  path3954-05-1-4             pancreas          -      
+ 187  path3954-05-1-4-5           pancreas          -      
+ 188  path3954-05-1-4-2           pancreas          -      
+ 189  path3954-05-1-4-1           pancreas          -      
+ 190  path3954-05-1-4-16          pancreas          -      
+ 191  path3954-05-1-4-16-8        pancreas          -      
+ 192  path3954-05-1-4-16-5        pancreas          -      
+ 193  path3954-05-1-4-16-5-7      pancreas          -      
+ 194  path3954-05-1-4-16-5-7-4    pancreas          -      
+ 195  rect4052                    liver_glow        -      
+ 196  rect4019                    duodenum          -      
+ 197  path3169                    duodenum          -      
+ 198  rect3958                    pancreas          -      
+ 199  rect3958-8-4                pancreas          -      
+ 200  rect3958-8                  pancreas          -      
+ 201  rect3997                    gallbladder       -      
+ 202  path4017                    gallbladder       -      
+ 203  rect3997-8                  gallbladder       -      
+ 204  path4017-0                  gallbladder       -      
+ 205  _223737152_1_               gallbladder       -      
+ 206  rect3998                    small             -      
+ 207  path6063                    stomach           yes    
+ 208  path6309                    stomach           -      
+ 209  path6047                    stomach           -      
+ 210  rect7359                    stomach_fundus    yes    YES
+ 211  path4972                    stomach           -      
+ 212  rect4556                    small             -      
+ 213  rect8590                    duodenum          -      
+ 214  path8607                    duodenum          -      
+ 215  path8609                    duodenum          -      
+ 216  path8630                    pancreas          -      
+ 217  path8632                    pancreas          -      
+ 218  path8634                    pancreas          -      
+ 220  path6525                    oesophagus        -      
+ 222  path126                     salivary          -      YES
+ 223  path145                     salivary          -      YES
+ 224  path147                     salivary          -      YES
+ 225  path182-9                   salivary          -      YES
+ 226  path184                     salivary          -      YES
+ 227  path186-4                   salivary          -      YES
+ 228  path188                     salivary          -      YES
+ 229  path192                     salivary          -      YES
+ 230  rect6444                    salivary          -      YES
+ 231  path6467                    salivary          -      YES
+ 232  path6469                    salivary          -      YES
+ 233  path6471                    salivary          -      YES
+ 234  rect6473                    salivary          -      YES
+ 235  rect6476                    salivary          -      YES
+ 236  rect5125                    salivary          -      YES
+ 237  rect5125-7                  salivary          -      YES
+ 238  path5162                    salivary          -      YES
+ 239  path5166                    salivary          -      YES
+ 240  path5215                    salivary          -      YES
+ 242  rect5328                    mouth             -      YES
+ 243  rect5251                    mouth             -      YES
+ 244  rect4800                    mouth             -      YES
+ 245  rect4802                    mouth             -      YES
+ 246  rect4806                    mouth             -      YES
+ 247  rect4808                    mouth             -      YES
+ 248  rect4797                    mouth             -      YES
+ 249  path128                     mouth             -      YES
+ 250  path130                     mouth             -      YES
+ 251  path143                     mouth             -      YES
+ 252  path6529                    mouth             -      YES
+ 253  path134                     mouth             -      YES
+ 254  path136                     mouth             -      YES
+ 255  path180                     mouth             -      YES
+ 256  path190                     mouth             -      YES
+ 257  path676                     mouth             -      YES
+ 258  path678                     mouth             -      YES
+ 259  path680                     mouth             -      YES
+ 260  path5183                    mouth             -      YES
+ 261  path4814                    mouth             -      YES
+ 262  rect4831                    mouth             -      YES
+ 263  rect4833                    mouth             -      YES
+ 264  rect4914                    mouth             -      YES
+ 265  path5085                    mouth             -      YES
+ 266  rect5101                    mouth             -      YES
+ 267  path5104                    mouth             -      YES
+ 268  rect5219                    mouth             -      YES
+ 269  rect5222                    mouth             -      YES
+ 270  path5225                    mouth             -      YES
+ 271  rect5227                    mouth             -      YES
+ 272  path5244                    mouth             -      YES
+ 273  rect5246                    mouth             -      YES
+ 274  path5249                    mouth             -      YES
+ 275  rect5325                    mouth             -      YES
+ 276  path164                     outline           -      YES
+ 277  path168                     outline           -      YES
+ 278  path172                     outline           -      YES
+ 279  rect10373                   outline           -      YES
+ 280  rect10376                   outline           -      YES
+ 281  path10680                   outline           -      YES
+ 282  path5249-7                  outline           -      YES
+ 283  path22855                   outline           -      YES
+ 284  path170                     outline           -      YES
+ 286  path10143                   colon             yes    
+ 287  path10145                   colon             yes    
+ 288  path10147                   colon             yes    
+ 289  path10149                   small             yes    
+ 290  path9836                    colon             -      
+ 291  path10151                   colon             yes    
+ 292  path10155                   colon             -      
+ 293  path10159                   colon             -      
+ 294  path10161                   colon             -      
+ 295  path10157                   colon             -      
+ 296  rect10067                   colon             -      
+ 297  rect10086                   colon             -      
+ 299  path10118                   annotation        -      YES
+ 300  rect11465                   annotation        -      YES
+ 302  path137                     teeth             -      YES
+ 303  path217                     teeth             -      YES
+ 304  path11042                   teeth             -      YES
+ 307  path213                     teeth             -      YES
+ 308  path215                     teeth             -      YES
+ 309  path11056                   teeth             -      YES
+ 312  path154                     teeth             -      YES
+ 313  path219                     teeth             -      YES
+ 314  rect11121                   teeth             -      YES
+ 315  use11138                    teeth             -      YES
+ 316  use11140                    teeth             -      YES
+ 317  use11142                    teeth             -      YES
+ 318  use11144                    teeth             -      YES
+ 319  path11164                   teeth             -      YES
