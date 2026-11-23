@@ -279,40 +279,31 @@
      what the rest of the file refers to, so the organ boundaries and
      the secretion trigger points cannot drift apart. */
   const ARC = {};
+  const ARC_ORDER = [
+    'mouth', 'oesophagus', 'cardia', 'stomach', 'pylorus', 'duodenum',
+    'flexure', 'jejunum', 'ileum', 'caecum', 'hepatic', 'transverse',
+    'splenic', 'descending', 'rectum'
+  ];
 
   (function findArcs() {
-    const at = (key) => {
-      if (key === 'mouth') ARC[key] = 20.445337601799142;
-      if (key === 'oesophagus') ARC[key] = 51.158475765998766;
-      if (key === 'cardia') ARC[key] = 130.0;
-      if (key === 'stomach') ARC[key] = 70.0;
-      if (key === 'pylorus') ARC[key] = 345.0;
-      if (key === 'duodenum') ARC[key] = 349.0493503585977;
-      if (key === 'flexure') ARC[key] = 451.3912064807437;
-      if (key === 'jejunum') ARC[key] = 482.0282687407831;
-      if (key === 'ileum') ARC[key] = 780.2816616460475;
-      if (key === 'caecum') ARC[key] = 1209.0296703106515;
-      if (key === 'hepatic') ARC[key] = 1329.5959387617472;
-      if (key === 'transverse') ARC[key] = 1406.3767615877732;
-      if (key === 'splenic') ARC[key] = 1483.0258655103014;
-      if (key === 'descending') ARC[key] = 1563.4619465556823;
-      if (key === 'rectum') ARC[key] = 1690.0;
-    };
-    at('mouth', 277.171, 289.466);
-    at('oesophagus', 297.1, 327.9);
-    at('cardia', 303.3, 409.4);
-    at('stomach', 382.8, 475.9);
-    at('pylorus', 287.2, 514.4);
-    at('duodenum', 243.9, 534.8);
-    at('flexure', 332.4, 596.3);
-    at('jejunum', 289.4, 597.4);
-    at('ileum', 388.3, 562.5);
-    at('caecum', 239.1, 669.1);
-    at('hepatic', 209.5, 547.9);
-    at('transverse', 311.0, 579.0);
-    at('splenic', 400.8, 526.5);
-    at('descending', 394.9, 638.1);
-    at('rectum', 297.7, 728.2);
+    if (!GEOM || !GEOM.ARC) {
+      throw new Error('ARC missing from generated geometry: load geometry.generated.js before script.js');
+    }
+    const missing = ARC_ORDER.filter((key) => !Number.isFinite(GEOM.ARC[key]));
+    if (missing.length) {
+      throw new Error('ARC missing from generated geometry: ' + missing.join(', '));
+    }
+    for (const key of ARC_ORDER) ARC[key] = GEOM.ARC[key];
+    for (let i = 1; i < ARC_ORDER.length; i++) {
+      const prev = ARC_ORDER[i - 1];
+      const next = ARC_ORDER[i];
+      if (!(ARC[prev] < ARC[next])) {
+        throw new Error(
+          'ARC values must strictly increase: ' + prev + '=' + ARC[prev] +
+          ' is not less than ' + next + '=' + ARC[next]
+        );
+      }
+    }
   })();
 
   /* Depth layers, back to front. The transverse colon crosses the
@@ -553,7 +544,7 @@
   const SPEED = [
     { s: 0, v: 53.44401183503034 },
     { s: ARC.oesophagus, v: 81.9415566895024 },
-    { s: ARC.stomach, v: 14.0 },
+    { s: ARC.stomach, v: 2.417133210617217 },
     { s: ARC.pylorus, v: 2.898670180683945 },
     { s: ARC.jejunum, v: 6.109120969524182 },
     { s: ARC.caecum, v: 0.8306012220305593 },
