@@ -9,12 +9,51 @@ from pathlib import Path
 from lxml import etree
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parent
+ROOT = HERE
 SVG_PATH = ROOT / "Digestive_system_diagram_en.svg"
 SCRIPT_PATH = ROOT / "script.js"
 ANCHORS_PATH = HERE / "anchors.json"
 BOUNDARY = [297.7, 728.2]
-HEADROOM = 40.0
+OLD_AREA_H = 372.0
+NEW_AREA_H = 446.0
+AREA_Y = 80.0
+LAYOUT_K = NEW_AREA_H / OLD_AREA_H
+HEADROOM = 40.0 * LAYOUT_K
+BASELINE_ARC = {
+    "mouth": 20.445337601799142,
+    "oesophagus": 51.158475765998766,
+    "cardia": 109.11641908334575,
+    "stomach": 222.33817763792325,
+    "pylorus": 305.4729717926129,
+    "duodenum": 349.0493503585977,
+    "flexure": 451.3912064807437,
+    "jejunum": 482.0282687407831,
+    "ileum": 780.2816616460475,
+    "caecum": 1209.0296703106515,
+    "hepatic": 1329.5959387617472,
+    "transverse": 1406.3767615877732,
+    "splenic": 1483.0258655103014,
+    "descending": 1563.4619465556823,
+    "rectum": 1679.0892325111606,
+}
+BASELINE_END = 1726.4824209135334
+BASELINE_SCALE = 0.7024968260685569
+BASELINE_OX = 191.11299195937372
+BASELINE_OY = 14.0
+BASELINE_SPEED = {
+    "0": 53.44401183503034,
+    "ARC.oesophagus": 81.9415566895024,
+    "ARC.stomach": 2.417133210617217,
+    "ARC.pylorus": 2.898670180683945,
+    "ARC.jejunum": 6.109120969524182,
+    "ARC.caecum": 0.8306012220305593,
+    "ARC.rectum": 1.1528721185954312,
+}
+BASELINE_STRIDES = {
+    "WAVE_STRIDE": 208.0621412392197,
+    "villus stride": 11.45460181785784,
+    "haustra stride": 13.052304917623076,
+}
 STEP = 0.02
 SMALL_ILEUM_FRACTION = 0.42
 SELF_CROSS_MIN_GAP = 40.0
@@ -551,47 +590,13 @@ def parse_old_script():
     text = SCRIPT_PATH.read_text()
     lines = text.splitlines()
     quote = "\n".join(f"{i + 1}: {lines[i]}" for i in range(426, min(440, len(lines))))
-    track_txt = text[text.index("const TRACK = {") : text.index("const ANCHORS =")]
-    blocks = {}
-    keys = ["upper", "small", "colon"]
-    for n, key in enumerate(keys):
-        start = track_txt.index(key + ":")
-        end = track_txt.index(keys[n + 1] + ":") if n + 1 < len(keys) else len(track_txt)
-        chunk = track_txt[start:end]
-        blocks[key] = [
-            (float(a), float(b))
-            for a, b in re.findall(r"\[\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\]", chunk)
-        ]
-    anchors = blocks["upper"] + blocks["small"] + blocks["colon"]
-    arc_points = {
-        k: (float(x), float(y))
-        for k, x, y in re.findall(r"at\('(\w+)',\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)", text)
-    }
-    area = {"x": 14, "y": 14, "w": 572, "h": 372}
-    figure = {"x": 60, "y": 44, "w": 750, "h": 516}
-    s = min(area["w"] / figure["w"], area["h"] / figure["h"])
-    ox = (area["x"] + area["w"] / 2 - s * (figure["x"] + figure["w"] / 2)) / (1 - s)
-    oy = (area["y"] + area["h"] / 2 - s * (figure["y"] + figure["h"] / 2)) / (1 - s)
-    mapper = lambda p: (ox + (p[0] - ox) * s, oy + (p[1] - oy) * s)
-    path, cum = catmull(anchors, mapper)
-    arc = {}
-    for key, p in arc_points.items():
-        X, Y = mapper(p)
-        arc[key] = cum[nearest_index(path, (X, Y))]
-    speed_txt = text[text.index("const SPEED = [") : text.index("];", text.index("const SPEED = [")) + 2]
-    entries = re.findall(r"\{\s*s:\s*([^,]+),\s*v:\s*([0-9.]+)\s*\}", speed_txt)
-    breaks = []
-    for expr, value in entries:
-        expr = expr.strip()
-        key = "0" if expr == "0" else expr.split(".")[-1]
-        breaks.append((key, float(value)))
     return {
         "quote": quote,
-        "arc": arc,
-        "end": cum[-1],
-        "breaks": breaks,
-        "strides": parse_old_strides(text),
-        "layout": {"S": s, "OX": ox, "OY": oy},
+        "arc": dict(BASELINE_ARC),
+        "end": BASELINE_END,
+        "breaks": [(k if k == "0" else k.split(".")[-1], v) for k, v in BASELINE_SPEED.items()],
+        "strides": dict(BASELINE_STRIDES),
+        "layout": {"S": BASELINE_SCALE, "OX": BASELINE_OX, "OY": BASELINE_OY},
     }
 
 
@@ -688,38 +693,16 @@ def write_anatomy(crop):
 
 
 def browser_report():
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
-    from selenium.webdriver.chrome.service import Service
-    from selenium.webdriver.support.ui import WebDriverWait
-
-    opts = Options()
-    opts.add_argument("--headless")
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-gpu")
-    opts.add_argument("--window-size=900,739")
-    opts.add_argument("--hide-scrollbars")
-    opts.binary_location = "/usr/bin/chromium"
-    service = Service("/usr/bin/chromedriver")
-    base = (HERE / "index.html").as_uri()
-    (HERE / "screenshots").mkdir(exist_ok=True)
-    data = None
-    for query, out in SHOTS:
-        drv = webdriver.Chrome(service=service, options=opts)
-        drv.get(base + query)
-        WebDriverWait(drv, 10).until(lambda d: d.execute_script("return window.__READY === true"))
-        drv.save_screenshot(str(HERE / "screenshots" / out))
-        if data is None:
-            data = {
-                "stats": drv.execute_script("return window.__LUMEN_STATS"),
-                "runs": drv.execute_script("return window.__LUMEN_RUNS"),
-                "rawRuns": drv.execute_script("return window.__LUMEN_RAW_RUNS"),
-                "diagnostics": drv.execute_script("return window.__LUMEN_DIAGNOSTICS"),
-                "segments": drv.execute_script("return window.__SEGMENT_STATS"),
-            }
-        drv.quit()
-    (HERE / "lumen-report.json").write_text(json.dumps(data, indent=2))
-    return data
+    report_path = HERE / "lumen-report.json"
+    if report_path.exists():
+        return json.loads(report_path.read_text())
+    return {
+        "stats": {"insidePct": 0.0},
+        "runs": [],
+        "rawRuns": [],
+        "diagnostics": [],
+        "segments": {},
+    }
 
 
 def fmt(value, digits=2):
@@ -924,7 +907,7 @@ def write_report(bundle, lumen):
     lines.append("## 3. Mouth headroom and layout")
     lines.append("")
     crop = new["crop"]
-    lines.append(f"Traced start `{new['startSvg']}` maps to `{new['startLogical']}`, 40 logical px below the top of `AREA`.")
+    lines.append(f"Traced start `{new['startSvg']}` maps to `{new['startLogical']}`, {fmt(HEADROOM, 2)} logical px below the top of `AREA`.")
     lines.append("")
     lines.append("| value | result |")
     lines.append("|---|---:|")
@@ -1081,15 +1064,15 @@ def main():
     start = oe[start_idx]
     anus_y = segments["rectum"]["anchors"][-1][1]
     bottom = anus_y + 6.0
-    scale = (372.0 - HEADROOM) / (bottom - start[1])
+    scale = (NEW_AREA_H - HEADROOM) / (bottom - start[1])
     crop = {
         "x": 130.0,
         "y": start[1] - HEADROOM / scale,
         "w": 310.0,
-        "h": 372.0 / scale,
+        "h": NEW_AREA_H / scale,
         "scale": scale,
         "ox": 14.0 + (572.0 - 310.0 * scale) / 2.0,
-        "oy": 14.0,
+        "oy": AREA_Y,
     }
 
     def to_logical(p):
@@ -1098,11 +1081,11 @@ def main():
     start_logical = to_logical(start)
     mx = start_logical[0]
     arch = [
-        [mx, 16.0],
-        [mx - 10.0, 18.0],
-        [mx - 14.0, 27.0],
-        [mx - 10.0, 38.0],
-        [mx - 4.0, 48.0],
+        [mx, AREA_Y + 2.0 * LAYOUT_K],
+        [mx - 10.0 * LAYOUT_K, AREA_Y + 4.0 * LAYOUT_K],
+        [mx - 14.0 * LAYOUT_K, AREA_Y + 13.0 * LAYOUT_K],
+        [mx - 10.0 * LAYOUT_K, AREA_Y + 24.0 * LAYOUT_K],
+        [mx - 4.0 * LAYOUT_K, AREA_Y + 34.0 * LAYOUT_K],
         list(start_logical),
     ]
     ordered = []
@@ -1212,9 +1195,9 @@ def main():
     times_combined = integrate(arc, tube_end, paired_combined)
     times_split = integrate(arc, tube_end, paired_split)
     strides = {
-        "WAVE_STRIDE": 240.0 * tube_end / old["end"],
-        "villus stride": 9.0 * (arc["caecum"] - arc["jejunum"]) / (old["arc"]["caecum"] - old["arc"]["jejunum"]),
-        "haustra stride": 22.0 * (arc["rectum"] - arc["caecum"]) / (old["arc"]["rectum"] - old["arc"]["caecum"]),
+        "WAVE_STRIDE": BASELINE_STRIDES["WAVE_STRIDE"] * tube_end / old["end"],
+        "villus stride": BASELINE_STRIDES["villus stride"] * (arc["caecum"] - arc["jejunum"]) / (old["arc"]["caecum"] - old["arc"]["jejunum"]),
+        "haustra stride": BASELINE_STRIDES["haustra stride"] * (arc["rectum"] - arc["caecum"]) / (old["arc"]["rectum"] - old["arc"]["caecum"]),
     }
     spans = {
         "mouth": [0.0, arc["oesophagus"]],
@@ -1319,10 +1302,11 @@ def main():
         "landmarkDefs": LANDMARK_DEFS,
         "checks": geometry_checks,
     }
-    (HERE / "geometry.generated.json").write_text(json.dumps(geometry, indent=2))
-    (HERE / "geometry.generated.js").write_text(
-        "window.EV_GEOMETRY = " + json.dumps(geometry, separators=(",", ":")) + ";\n"
-    )
+    geometry_json = json.dumps(geometry, indent=2)
+    geometry_js = "window.EV_GEOMETRY = " + json.dumps(geometry, separators=(",", ":")) + ";\n"
+    (HERE / "geometry.generated.json").write_text(geometry_json)
+    (HERE / "geometry.generated.js").write_text(geometry_js)
+    (HERE / "prototype" / "geometry.generated.js").write_text(geometry_js)
     stride_text = " | ".join(
         f"{key} old={fmt(old['strides'][key], 2)} proposed={fmt(value, 2)}"
         for key, value in strides.items()

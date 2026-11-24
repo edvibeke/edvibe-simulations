@@ -31,15 +31,14 @@
   const H = 540;
 
   const RAIL = { x: 600, y: 32, w: 284, h: 330 };
-  const FOOT = { x: 40, y: 400, w: 844, h: 128 };
 
   const MARGIN = 14;
   const AREA = {
-    x: MARGIN, y: MARGIN,
+    x: MARGIN, y: 80,
     w: RAIL.x - MARGIN * 2,
-    h: FOOT.y - MARGIN * 2
+    h: 446
   };
-  const FIGURE = { x: 191.1129919593737, y: 14, w: 310.0, h: 529.5397590361446 };
+  const FIGURE = { x: 169.45267315559317, y: 80, w: 310.0, h: 529.5397590361446 };
 
   const S = Math.min(AREA.w / FIGURE.w, AREA.h / FIGURE.h);
   const OX = (AREA.x + AREA.w / 2 - S * (FIGURE.x + FIGURE.w / 2)) / (1 - S);
@@ -273,7 +272,7 @@
     push(a[a.length - 1][0], a[a.length - 1][1]);
   })();
 
-  const TUBE_END = 1726.4824209135334;
+  const TUBE_END = 2069.9224723855814;
 
   /* Arclength of the landmark nearest each design point. The names are
      what the rest of the file refers to, so the organ boundaries and
@@ -454,6 +453,22 @@
   const waterValue    = document.getElementById('waterValue');
   const transitValue  = document.getElementById('transitValue');
 
+  const footerPct     = document.getElementById('footerPct');
+  const footerSurface = document.getElementById('footerSurface');
+  const footerAbsorbed = {
+    carb: document.getElementById('footerAbsCarb'),
+    protein: document.getElementById('footerAbsProtein'),
+    fat: document.getElementById('footerAbsFat')
+  };
+  const footerWater    = document.getElementById('footerWater');
+  const footerInsulin  = document.getElementById('footerInsulin');
+  const footerLeftover = document.getElementById('footerLeftover');
+  const footerSegments = {};
+  for (const n of NUTRIENTS) {
+    footerSegments[n.key] = document.getElementById('footerSeg' + n.key[0].toUpperCase() + n.key.slice(1));
+    if (footerSegments[n.key]) footerSegments[n.key].style.background = n.colour;
+  }
+
   /* ── State ──────────────────────────────────────────── */
 
   let peristalsis = 1;
@@ -542,13 +557,13 @@
 
   const MIN_PER_SEC = 46;
   const SPEED = [
-    { s: 0, v: 53.44401183503034 },
-    { s: ARC.oesophagus, v: 81.9415566895024 },
-    { s: ARC.stomach, v: 2.417133210617217 },
-    { s: ARC.pylorus, v: 2.898670180683945 },
-    { s: ARC.jejunum, v: 6.109120969524182 },
-    { s: ARC.caecum, v: 0.8306012220305593 },
-    { s: ARC.rectum, v: 1.1528721185954312 }
+    { s: 0, v: 64.07534752264388 },
+    { s: ARC.oesophagus, v: 98.24175882666144 },
+    { s: ARC.stomach, v: 2.8978340537883365 },
+    { s: ARC.pylorus, v: 3.4752873671640923 },
+    { s: ARC.jejunum, v: 7.324376216149951 },
+    { s: ARC.caecum, v: 0.9958283468430951 },
+    { s: ARC.rectum, v: 1.3822068948751376 }
   ];
 
   function speedAt(s) {
@@ -557,7 +572,7 @@
     return v;
   }
 
-  const WAVE_STRIDE = 208.0621412392197;
+  const WAVE_STRIDE = 249.45084675454848;
   const waveDrift = (s, t) => t * speedAt(s) * MIN_PER_SEC * 0.5;
 
   function waveIntensityAt(s, t) {
@@ -741,7 +756,7 @@
       let ds = waveIntensityAt(p.s, simSec) * speedAt(p.s) * peristalsis * dMin;
       if (p.s > ARC.stomach && p.s < ARC.pylorus) {
         const churn = Math.sin(simMin * 0.09 + p.phase) * 0.85 + 0.2;
-        ds = ds * 0.2 + churn * 1.3;
+        ds = ds * 0.2 + churn * 1.5586021505376353;
       }
       p.s += ds;
 
@@ -871,7 +886,7 @@
     const outer = gs(VILLUS_OUTER);
     const s0 = Math.max(L.s0, ARC.pylorus);
     const s1 = Math.min(L.s1, ARC.caecum);
-    for (let s = s0; s < s1; s += 11.45460181785784) {
+    for (let s = s0; s < s1; s += 13.733205405281158) {
       const p = sampleAt(s);
       const grow = 0.6 + 0.4 * Math.sin(s * 0.06 + t);
       const reach = inner + (outer - inner) * grow;
@@ -893,7 +908,7 @@
     const s1 = Math.min(L.s1, TUBE_END);
     c.strokeStyle = 'rgba(0,0,0,0.3)';
     c.lineWidth = 2.4;
-    for (let s = s0; s < s1; s += 13.052304917623076) {
+    for (let s = s0; s < s1; s += 15.648731164677208) {
       const p = sampleAt(s);
       const nx = -Math.sin(p.a), ny = Math.cos(p.a);
       for (const side of [-1, 1]) {
@@ -1854,7 +1869,6 @@
     }
     drawBadge();
     drawLegend();
-    drawFooter();
   }
 
   /* ── Readout ────────────────────────────────────────── */
@@ -1873,8 +1887,10 @@
         ? ORGAN_NAME[headOrgan]
         : (passed.length ? 'Eliminated' : 'No meal yet');
 
-    digestedValue.textContent = Math.round(pct * 100) + '%';
-    digestedValue.style.color = pct > 0.8 ? '#10b981' : pct > 0.5 ? '#facc15' : '#f87171';
+    const pctText = Math.round(pct * 100) + '%';
+    const pctColour = pct > 0.8 ? '#10b981' : pct > 0.5 ? '#facc15' : '#f87171';
+    digestedValue.textContent = pctText;
+    digestedValue.style.color = pctColour;
 
     energyValue.textContent = Math.round(
       absorbed.carb * KCAL.carb + absorbed.protein * KCAL.protein + absorbed.fat * KCAL.fat
@@ -1886,6 +1902,26 @@
 
     waterValue.textContent = Math.round(waterOut) + ' mL';
     transitValue.textContent = (simMin / 60).toFixed(1) + ' h';
+
+    footerPct.textContent = pctText;
+    footerPct.style.color = pctColour;
+    let barAt = 0;
+    for (const n of NUTRIENTS) {
+      const el = footerSegments[n.key];
+      if (!el) continue;
+      const width = mealG > 0 ? Math.min(dig[n.key], n.grams) / mealG * 100 : 0;
+      el.style.left = barAt + '%';
+      el.style.width = width + '%';
+      barAt += width;
+    }
+    footerSurface.textContent = '×' + chewFactor.toFixed(2);
+    footerAbsorbed.carb.textContent = absorbed.carb.toFixed(1) + ' g';
+    footerAbsorbed.protein.textContent = absorbed.protein.toFixed(1) + ' g';
+    footerAbsorbed.fat.textContent = absorbed.fat.toFixed(1) + ' g';
+    footerWater.textContent = Math.round(waterOut) + ' / ' + Math.round(waterIn) + ' mL';
+    footerInsulin.textContent = insulin.toFixed(1) + ' mU/L';
+    footerInsulin.style.color = insulin > 0.4 ? '#facc15' : '#64748b';
+    footerLeftover.textContent = passed.length ? leftover().toFixed(0) + ' g' : '—';
 
     if (interactions >= 8) EV.revealInsight();
   }
