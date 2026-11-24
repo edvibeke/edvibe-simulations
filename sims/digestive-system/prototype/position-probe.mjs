@@ -6,152 +6,199 @@ import { Chrome } from '../../../tools/cdp.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(process.argv[2] || path.join(HERE, '..', '..', '..'));
-const MODE = process.argv[3] || 'landmarks';
-const SUMMARY_FILE = path.join(HERE, 'landmark-positions.json');
+const CHEW = Number(process.argv[3] || 0);
+const OUT = path.join(HERE, `position-check-${CHEW}.json`);
 const clockSource = fs.readFileSync(path.join(HERE, 'timing-clock.js'), 'utf8');
+const routeDefaults = fs.readFileSync(path.join(HERE, 'route-defaults.js'), 'utf8');
 
 function patchedIndex() {
   const dir = path.join(ROOT, 'sims', 'digestive-system');
   let html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
   let js = fs.readFileSync(path.join(dir, 'script.js'), 'utf8');
   const probe = `
-  window.__posprobe = {
-    summary() {
-      return {
-        S: S,
-        TUBE_END: TUBE_END,
-        GEOM_TUBE_END: GEOM.TUBE_END,
-        cumLast: cum[cum.length - 1],
-        GEOM_cumLast: GEOM.cumulative[GEOM.cumulative.length - 1],
-        pathLength: cum[cum.length - 1],
-        pathPointCount: path.length,
-        firstPathPoint: path[0],
-        lastPathPoint: path[path.length - 1],
-        firstTruePathPoint: GEOM.pathPoints[0],
-        lastTruePathPoint: GEOM.pathPoints[GEOM.pathPoints.length - 1],
-        truePathPointCount: GEOM.pathPoints.length,
-        sampleAtTubeEnd: sampleAt(TUBE_END),
-        halfTubePx: gs(TUBE_W / 2),
-        mouthSpot: GEOM.markers['Mouth badge'],
-        landmarks: ARC_ORDER.map((key) => ({
-          key: key,
-          s: ARC[key],
-          sample: sampleAt(ARC[key]),
-          committed: { x: GEOM.landmarks[key].x, y: GEOM.landmarks[key].y }
-        }))
-      };
-    },
-    capture() {
-      window.__badgeSpot = null;
-      window.__badgeText = null;
-      const arcs = [];
-      const originalArc = ctx.arc;
-      ctx.arc = function (x, y, r) {
-        arcs.push({ x: x, y: y, r: r });
-        return originalArc.apply(this, arguments);
-      };
-      try {
-        render(EV.visualTime(performance.now()));
-      } finally {
-        ctx.arc = originalArc;
+  try {
+  window.__dotRoutes = DOT_ROUTES;
+  const baselineRoutes = {};
+  for (const name of ['portal', 'lymph', 'bile', 'pancreatic', 'papilla']) {
+    const source = window.ROUTE_DEFAULTS[name];
+    if (!source) throw new Error('baseline route missing: ' + name);
+    const points = source.map((p) => {
+      const q = Array.isArray(p) ? p : [p.x, p.y];
+      return [
+        GEOM.layout.ox + (q[0] - GEOM.layout.x) * GEOM.layout.scale,
+        GEOM.layout.oy + (q[1] - GEOM.layout.y) * GEOM.layout.scale
+      ];
+    });
+    baselineRoutes[name] = points;
+  }
+  function trimBaselineLymph(points, y) {
+    const out = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i], b = points[i + 1];
+      if (a[1] >= y) out.push([a[0], a[1]]);
+      if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1]) {
+        const f = (y - a[1]) / (b[1] - a[1]);
+        out.push([a[0] + (b[0] - a[0]) * f, y]);
+        break;
       }
-      const particlesNow = particles.map((p) => ({
-        type: p.type,
-        grams: p.grams,
-        s: p.s,
-        off: p.off,
-        phase: p.phase,
-        dig: p.dig
-      }));
-      return {
-        frame: window.__clock.frame,
-        virtualSeconds: window.__clock.ms / 1000,
-        headS: headS,
-        headSample: headS === null ? null : sampleAt(headS),
-        mouthHold: mouthHold,
-        badgeText: window.__badgeText,
-        badgeSpot: window.__badgeSpot,
-        badgeS: window.__badgeS,
-        readout: document.getElementById('whereValue').textContent,
-        tolerancePx: 0.6 * gs(TUBE_W / 2),
-        particles: particlesNow.map((p, i) => {
-          const drawn = arcs[i] || null;
-          const sample = sampleAt(p.s);
-          const inMouth = USE_SVG_ART && GEOM && GEOM.markers['feed first'] && GEOM.markers['feed last'] &&
-            mouthHold > 0 && p.s <= ARC.mouth;
-          const first = GEOM.markers['feed first'], last = GEOM.markers['feed last'];
-          const sp = inMouth
-            ? {
-                x: first.x + (last.x - first.x) * clamp((p.s - 2) / 16, 0, 1),
-                y: first.y + (last.y - first.y) * clamp((p.s - 2) / 16, 0, 1),
-                a: -Math.PI / 2
-              }
-            : sample;
-          const nx = -Math.sin(sp.a), ny = Math.cos(sp.a);
-          const churn = p.s > ARC.stomach && p.s < ARC.pylorus
-            ? Math.sin(simMin * 0.09 + p.phase) * gs(4)
-            : 0;
-          const shrink = 1 / Math.pow(chewFactor, 0.3);
-          const r = Math.max(1.2, gs(3.4 + p.grams * 0.13) * shrink);
-          return {
-            index: i,
-            type: p.type,
-            s: p.s,
-            organ: organAt(p.s),
-            off: p.off,
-            phase: p.phase,
-            churn: churn,
-            formula: { x: sp.x + nx * p.off, y: sp.y + ny * p.off + churn, r: r },
-            drawn: drawn ? { x: drawn.x, y: drawn.y } : null,
-            sample: { x: sample.x, y: sample.y, a: sample.a },
-            distancePx: drawn ? Math.hypot(drawn.x - sample.x, drawn.y - sample.y) : null,
-            nearestTruePathPx: drawn ? nearestTruePath(drawn.x, drawn.y) : null
-          };
-        })
-      };
-    },
-    runTrace(every) {
-      document.getElementById('feedBtn').click();
-      const readout = document.getElementById('whereValue');
-      const records = [];
-      for (let i = 0; i < 6000; i++) {
-        window.__clock.step();
-        if (window.__clock.frame % every === 0) records.push(window.__posprobe.capture());
-        if (readout.textContent === 'Eliminated') break;
-      }
-      return records;
     }
+    return out;
+  }
+  baselineRoutes.lymph = trimBaselineLymph(baselineRoutes.lymph, 40);
+  const maskCtx = document.createElement('canvas').getContext('2d');
+  const maskItems = (items) => items.map((item) => ({
+    id: item.id,
+    path: new Path2D(item.d),
+    m: item.m || [1, 0, 0, 1, 0, 0]
+  }));
+  const groupItems = (tag) => {
+    const group = GEOM.svgArt.find((g) => g.tag === tag);
+    return group ? maskItems(group.items) : [];
   };
-  function nearestTruePath(x, y) {
+  const masks = {
+    liver: groupItems('liver'),
+    bile: groupItems('liver_detail').filter((i) => i.id === 'path2533')
+      .concat(groupItems('gallbladder').filter((i) => i.id === '_223737152_1_'))
+      .concat(groupItems('duodenum')),
+    pancreatic: groupItems('pancreas').concat(groupItems('duodenum')),
+    small: Object.values(GEOM.tubePaths).flat()
+      .filter((item) => item.sourceTag === 'small intestine' || item.sourceTag === 'duodenum' || item.tag === 'small intestine' || item.tag === 'duodenum')
+      .map((item) => ({ id: item.id, path: new Path2D(item.d), m: item.m || [1, 0, 0, 1, 0, 0] }))
+      .concat(groupItems('small'))
+      .concat(groupItems('duodenum'))
+  };
+  function pointInMasks(items, p) {
+    for (const item of items) {
+      maskCtx.setTransform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
+      if (maskCtx.isPointInPath(item.path, p.x, p.y)) return true;
+    }
+    return false;
+  }
+  function pointNearMasks(items, p, tol) {
+    if (pointInMasks(items, p)) return true;
+    for (let i = 0; i < 16; i++) {
+      const a = i * Math.PI / 8;
+      if (pointInMasks(items, { x: p.x + Math.cos(a) * tol, y: p.y + Math.sin(a) * tol })) return true;
+    }
+    return false;
+  }
+  function routeDistance(points, p) {
     let best = Infinity;
-    for (const q of GEOM.pathPoints) {
-      const d = Math.hypot(q[0] - x, q[1] - y);
-      if (d < best) best = d;
+    for (let i = 1; i < points.length; i++) {
+      const a = points[i - 1], b = points[i];
+      const ax = a[0], ay = a[1], bx = b[0], by = b[1];
+      const dx = bx - ax, dy = by - ay;
+      const t = clamp(((p.x - ax) * dx + (p.y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
+      best = Math.min(best, Math.hypot(ax + dx * t - p.x, ay + dy * t - p.y));
     }
     return best;
+  }
+  window.__posprobe = {
+    check(chew) {
+      const events = window.__dotEvents || [];
+      const counts = {};
+      const offences = [];
+      for (const e of events) counts[e.kind] = (counts[e.kind] || 0) + 1;
+      const add = (kind, detail) => offences.push({ kind, detail });
+      for (const route of ['portal', 'lymph', 'bile', 'pancreatic']) {
+        (window.__dotRoutes[route] || []).forEach((p, i) => {
+          const d = routeDistance(baselineRoutes[route], { x: p[0], y: p[1] });
+          if (d > 3) add('traced-route', route + '[' + i + '] ' + d.toFixed(2) + 'px from baseline polyline');
+        });
+      }
+      const papilla = window.__dotRoutes.papilla;
+      const baselinePapilla = { x: baselineRoutes.papilla[0][0], y: baselineRoutes.papilla[0][1] };
+      if (!papilla || Math.hypot(papilla[0] - baselinePapilla.x, papilla[1] - baselinePapilla.y) > 4) {
+        add('papilla-route', 'papilla endpoint does not match baseline');
+      }
+      for (const kind of ['carb', 'protein', 'fat', 'bile', 'bicarbonate']) {
+        if (!counts[kind]) add('missing-dots', kind + ' emitted zero dots');
+      }
+      for (let n = 0; n < events.length; n++) {
+        const e = events[n];
+        const label = e.kind + '#' + n;
+        const points = [e.at(0), e.at(0.5), e.at(1)];
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          const where = ['start', 'middle', 'end'][i];
+          if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) {
+            add('bad-point', label + ' ' + where + ' is not finite');
+            continue;
+          }
+          if (e.kind === 'carb' || e.kind === 'protein' || e.kind === 'fat') {
+            const route = e.kind === 'fat' ? 'lymph' : 'portal';
+            if (e.route !== route) add('wrong-route', label + ' route=' + e.route + ' expected=' + route);
+            const d = routeDistance(baselineRoutes[route], p);
+            if (d > 3) {
+              add('route-distance', label + ' ' + where + ' ' + d.toFixed(2) + 'px from baseline ' + route);
+            }
+            if (i === 0 && !pointInMasks(masks.small, p)) {
+              add('start-outside-lumen', label + ' start x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2));
+            }
+            if (i === 2 && route === 'portal' && !pointNearMasks(masks.liver, p, 4)) {
+              add('portal-end', label + ' end x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2));
+            }
+            if (i === 2 && route === 'lymph' && (p.y < 40 || p.y > H || p.x < 0 || p.x > W)) {
+              add('lymph-end', label + ' end x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2));
+            }
+          } else {
+            const route = e.kind === 'bile' ? 'bile' : 'pancreatic';
+            if (e.route !== route) add('wrong-route', label + ' route=' + e.route + ' expected=' + route);
+            if (!pointNearMasks(masks[route], p, 4)) {
+              add('duct-offset', label + ' ' + where + ' x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2) + ' outside ' + route + ' art');
+            }
+            if (i === 2) {
+              const papilla = { x: baselineRoutes.papilla[0][0], y: baselineRoutes.papilla[0][1] };
+              const d = Math.hypot(p.x - papilla.x, p.y - papilla.y);
+              if (d > 4) add('papilla-end', label + ' end ' + d.toFixed(2) + 'px from papilla');
+            }
+          }
+        }
+      }
+      const routeSamples = {};
+      for (const route of ['portal', 'lymph', 'bile', 'pancreatic']) {
+        routeSamples[route] = window.__dotRoutes[route].map((p) =>
+          routeDistance(baselineRoutes[route], { x: p[0], y: p[1] }));
+      }
+      return {
+        chew: chew,
+        counts: counts,
+        routeSamples: routeSamples,
+        emitted: events.length,
+        offences: offences,
+        masks: {
+          liver: masks.liver.length,
+          bile: masks.bile.length,
+          pancreatic: masks.pancreatic.length,
+          small: masks.small.length
+        },
+        baseline: {
+          portal: baselineRoutes.portal.length,
+          lymph: baselineRoutes.lymph.length,
+          papilla: baselineRoutes.papilla[0]
+        }
+      };
+    }
+  };
+  } catch (error) {
+    window.__probeError = String(error && error.stack || error);
   }
   `;
   const end = js.lastIndexOf('})();');
   if (end < 0) throw new Error('cannot find IIFE end in script.js');
   js = js.slice(0, end) + probe + js.slice(end);
-  const spotLine = 'const spot = mouthSpot || sampleAt(s);';
-  if (!js.includes(spotLine)) throw new Error('cannot find badge spot line');
-  js = js.replace(spotLine, spotLine +
-    ' window.__badgeSpot = { x: spot.x, y: spot.y }; window.__badgeS = s;');
-  const textLine = 'ctx.fillText(text, x + w / 2, y);';
-  if (!js.includes(textLine)) throw new Error('cannot find badge text line');
-  js = js.replace(textLine, 'window.__badgeText = text; ' + textLine);
+  const hook = '<script>window.__dotEvents=[];window.__pageError=null;window.addEventListener("error",function(e){window.__pageError=e.message+" @"+e.lineno+":"+e.colno;});window.__EV_DOT_EMIT__=function(e){window.__dotEvents.push(e);};</script>';
   const tag = '<script src="script.js"></script>';
   if (!html.includes(tag)) throw new Error('cannot find script.js tag in index.html');
   html = html.replace(tag, '<script>\n' + js + '\n</script>');
-  html = html.replace('<head>', '<head>\n<script>\n' + clockSource + '\n</script>');
+  html = html.replace('<head>', '<head>\n<script>\n' + clockSource + '\n</script>\n<script>\n' + routeDefaults + '\n</script>\n' + hook);
   return html;
 }
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
+  '.css': 'text/css',
   '.jpg': 'image/jpeg',
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
@@ -183,83 +230,29 @@ try {
   await browser.goto(url);
   let ready = false;
   for (let i = 0; i < 25 && !ready; i++) {
-    ready = await browser.eval('return !!(window.__clock && window.__posprobe);');
+    ready = await browser.eval('return !!(window.__clock && window.__posprobe && window.ROUTE_DEFAULTS);');
     if (!ready) await new Promise((r) => setTimeout(r, 200));
   }
   if (!ready) {
-    const htmlStart = await browser.eval('return document.documentElement.outerHTML.slice(0, 400);');
-    throw new Error('virtual clock or position probe missing in page: ' + htmlStart);
+    const diag = await browser.eval('return JSON.stringify({ clock: typeof window.__clock, probe: typeof window.__posprobe, defaults: typeof window.ROUTE_DEFAULTS, events: typeof window.__dotEvents, readyState: document.readyState });');
+    const error = await browser.eval('return window.__probeError || window.__pageError || null;');
+    throw new Error('virtual clock or independent route oracle missing in page: ' + diag + ' error=' + error);
   }
-
-  if (MODE === 'landmarks' || MODE === 'trace') {
-    const summary = await browser.eval('return window.__posprobe.summary();');
-    fs.writeFileSync(SUMMARY_FILE, JSON.stringify(summary, null, 2));
-    console.log('CUM_SCRIPT=' + summary.cumLast.toFixed(6) +
-      ' PATH_POINTS=' + summary.pathPointCount +
-      ' GEOM_TUBE_END=' + summary.GEOM_TUBE_END +
-      ' SCRIPT_TUBE_END=' + summary.TUBE_END);
-    console.log('FIRST_PATH=' + JSON.stringify(summary.firstPathPoint) +
-      ' LAST_PATH=' + JSON.stringify(summary.lastPathPoint));
-    console.log('FIRST_TRUE=' + JSON.stringify(summary.firstTruePathPoint) +
-      ' LAST_TRUE=' + JSON.stringify(summary.lastTruePathPoint));
-    console.log('SAMPLE_AT_TUBE_END=' + JSON.stringify(summary.sampleAtTubeEnd));
-    console.log('landmark,s,sample_x,sample_y,committed_x,committed_y,dx,dy');
-    for (const l of summary.landmarks) {
-      const dx = l.sample.x - l.committed.x;
-      const dy = l.sample.y - l.committed.y;
-      console.log([l.key, l.s.toFixed(3), l.sample.x.toFixed(3), l.sample.y.toFixed(3),
-        l.committed.x.toFixed(3), l.committed.y.toFixed(3), dx.toFixed(3), dy.toFixed(3)].join(','));
+  const result = JSON.parse(await browser.eval(`
+    document.getElementById('feedBtn').click();
+    for (let i = 0; i < ${CHEW}; i++) document.getElementById('chewBtn').click();
+    const readout = document.getElementById('whereValue');
+    for (let i = 0; i < 6000; i++) {
+      window.__clock.step();
+      if (readout.textContent === 'Eliminated') break;
     }
-    const big = summary.landmarks.filter((l) =>
-      Math.abs(l.sample.x - l.committed.x) > 2 || Math.abs(l.sample.y - l.committed.y) > 2);
-    console.log('DIFF_GT_2PX=' + big.length + ':' + big.map((l) => l.key).join(','));
-  }
-
-  if (MODE === 'trace') {
-    const records = await browser.eval('return window.__posprobe.runTrace(30);');
-    fs.writeFileSync(path.join(HERE, 'position-trace.json'), JSON.stringify(records));
-    console.log('TRACE_FRAMES=' + records.length +
-      ' PARTICLES=' + records.reduce((n, r) => n + r.particles.length, 0));
-    console.log('FIRST_FRAME=' + JSON.stringify(records[0], null, 2));
-  }
-
-  if (MODE === 'screens') {
-    const trace = JSON.parse(fs.readFileSync(path.join(HERE, 'position-trace.json'), 'utf8'));
-    const screenSummary = JSON.parse(fs.readFileSync(SUMMARY_FILE, 'utf8'));
-    const arc = Object.fromEntries(screenSummary.landmarks.map((l) => [l.key, l.s]));
-    const stages = [
-      ['stomach', (s, f) => s > arc.stomach && s < arc.pylorus && /Stomach/.test(f.badgeText)],
-      ['duodenum', (s, f) => s > arc.pylorus && s < arc.jejunum && /Duodenum/.test(f.badgeText)],
-      ['small-intestine', (s, f) => s > arc.jejunum && s < arc.caecum && /Small intestine/.test(f.badgeText)],
-      ['ascending-colon', (s, f) => s > arc.caecum && s < arc.hepatic && /Large intestine/.test(f.badgeText)],
-      ['transverse-colon', (s, f) => s > arc.hepatic && s < arc.transverse && /Large intestine/.test(f.badgeText)],
-      ['rectum', (s, f) => s >= arc.rectum && /Rectum/.test(f.badgeText)]
-    ];
-    for (const [name, matches] of stages) {
-      const frame = trace.find((f) => matches(f.headS, f));
-      if (!frame) throw new Error('no sampled frame for ' + name);
-      await browser.goto(url + '?debug=1');
-      let readyScreen = false;
-      for (let i = 0; i < 25 && !readyScreen; i++) {
-        readyScreen = await browser.eval('return !!(window.__clock && window.__posprobe);');
-        if (!readyScreen) await new Promise((r) => setTimeout(r, 200));
-      }
-      if (!readyScreen) throw new Error('debug page not ready for ' + name);
-      const state = await browser.eval(`
-        document.getElementById('feedBtn').click();
-        for (let i = 0; i < ${frame.frame}; i++) window.__clock.step();
-        return JSON.stringify(window.__posprobe.capture());
-      `);
-      const info = JSON.parse(state);
-      const clip = await browser.eval(`
-        const r = document.getElementById('stage').getBoundingClientRect();
-        return JSON.stringify({ x: r.x, y: r.y, width: r.width, height: r.height, scale: 1 });
-      `);
-      const file = path.join(HERE, `debug-${name}-frame-${frame.frame}.png`);
-      await browser.screenshot(file, JSON.parse(clip));
-      console.log(`${name}: frame=${info.frame} headS=${info.headS.toFixed(2)} badge="${info.badgeText}" file=${path.basename(file)}`);
-    }
-  }
+    return JSON.stringify(window.__posprobe.check(${CHEW}));
+  `));
+  fs.writeFileSync(OUT, JSON.stringify(result, null, 2));
+  const kinds = Object.keys(result.counts).sort().map((k) => k + '=' + result.counts[k]).join(',');
+  console.log(`position-probe: chew=${CHEW} emitted=${result.emitted} counts=${kinds} offences=${result.offences.length}`);
+  for (const o of result.offences.slice(0, 12)) console.log(`FAIL [${o.kind}] ${o.detail}`);
+  if (result.offences.length) process.exitCode = 1;
 } catch (e) {
   console.error('POSITION PROBE ERROR: ' + (e && e.stack || e));
   process.exitCode = 1;

@@ -306,24 +306,49 @@
   /* ── Supporting anatomy, in design space ───────────── */
 
   const LIVER = { x: 262, y: 118, rx: 92, ry: 44, lobe: { x: 372, y: 136, rx: 46, ry: 26 } };
-  const GALLBLADDER = { x: 212, y: 174, rx: 12, ry: 9 };
-  const PANCREAS = { x: 470, y: 318, rx: 82, ry: 13, rot: -0.12 };
   const STOMACH_SHAPE = { cx: 560, cy: 244, rx: 68, ry: 48, rot: -0.42 };
 
-  /* Where the visible upper part of the descending duodenum sits, so the
-     bile and pancreatic ducts are drawn to it rather than to a coordinate
-     typed in here. The rest of the duodenum passes behind the transverse
-     colon, which is why the ducts stop at this point. */
-  const DUODENUM = { x: 424, y: 336 };
-  const PANCREATIC_HEAD = { x: 400, y: 322 };
+  const DOT_ROUTES = {};
+  const DOT_NECK_Y = 40;
 
-  /* The portal vein leaves the small intestine at the pancreatic head and
-     has to finish inside the liver, because that is the whole point of
-     drawing it: sugars and amino acids go to the liver first. */
-  const PORTAL = [[452, 336], [416, 300], [374, 266], [318, 228], [276, 192], [248, 152]];
-  /* The lymph duct climbs out of the villi, behind the stomach, and up
-     towards the left shoulder. */
-  const LYMPH = [[690, 440], [738, 362], [762, 292], [770, 212], [752, 140], [724, 104]];
+  function validRoutePoints(points) {
+    return Array.isArray(points) && points.length >= 2 && points.every((p) =>
+      Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+  }
+
+  function trimRouteAtCanvasY(points, y) {
+    const out = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i], b = points[i + 1];
+      if (a[1] >= y) out.push([a[0], a[1]]);
+      if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1]) {
+        const f = (y - a[1]) / (b[1] - a[1]);
+        out.push([a[0] + (b[0] - a[0]) * f, y]);
+        break;
+      }
+    }
+    if (!out.length) throw new Error('DOT route does not reach canvas y=' + y);
+    return out;
+  }
+
+  (function loadDotRoutes() {
+    const names = ['portal', 'lymph', 'bile', 'pancreatic'];
+    if (!GEOM || !GEOM.routes) {
+      throw new Error('DOT routes missing: load geometry.generated.js before script.js');
+    }
+    const missing = names.filter((name) => !validRoutePoints(GEOM.routes[name] && GEOM.routes[name].points));
+    if (missing.length) {
+      throw new Error('DOT routes missing or invalid: ' + missing.join(', '));
+    }
+    const bileEnd = GEOM.routes.bile.points[GEOM.routes.bile.points.length - 1];
+    const pancreaticEnd = GEOM.routes.pancreatic.points[GEOM.routes.pancreatic.points.length - 1];
+    if (Math.hypot(bileEnd[0] - pancreaticEnd[0], bileEnd[1] - pancreaticEnd[1]) > 0.01) {
+      throw new Error('DOT papilla missing: bile and pancreatic routes must share one endpoint');
+    }
+    for (const name of names) DOT_ROUTES[name] = GEOM.routes[name].points.map((p) => [p[0], p[1]]);
+    DOT_ROUTES.lymph = trimRouteAtCanvasY(DOT_ROUTES.lymph, DOT_NECK_Y);
+    DOT_ROUTES.papilla = [bileEnd[0], bileEnd[1]];
+  })();
 
   /* Villi are short enough that two neighbouring loops of bowel do not
      grow into each other. */
@@ -643,26 +668,36 @@
 
   /* ── Absorbed-nutrient packets ──────────────────────── */
 
+  function noteDot(kind, route, index, at) {
+    const hook = window.__EV_DOT_EMIT__;
+    if (typeof hook === 'function') hook({ kind: kind, route: route, index: index, at: at });
+  }
+
   function routePoint(route, t) {
-    const pts = route === 'lymph' ? LYMPH : PORTAL;
+    const pts = DOT_ROUTES[route] || DOT_ROUTES.portal;
     const span = pts.length - 1;
-    const seg = Math.min(span - 1, Math.floor(t * span));
-    const f = clamp(t * span - seg, 0, 1);
+    const u = clamp(t, 0, 1);
+    const seg = Math.min(span - 1, Math.floor(u * span));
+    const f = clamp(u * span - seg, 0, 1);
     return {
-      x: gx(pts[seg][0]) + (gx(pts[seg + 1][0]) - gx(pts[seg][0])) * f,
-      y: gy(pts[seg][1]) + (gy(pts[seg + 1][1]) - gy(pts[seg][1])) * f
+      x: pts[seg][0] + (pts[seg + 1][0] - pts[seg][0]) * f,
+      y: pts[seg][1] + (pts[seg + 1][1] - pts[seg][1]) * f
     };
   }
 
   function emitDot(type) {
     if (dots.length > 24) return;
-    dots.push({
+    const route = type === 'fat' ? 'lymph' : 'portal';
+    const d = {
+      type: type,
       t: 0,
       dur: 1.5 + rnd() * 0.5,
-      route: type === 'fat' ? 'lymph' : 'portal',
+      route: route,
       jx: (rnd() - 0.5) * 1.6,
       jy: (rnd() - 0.5) * 1.2
-    });
+    };
+    dots.push(d);
+    noteDot(type, route, dots.length - 1, (f) => routePoint(route, f));
   }
 
   /* ── One simulation step ────────────────────────────── */
@@ -1024,12 +1059,10 @@
     c.restore();
   }
 
-  /* Bile and pancreatic juice both arrive at the duodenum, so the ducts
-     are drawn to the duodenum's own coordinates rather than to numbers
-     typed in here. */
   function drawGlandsUpper(c = ctx) {
-    const gb = GALLBLADDER;
-    const du = DUODENUM;
+    const pts = DOT_ROUTES.bile.points;
+    const gb = { x: pts[3][0], y: pts[3][1], rx: 12, ry: 9 };
+    const pap = DOT_ROUTES.papilla;
     const bx0 = gx(gb.x - gb.rx);
     const by0 = gy(gb.y - gb.ry);
     const bx1 = gx(gb.x + gb.rx);
@@ -1073,14 +1106,23 @@
     c.strokeStyle = COL.bile;
     c.lineWidth = 2.6;
     c.beginPath();
-    c.moveTo(gx(gb.x - 4), gy(gb.y + 8));
-    c.quadraticCurveTo(gx(du.x + 30), gy(du.y - 40), gx(du.x + 6), gy(du.y - 2));
+    pts.forEach((p, i) => (i ? c.lineTo(p[0], p[1])
+      : c.moveTo(p[0], p[1])));
+    c.lineTo(pap[0], pap[1]);
     c.stroke();
   }
 
   function drawGlandsLower(c = ctx) {
-    const pa = PANCREAS;
-    const du = DUODENUM;
+    const pts = DOT_ROUTES.pancreatic.points;
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    const pa = {
+      x: (Math.min(...xs) + Math.max(...xs)) / 2 + 28,
+      y: (Math.min(...ys) + Math.max(...ys)) / 2,
+      rx: Math.max(30, (Math.max(...xs) - Math.min(...xs)) * 0.55),
+      ry: Math.max(10, (Math.max(...ys) - Math.min(...ys)) * 0.5),
+      rot: -0.12
+    };
+    const pap = DOT_ROUTES.papilla;
     const cos = Math.cos(pa.rot), sin = Math.sin(pa.rot);
     const at = (u, v) => ({
       x: gx(pa.x + u * pa.rx * cos - v * pa.ry * sin),
@@ -1128,29 +1170,32 @@
     c.strokeStyle = COL.pancreas;
     c.lineWidth = 2.2;
     c.beginPath();
-    c.moveTo(gx(PANCREATIC_HEAD.x), gy(PANCREATIC_HEAD.y));
-    c.quadraticCurveTo(gx(du.x + 2), gy(du.y - 26), gx(du.x + 2), gy(du.y - 6));
+    pts.forEach((p, i) => (i ? c.lineTo(p[0], p[1])
+      : c.moveTo(p[0], p[1])));
+    c.lineTo(pap[0], pap[1]);
     c.stroke();
   }
 
   function drawGlands(t) {
-    const gb = GALLBLADDER;
-    const du = DUODENUM;
     drawGlandsUpper(ctx);
     const flow = 0.15 + 0.85 * bileFlow;
     ctx.fillStyle = 'rgba(163,230,53,0.85)';
     for (let i = 0; i < 6; i++) {
       const u = (t * 0.3 * flow + i / 6) % 1;
+      const q = routePoint('bile', u);
+      noteSecretion('bile', 'bile', i, u);
       ctx.beginPath();
-      ctx.arc(gx(gb.x - 10 - u * 130), gy(gb.y + 14 + u * 156) + Math.sin(u * 7) * gs(4), 2.2, 0, Math.PI * 2);
+      ctx.arc(q.x, q.y + Math.sin(u * 7) * gs(1.5), 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
     drawGlandsLower(ctx);
     ctx.fillStyle = 'rgba(192,132,252,0.8)';
     for (let i = 0; i < 7; i++) {
       const u = (t * 0.26 + i / 7) % 1;
+      const q = routePoint('pancreatic', u);
+      noteSecretion('bicarbonate', 'pancreatic', i, u);
       ctx.beginPath();
-      ctx.arc(gx(du.x - 16 + u * 60), gy(du.y - 2) + Math.sin(u * 6 + i) * gs(8), 2.2, 0, Math.PI * 2);
+      ctx.arc(q.x, q.y + Math.sin(u * 6 + i) * gs(1.5), 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1162,12 +1207,12 @@
     c.strokeStyle = COL.portal;
     c.lineWidth = 3.4;
     c.beginPath();
-    PORTAL.forEach((p, i) => (i ? c.lineTo(gx(p[0]), gy(p[1])) : c.moveTo(gx(p[0]), gy(p[1]))));
+    DOT_ROUTES.portal.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])));
     c.stroke();
     c.strokeStyle = COL.lymph;
     c.lineWidth = 3;
     c.beginPath();
-    LYMPH.forEach((p, i) => (i ? c.lineTo(gx(p[0]), gy(p[1])) : c.moveTo(gx(p[0]), gy(p[1]))));
+    DOT_ROUTES.lymph.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])));
     c.stroke();
     c.globalAlpha = 1;
   }
@@ -1282,6 +1327,16 @@
     bile: secretionFill('rgba(163,230,53,0.9)', 'rgba(163,230,53,0.9)'),
     bicarbonate: secretionFill('rgba(192,132,252,0.9)', 'rgba(192,132,252,0.9)')
   };
+  const SECRETION_EMIT_STATE = { bile: {}, bicarbonate: {} };
+
+  function noteSecretion(kind, route, index, u) {
+    const state = SECRETION_EMIT_STATE[kind];
+    const previous = state[index];
+    if (previous === undefined || u < previous - 0.000001) {
+      noteDot(kind, route, index, (f) => routePoint(route, f));
+    }
+    state[index] = u;
+  }
 
   function drawDots() {
     ctx.save();
@@ -1297,25 +1352,18 @@
     ctx.globalAlpha = 1;
     if (USE_SVG_ART && GEOM && headS !== null && headS > ARC.pylorus && headS < ARC.caecum) {
       const secretions = [
-        {
-          fill: SECRETION_FILLS.bile,
-          from: { x: gx(GALLBLADDER.x - 10), y: gy(GALLBLADDER.y + 14) },
-          to: { x: gx(DUODENUM.x + 6), y: gy(DUODENUM.y - 2) }
-        },
-        {
-          fill: SECRETION_FILLS.bicarbonate,
-          from: { x: gx(DUODENUM.x - 16), y: gy(DUODENUM.y - 2) },
-          to: { x: gx(DUODENUM.x + 44), y: gy(DUODENUM.y - 2) }
-        }
+        { kind: 'bile', route: 'bile', fill: SECRETION_FILLS.bile },
+        { kind: 'bicarbonate', route: 'pancreatic', fill: SECRETION_FILLS.bicarbonate }
       ];
       for (const s of secretions) {
         ctx.fillStyle = s.fill;
-        for (const t of [0.32, 0.68]) {
+        [0.32, 0.68].forEach((u, i) => {
+          const q = routePoint(s.route, u);
+          noteSecretion(s.kind, s.route, i, u);
           ctx.beginPath();
-          ctx.arc(s.from.x + (s.to.x - s.from.x) * t, s.from.y + (s.to.y - s.from.y) * t,
-            2.2, 0, Math.PI * 2);
+          ctx.arc(q.x, q.y, 2.2, 0, Math.PI * 2);
           ctx.fill();
-        }
+        });
       }
     }
     ctx.restore();
@@ -1488,22 +1536,27 @@
     layers.liver = make(cacheRect(liverBox.x - 14, liverBox.y - 14,
       liverBox.x + liverBox.w + 14, liverBox.y + liverBox.h + 14),
       (c) => drawLiver(c));
-    layers.vessels = make(cachePoints(PORTAL.concat(LYMPH).map((p) => [gx(p[0]), gy(p[1])]), 6),
+    layers.vessels = make(cachePoints(DOT_ROUTES.portal.concat(DOT_ROUTES.lymph), 6),
       (c) => drawVessels(c));
-    const gb = GALLBLADDER, du = DUODENUM;
-    const gallPts = [
-      [gx(gb.x - gb.rx), gy(gb.y - gb.ry)], [gx(gb.x + gb.rx), gy(gb.y + gb.ry)],
-      [gx(gb.x - 4), gy(gb.y + 8)],
-      [gx(du.x + 30), gy(du.y - 40)], [gx(du.x + 6), gy(du.y - 2)]
-    ];
+    const bilePts = DOT_ROUTES.bile.points;
+    const gallPts = bilePts.concat([
+      [bilePts[3][0] - 12, bilePts[3][1] - 9],
+      [bilePts[3][0] + 12, bilePts[3][1] + 9]
+    ]);
     layers['glands-upper'] = make(cachePoints(gallPts, 12),
       (c) => drawGlandsUpper(c));
-    const pa = PANCREAS;
+    const pancreaticPts = DOT_ROUTES.pancreatic.points;
+    const paXs = pancreaticPts.map((p) => p[0]), paYs = pancreaticPts.map((p) => p[1]);
+    const pa = {
+      x: (Math.min(...paXs) + Math.max(...paXs)) / 2 + 28,
+      y: (Math.min(...paYs) + Math.max(...paYs)) / 2,
+      rx: Math.max(30, (Math.max(...paXs) - Math.min(...paXs)) * 0.55),
+      ry: Math.max(10, (Math.max(...paYs) - Math.min(...paYs)) * 0.5),
+      rot: -0.12
+    };
     layers['glands-lower'] = make(cacheUnion(cacheEllipse(pa.x, pa.y, pa.rx, pa.ry, pa.rot, 12),
-      cachePoints([
-        [gx(PANCREATIC_HEAD.x), gy(PANCREATIC_HEAD.y)],
-        [gx(du.x + 2), gy(du.y - 26)], [gx(du.x + 2), gy(du.y - 6)]
-      ], 4)), (c) => drawGlandsLower(c));
+      cachePoints(pancreaticPts, 4)),
+      (c) => drawGlandsLower(c));
     LABELS.forEach((l, i) => {
       layers['leader-' + i] = make(cachePoints([
         [gx(l.at[0]), gy(l.at[1])], [gx(l.to[0]), gy(l.to[1])]
@@ -2098,6 +2151,33 @@
     c.restore();
   }
 
+  function paintRouteGlow(c) {
+    if (!DOT_ROUTES.portal || !DOT_ROUTES.lymph) return;
+    c.save();
+    c.beginPath();
+    c.rect(0, DOT_NECK_Y, W, H - DOT_NECK_Y);
+    c.clip();
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    for (const route of ['portal', 'lymph']) {
+      const colour = COL[route];
+      c.strokeStyle = svgColour(colour, 0.16);
+      c.shadowColor = svgColour(colour, 0.22);
+      c.shadowBlur = 8;
+      c.lineWidth = 4;
+      c.beginPath();
+      DOT_ROUTES[route].forEach((p, i) => (i
+        ? c.lineTo(p[0], p[1])
+        : c.moveTo(p[0], p[1])));
+      c.stroke();
+      c.shadowBlur = 0;
+      c.strokeStyle = svgColour(colour, 0.72);
+      c.lineWidth = 1.5;
+      c.stroke();
+    }
+    c.restore();
+  }
+
   function buildSvgCache() {
     const scale = staticCacheScale();
     const canvas = document.createElement('canvas');
@@ -2106,6 +2186,7 @@
     const c = canvas.getContext('2d');
     c.setTransform(scale, 0, 0, scale, 0, 0);
     paintSvgArt(c);
+    paintRouteGlow(c);
     SVG_ART.cache = canvas;
     SVG_ART.scale = scale;
   }
