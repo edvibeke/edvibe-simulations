@@ -1753,7 +1753,31 @@
     return passed.reduce((a, p) => a + p.grams * (1 - p.dig * 0.65), 0);
   }
 
-  const SVG_ART = { groups: null, arch: null };
+  const SVG_ART = { groups: null, arch: null, cache: null, scale: 0, measure: null };
+
+  const SVG_PALETTE = {
+    oesophagus: { fill: 'rgba(255,122,89,.24)', stroke: '#ff9a7a', glow: 'rgba(255,90,60,.16)', blur: 8 },
+    stomach: { fill: 'rgba(220,20,60,.42)', stroke: '#dc143c', glow: 'rgba(220,20,60,.26)', blur: 13 },
+    stomach_fundus: { fill: 'rgba(255,110,140,.62)', stroke: '#ff789e', glow: 'rgba(255,90,130,.22)', blur: 12 },
+    liver: { fill: 'rgba(255,69,35,.62)', stroke: '#ff451f', glow: 'rgba(255,69,35,.30)', blur: 14 },
+    liver_detail: { fill: 'rgba(255,89,40,.28)', stroke: '#ff5928', glow: 'rgba(255,89,40,.16)', blur: 6 },
+    liver_glow: { fill: 'rgba(255,120,60,.22)', stroke: '#ff7840', glow: 'rgba(255,120,60,.16)', blur: 8 },
+    gallbladder: { fill: 'rgba(57,255,20,.55)', stroke: '#39ff14', glow: 'rgba(57,255,20,.28)', blur: 14 },
+    pancreas: { fill: 'rgba(255,0,255,.46)', stroke: '#ff3dff', glow: 'rgba(255,0,255,.26)', blur: 14 },
+    duodenum: { fill: 'rgba(255,145,45,.44)', stroke: '#ff9a3d', glow: 'rgba(255,140,50,.22)', blur: 11 },
+    small: { fill: 'rgba(255,92,78,.55)', stroke: '#ff6f61', glow: 'rgba(255,80,70,.26)', blur: 14, inner: 'rgba(255,190,175,.22)' },
+    colon: { fill: 'rgba(216,192,240,.16)', stroke: '#d8c0f0', glow: 'rgba(196,162,235,.14)', blur: 9 },
+    colon_detail: { fill: 'rgba(216,192,240,.12)', stroke: '#d8c0f0', glow: 'rgba(196,162,235,.12)', blur: 6 },
+    outline: { fill: 'rgba(103,232,249,.04)', stroke: 'rgba(103,232,249,.16)', glow: 'rgba(34,211,238,.10)', blur: 6 },
+    detail: { fill: 'rgba(148,163,184,.14)', stroke: '#94a3b8', glow: 'rgba(148,163,184,.10)', blur: 6 }
+  };
+
+  const SVG_HIDDEN_TAGS = new Set(['annotation', 'salivary', 'teeth', 'mouth']);
+  const SVG_DRAW_ORDER = [
+    'outline', 'oesophagus', 'duodenum', 'colon', 'liver_glow',
+    'liver_detail', 'liver', 'pancreas', 'gallbladder', 'small',
+    'stomach_fundus', 'stomach', 'detail'
+  ];
 
   function svgColour(hex, alpha) {
     const v = hex.replace('#', '');
@@ -1761,18 +1785,60 @@
     return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + alpha + ')';
   }
 
+  function svgMeasureNode() {
+    if (SVG_ART.measure) return SVG_ART.measure;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.style.position = 'absolute';
+    svg.style.left = '-9999px';
+    const path = document.createElementNS(ns, 'path');
+    svg.appendChild(path);
+    document.body.appendChild(svg);
+    SVG_ART.measure = { svg, path };
+    return SVG_ART.measure;
+  }
+
+  function svgItemBox(item) {
+    const measure = svgMeasureNode();
+    measure.path.setAttribute('d', item.d);
+    const box = measure.path.getBBox();
+    const m = item.m;
+    let minY = Infinity, maxY = -Infinity;
+    for (const x of [box.x, box.x + box.width]) {
+      for (const y of [box.y, box.y + box.height]) {
+        const Y = m[1] * x + m[3] * y + m[5];
+        if (Y < minY) minY = Y;
+        if (Y > maxY) maxY = Y;
+      }
+    }
+    return { minY, maxY };
+  }
+
   function svgArtGroups() {
     if (SVG_ART.groups) return SVG_ART.groups;
     if (!GEOM || !GEOM.svgArt) return [];
     SVG_ART.groups = GEOM.svgArt.map((group) => ({
       tag: group.tag,
-      items: group.items.map((item) => ({
-        m: item.m,
-        fill: item.fill,
-        stroke: item.stroke,
-        strokeWidth: item.strokeWidth,
-        path: new Path2D(item.d)
-      }))
+      items: group.items
+        .filter((item) => {
+          if (SVG_HIDDEN_TAGS.has(group.tag)) return false;
+          const box = svgItemBox(item);
+          return box.maxY > 100;
+        })
+        .map((item) => {
+          const box = svgItemBox(item);
+          return {
+            m: item.m,
+            fill: item.fill,
+            stroke: item.stroke,
+            strokeWidth: item.strokeWidth,
+            minY: box.minY,
+            maxY: box.maxY,
+            path: new Path2D(item.d)
+          };
+        })
     }));
     return SVG_ART.groups;
   }
@@ -1793,39 +1859,83 @@
     return p;
   }
 
-  function drawSvgArt() {
+  function svgOutlineGradient(c, stroke) {
+    const g = c.createLinearGradient(0, 60, 0, 100);
+    g.addColorStop(0, 'rgba(103,232,249,0)');
+    g.addColorStop(1, stroke ? 'rgba(103,232,249,0.16)' : 'rgba(103,232,249,0.04)');
+    return g;
+  }
+
+  function paintSvgArt(c) {
     if (!GEOM) return;
-    ctx.save();
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    for (const group of svgArtGroups()) {
-      const flat = group.tag === 'outline' || group.tag === 'annotation' || group.tag === 'detail';
-      const fillAlpha = flat ? 0.07 : group.tag === 'teeth' ? 0.36 : 0.26;
-      const strokeAlpha = flat ? 0.22 : 0.62;
-      const blur = flat ? 0 : 7;
-      for (const item of group.items) {
-        ctx.save();
-        ctx.transform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
-        ctx.fillStyle = 'rgba(15,23,42,' + (fillAlpha + 0.34) + ')';
-        ctx.fill(item.path);
-        ctx.shadowColor = svgColour(item.stroke, 0.75);
-        ctx.shadowBlur = blur;
-        ctx.strokeStyle = svgColour(item.stroke, strokeAlpha);
-        ctx.lineWidth = Math.max(0.7, item.strokeWidth);
-        ctx.stroke(item.path);
-        ctx.restore();
+    c.save();
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    const groups = new Map(svgArtGroups().map((group) => [group.tag, group]));
+    for (const tag of SVG_DRAW_ORDER) {
+      const group = groups.get(tag);
+      if (!group || !group.items.length) continue;
+      const style = SVG_PALETTE[tag] || (tag === 'rectum' ? SVG_PALETTE.colon : SVG_PALETTE.detail);
+      c.save();
+      if (tag === 'outline') {
+        c.beginPath();
+        c.rect(0, 60, W, H - 60);
+        c.clip();
       }
+      for (const item of group.items) {
+        c.save();
+        c.transform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
+        if (item.fill !== 'none') {
+          c.shadowColor = style.glow;
+          c.shadowBlur = clamp(style.blur, 6, 14);
+          c.fillStyle = tag === 'outline' ? svgOutlineGradient(c, false) : style.fill;
+          c.fill(item.path);
+          if (style.inner) {
+            c.shadowBlur = 8;
+            c.fillStyle = style.inner;
+            c.fill(item.path);
+          }
+        }
+        c.shadowBlur = 0;
+        c.strokeStyle = tag === 'outline' ? svgOutlineGradient(c, true) : style.stroke;
+        c.lineWidth = Math.max(0.9, item.strokeWidth || 1);
+        c.stroke(item.path);
+        c.restore();
+      }
+      c.restore();
     }
-    ctx.save();
-    ctx.fillStyle = 'rgba(15,23,42,0.86)';
-    ctx.shadowColor = svgColour(ART_COLOURS.mouth, 0.7);
-    ctx.shadowBlur = 8;
-    ctx.strokeStyle = svgColour(ART_COLOURS.mouth, 0.68);
-    ctx.lineWidth = 2.2;
-    ctx.fill(svgArchPath());
-    ctx.stroke(svgArchPath());
-    ctx.restore();
-    ctx.restore();
+    c.save();
+    c.fillStyle = 'rgba(15,23,42,0.86)';
+    c.shadowColor = svgColour(ART_COLOURS.mouth, 0.7);
+    c.shadowBlur = 8;
+    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.68);
+    c.lineWidth = 2.2;
+    c.fill(svgArchPath());
+    c.stroke(svgArchPath());
+    c.restore();
+    c.restore();
+  }
+
+  function buildSvgCache() {
+    const scale = staticCacheScale();
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
+    const c = canvas.getContext('2d');
+    c.setTransform(scale, 0, 0, scale, 0, 0);
+    paintSvgArt(c);
+    SVG_ART.cache = canvas;
+    SVG_ART.scale = scale;
+  }
+
+  function ensureSvgCache() {
+    if (!USE_SVG_ART || !GEOM) return;
+    if (SVG_ART.cache && SVG_ART.scale === staticCacheScale()) return;
+    buildSvgCache();
+  }
+
+  function blitSvgArt() {
+    if (SVG_ART.cache) ctx.drawImage(SVG_ART.cache, 0, 0, W, H);
   }
 
   const ART_COLOURS = { mouth: '#f9bb9d' };
@@ -1835,7 +1945,7 @@
   function render(t) {
     ctx.clearRect(0, 0, W, H);
     if (USE_SVG_ART && GEOM) {
-      drawSvgArt();
+      blitSvgArt();
       LAYERS.forEach((L) => {
         drawVilli(L, t * 1.3);
         drawCapillaries(L);
@@ -2048,6 +2158,7 @@
 
   stage.onPaint = () => {
     ensureStaticCache();
+    ensureSvgCache();
     render(EV.visualTime(performance.now()));
     syncReadout();
   };
