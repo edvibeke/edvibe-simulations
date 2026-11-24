@@ -19,6 +19,7 @@
   const traceMode = query.get('mode') === 'trace';
   let overlay = query.get('overlay') === '1';
   const labelsVisible = query.get('labels') !== '0';
+  const cleanTrace = query.get('clean') === '1';
 
   const VIEWS = {
     full: { label: 'FULL VIEW — recoloured SVG base art', rect: null },
@@ -632,8 +633,9 @@
   }
 
   const TRACE_SEGMENTS = ['oesophagus', 'stomach', 'duodenum', 'small', 'colon', 'rectum'];
-  const ROUTE_SEGMENTS = ['portal', 'lymph'];
-  const ALL_SEGMENTS = TRACE_SEGMENTS.concat(ROUTE_SEGMENTS);
+  const ROUTE_SEGMENTS = ['portal', 'lymph', 'bile', 'pancreatic'];
+  const PAPILLA_SEGMENT = 'papilla';
+  const ALL_SEGMENTS = TRACE_SEGMENTS.concat(ROUTE_SEGMENTS, [PAPILLA_SEGMENT]);
   const TRACE_ORGAN = {
     oesophagus: 'oesophagus', stomach: 'stomach', duodenum: 'duodenum',
     small: 'small', colon: 'colon', rectum: 'rectum'
@@ -641,22 +643,34 @@
   const SEGMENT_LABELS = {
     oesophagus: 'oesophagus', stomach: 'stomach', duodenum: 'duodenum',
     small: 'small intestine', colon: 'colon', rectum: 'rectum',
-    portal: 'portal vein', lymph: 'lymph duct'
+    portal: 'portal vein', lymph: 'lymph duct',
+    bile: 'bile duct', pancreatic: 'pancreatic duct', papilla: 'papilla'
   };
-  const STORAGE_KEY = 'digestive-svg-trace-v4';
+  const SEGMENT_HINTS = {
+    oesophagus: 'mouth → stomach',
+    stomach: 'cardia → fundus → pylorus',
+    duodenum: 'pylorus → flexure → jejunum',
+    small: 'jejunum → ileum → caecum',
+    colon: 'caecum → transverse → sigmoid',
+    rectum: 'sigmoid → rectum',
+    portal: 'portal vein: middle small-intestine mass → behind stomach → liver hilum',
+    lymph: 'lymph duct: small-intestine mass → beside oesophagus → base of neck inside canvas',
+    bile: 'bile duct: liver hilum → gallbladder junction → papilla on descending duodenum',
+    pancreatic: 'pancreatic duct: tail → papilla',
+    papilla: 'papilla: drag the single point onto the descending duodenum at the duct junction'
+  };
+  const ROUTE_COLOURS = {
+    portal: 'rgba(96,165,250,.95)',
+    lymph: 'rgba(252,211,77,.95)',
+    bile: 'rgba(163,230,53,.95)',
+    pancreatic: 'rgba(232,121,249,.95)',
+    papilla: 'rgba(248,250,252,.95)'
+  };
+  const STORAGE_KEY = 'digestive-svg-trace-v5';
 
   function emptyTrace() {
     const out = {};
     ALL_SEGMENTS.forEach(function (s) { out[s] = []; });
-    return out;
-  }
-
-  function defaultTrace() {
-    const out = emptyTrace();
-    ROUTE_SEGMENTS.forEach(function (seg) {
-      const src = window.ROUTE_DEFAULTS && window.ROUTE_DEFAULTS[seg];
-      out[seg] = cleanAnchors(src);
-    });
     return out;
   }
 
@@ -693,12 +707,9 @@
 
   function loadState() {
     const fallback = {
-      anchors: JSON.parse(JSON.stringify(PATH_ANCHORS.segments)),
+      anchors: emptyTrace(),
       activeSegment: 'oesophagus'
     };
-    ROUTE_SEGMENTS.forEach(function (seg) {
-      fallback.anchors[seg] = cleanAnchors(window.ROUTE_DEFAULTS && window.ROUTE_DEFAULTS[seg]);
-    });
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return fallback;
@@ -711,6 +722,9 @@
         const value = Array.isArray(routes[seg]) ? routes[seg] : src[seg];
         anchors[seg] = cleanAnchors(value);
       });
+      anchors[PAPILLA_SEGMENT] = cleanAnchors(
+        Array.isArray(routes[PAPILLA_SEGMENT]) ? routes[PAPILLA_SEGMENT] : src[PAPILLA_SEGMENT]
+      );
       syncChains(anchors);
       const active = ALL_SEGMENTS.indexOf(saved.activeSegment) >= 0 ? saved.activeSegment : 'oesophagus';
       return { anchors: anchors, activeSegment: active };
@@ -735,7 +749,7 @@
   function saveTrace() {
     try {
       const routes = {};
-      ROUTE_SEGMENTS.forEach(function (seg) { routes[seg] = traceAnchors[seg]; });
+      ROUTE_SEGMENTS.concat([PAPILLA_SEGMENT]).forEach(function (seg) { routes[seg] = traceAnchors[seg]; });
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         segments: traceAnchors,
         routes: routes,
@@ -771,6 +785,24 @@
     syncChains(traceAnchors);
     saveTrace();
     setMessage('Cleared ' + SEGMENT_LABELS[activeSegment] + '.');
+    render();
+  }
+
+  function loadSuggestion() {
+    const seg = activeSegment;
+    const src = window.ROUTE_DEFAULTS && window.ROUTE_DEFAULTS[seg];
+    const pts = cleanAnchors(src);
+    if (!pts.length || TRACE_SEGMENTS.indexOf(seg) >= 0) {
+      setMessage('No suggestion available for ' + SEGMENT_LABELS[seg] + '.');
+      render();
+      return;
+    }
+    if (seg === PAPILLA_SEGMENT && pts.length > 1) pts.length = 1;
+    pushUndo();
+    traceAnchors[seg] = pts;
+    syncChains(traceAnchors);
+    saveTrace();
+    setMessage('Loaded suggestion for ' + SEGMENT_LABELS[seg] + '.');
     render();
   }
 
@@ -828,6 +860,11 @@
     });
 
     segmentSelect.value = activeSegment;
+    const help = document.getElementById('trace-help');
+    if (help) {
+      help.textContent = 'Click empty space to add · drag anchor to move · drag empty space to pan · wheel to zoom · Backspace to undo · ' +
+        (SEGMENT_HINTS[activeSegment] || '');
+    }
   }
 
   function traceCurve(seg) {
@@ -859,7 +896,7 @@
         length: curve.total
       };
     });
-    ROUTE_SEGMENTS.forEach(function (seg) {
+    ROUTE_SEGMENTS.concat([PAPILLA_SEGMENT]).forEach(function (seg) {
       out[seg] = {
         samples: [],
         inside: 0,
@@ -984,8 +1021,8 @@
 
   function autoCentreSegment() {
     const seg = activeSegment;
-    if (ROUTE_SEGMENTS.indexOf(seg) >= 0) {
-      setMessage('Auto-centre is not available for free routes.');
+    if (ROUTE_SEGMENTS.indexOf(seg) >= 0 || seg === PAPILLA_SEGMENT) {
+      setMessage('Auto-centre is not available for free routes or the papilla point.');
       render();
       return;
     }
@@ -1050,12 +1087,50 @@
     ctx.stroke();
   }
 
+  function drawReferenceCentreline() {
+    TRACE_SEGMENTS.forEach(function (seg) {
+      drawTraceCurve(referenceCurve(seg), 'rgba(148,163,184,.20)', 1);
+    });
+  }
+
+  function drawFlowArrow(seg) {
+    const pts = traceAnchors[seg].map(function (p) {
+      const lp = logical(p[0], p[1]);
+      return { x: lp[0], y: lp[1] };
+    });
+    if (pts.length < 2) return;
+    const end = pts[pts.length - 1];
+    const prev = pts[pts.length - 2];
+    const dx = end.x - prev.x, dy = end.y - prev.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 0.001) return;
+    const ux = dx / len, uy = dy / len;
+    const size = 6 / traceView.s;
+    const colour = ROUTE_COLOURS[seg] || '#e2e8f0';
+    ctx.save();
+    ctx.strokeStyle = colour;
+    ctx.fillStyle = colour;
+    ctx.lineWidth = 1.6 / traceView.s;
+    ctx.beginPath();
+    ctx.moveTo(end.x - ux * size * 1.8, end.y - uy * size * 1.8);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(end.x - ux * size - uy * size * 0.6, end.y - uy * size + ux * size * 0.6);
+    ctx.lineTo(end.x - ux * size + uy * size * 0.6, end.y - uy * size - ux * size * 0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
   function drawTraceSamples(seg, data) {
     const ss = data.samples;
     ctx.lineWidth = 2.2 / traceView.s;
     ctx.lineCap = 'round';
     if (data.free) {
-      drawTraceCurve(traceCurve(seg), seg === 'portal' ? 'rgba(96,165,250,.95)' : 'rgba(252,211,77,.95)', 3);
+      drawTraceCurve(traceCurve(seg), ROUTE_COLOURS[seg] || 'rgba(226,232,240,.95)', 3);
+      if (seg !== PAPILLA_SEGMENT) drawFlowArrow(seg);
     } else {
       for (let i = 1; i < ss.length; i++) {
         const a = ss[i - 1], b = ss[i];
@@ -1066,13 +1141,24 @@
         ctx.stroke();
       }
     }
-    const r = 4 / traceView.s;
+    const isPapilla = seg === PAPILLA_SEGMENT;
+    const r = (isPapilla ? 6 : 4) / traceView.s;
     traceAnchors[seg].forEach(function (p, i) {
       const lp = logical(p[0], p[1]);
-      ctx.fillStyle = i === traceAnchors[seg].length - 1 ? '#fbbf24' : '#a5f3fc';
       ctx.beginPath();
       ctx.arc(lp[0], lp[1], r, 0, Math.PI * 2);
-      ctx.fill();
+      if (isPapilla) {
+        ctx.fillStyle = '#f8fafc';
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2 / traceView.s;
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = data.free
+          ? (ROUTE_COLOURS[seg] || '#e2e8f0')
+          : (i === traceAnchors[seg].length - 1 ? '#fbbf24' : '#a5f3fc');
+        ctx.fill();
+      }
     });
   }
 
@@ -1081,7 +1167,8 @@
     backdrop();
     drawTraceArt();
     setTraceTransform();
-    if (showReference) {
+    if (!cleanTrace) drawReferenceCentreline();
+    if (showReference && !cleanTrace) {
       ctx.save();
       ctx.setLineDash([5 / traceView.s, 4 / traceView.s]);
       TRACE_SEGMENTS.forEach(function (seg) {
@@ -1091,25 +1178,42 @@
     }
     ALL_SEGMENTS.forEach(function (seg) {
       if (seg === activeSegment) return;
-      drawTraceCurve(traceCurve(seg), 'rgba(148,163,184,.22)', 1.5);
+      if (cleanTrace && TRACE_SEGMENTS.indexOf(seg) >= 0) return;
+      drawTraceCurve(traceCurve(seg), ROUTE_COLOURS[seg] || 'rgba(148,163,184,.22)', 1.5);
     });
+    if (activeSegment !== PAPILLA_SEGMENT && traceAnchors[PAPILLA_SEGMENT].length) {
+      const lp = logical(traceAnchors[PAPILLA_SEGMENT][0][0], traceAnchors[PAPILLA_SEGMENT][0][1]);
+      ctx.beginPath();
+      ctx.arc(lp[0], lp[1], 6 / traceView.s, 0, Math.PI * 2);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2 / traceView.s;
+      ctx.stroke();
+    }
     drawTraceSamples(activeSegment, data[activeSegment]);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.font = '600 12px system-ui, sans-serif';
-    ctx.fillStyle = '#e0f2fe';
-    const autoText = lastAutoCentre
-      ? ' | auto-centre ' + lastAutoCentre.before.toFixed(1) + '% → ' + lastAutoCentre.after.toFixed(1) + '%'
-      : '';
-    const scoreText = data[activeSegment].free
-      ? 'free route'
-      : (data[activeSegment].pct === null ? 'n/a' : data[activeSegment].pct.toFixed(1) + '% inside lumen');
-    ctx.fillText('TRACE EDITOR — ' + SEGMENT_LABELS[activeSegment] + ' — ' + scoreText + autoText, 16, 20);
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText('click add · drag anchor · drag pan · wheel zoom · Backspace undo', 16, 36);
+    if (!cleanTrace) {
+      ctx.font = '600 12px system-ui, sans-serif';
+      ctx.fillStyle = '#e0f2fe';
+      const autoText = lastAutoCentre
+        ? ' | auto-centre ' + lastAutoCentre.before.toFixed(1) + '% → ' + lastAutoCentre.after.toFixed(1) + '%'
+        : '';
+      const scoreText = activeSegment === PAPILLA_SEGMENT
+        ? 'single point'
+        : (data[activeSegment].free
+          ? 'free route'
+          : (data[activeSegment].pct === null ? 'n/a' : data[activeSegment].pct.toFixed(1) + '% inside lumen'));
+      ctx.fillText('TRACE EDITOR — ' + SEGMENT_LABELS[activeSegment] + ' — ' + scoreText + autoText, 16, 20);
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(SEGMENT_HINTS[activeSegment] || '', 16, 36);
+    }
     updateTraceUI(data);
     window.__TRACE_MESSAGE = lastMessage;
     window.__TRACE_REFERENCE = REFERENCE_ANCHORS;
+    window.__TRACE_HINT = SEGMENT_HINTS[activeSegment] || '';
+    window.__TRACE_SUGGESTIONS = window.ROUTE_DEFAULTS || {};
     window.__SHOW_REFERENCE = showReference;
     statusEl.textContent = 'anchors=' + traceAnchors[activeSegment].length +
       '  zoom=' + traceView.s.toFixed(2) + '  undo=' + undoStack.length;
@@ -1149,8 +1253,11 @@
       }
     });
     ROUTE_SEGMENTS.forEach(function (seg) {
-      if (traceAnchors[seg].length < 2) problems.push(SEGMENT_LABELS[seg] + ': ' + traceAnchors[seg].length + ' anchors');
+      if (traceAnchors[seg].length < 3) problems.push(SEGMENT_LABELS[seg] + ': ' + traceAnchors[seg].length + ' anchors');
     });
+    if (traceAnchors[PAPILLA_SEGMENT].length !== 1) {
+      problems.push(SEGMENT_LABELS[PAPILLA_SEGMENT] + ': ' + traceAnchors[PAPILLA_SEGMENT].length + ' anchors');
+    }
     if (problems.length) {
       window.__TRACE_EXPORT_BLOCK = problems;
       setMessage('Export blocked — ' + problems.join('; '));
@@ -1168,7 +1275,7 @@
         samples: data[seg].samples.length
       };
     });
-    ROUTE_SEGMENTS.forEach(function (seg) {
+    ROUTE_SEGMENTS.concat([PAPILLA_SEGMENT]).forEach(function (seg) {
       out.routes[seg] = traceAnchors[seg].map(function (p) {
         return [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10];
       });
@@ -1182,7 +1289,7 @@
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    setMessage('Exported anchors.json for six segments and two free routes.');
+    setMessage('Exported anchors.json for six gut segments, four free routes and the papilla.');
     render();
   }
 
@@ -1199,6 +1306,9 @@
       const raw = Array.isArray(routes[seg]) ? routes[seg] : src[seg];
       next[seg] = cleanAnchors(raw);
     });
+    next[PAPILLA_SEGMENT] = cleanAnchors(
+      Array.isArray(routes[PAPILLA_SEGMENT]) ? routes[PAPILLA_SEGMENT] : src[PAPILLA_SEGMENT]
+    );
     syncChains(next);
     pushUndo();
     traceAnchors = next;
@@ -1246,7 +1356,8 @@
       const lp = screenToLogical(p);
       const sp = svgFromLogical(lp.x, lp.y);
       pushUndo();
-      traceAnchors[activeSegment].push([sp[0], sp[1]]);
+      if (activeSegment === PAPILLA_SEGMENT) traceAnchors[activeSegment][0] = [sp[0], sp[1]];
+      else traceAnchors[activeSegment].push([sp[0], sp[1]]);
       syncChains(traceAnchors);
       saveTrace();
     }
@@ -1288,6 +1399,7 @@
     document.getElementById('undo').addEventListener('click', undo);
     document.getElementById('auto-centre').addEventListener('click', autoCentreSegment);
     document.getElementById('clear').addEventListener('click', clearSegment);
+    document.getElementById('suggest').addEventListener('click', loadSuggestion);
     document.getElementById('reference').addEventListener('change', function (e) {
       showReference = e.target.checked;
       render();
@@ -1349,6 +1461,7 @@
   window.__TRACE_ANCHORS = traceAnchors;
   window.__TRACE_DATA = traceData();
   window.__TRACE_VIEW = traceView;
+  window.__TRACE_RENDER = render;
   window.__READY = true;
   diagEl.textContent =
     'OFFCANVAS_ANCHORS=' + JSON.stringify(offCanvasAnchors) + '\n' +

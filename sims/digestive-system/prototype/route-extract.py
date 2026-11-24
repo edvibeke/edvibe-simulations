@@ -39,6 +39,30 @@ LYMPH_SVG = [
     [288.6, 430.1], [292.9, 405.2], [295.0, 380.0], [300.0, 340.0],
     [299.0, 300.0], [288.0, 246.8], [295.0, 209.1], [303.2, 183.2],
 ]
+PAPILLA_SVG = [316.2, 576.7]
+SUGGESTIONS = {
+    "bile": [
+        [258.4, 412.2], [252.0, 430.0], [247.0, 452.0], [249.4, 481.7],
+        [264.0, 492.0], [282.4, 501.0], [292.0, 520.0], [302.0, 540.0],
+        [310.0, 558.0], PAPILLA_SVG,
+    ],
+    "pancreatic": [
+        [380.4, 507.5], [370.0, 513.0], [356.0, 522.0], [342.0, 534.0],
+        [333.0, 543.0], [326.0, 553.0], [322.0, 563.0], [319.0, 570.0],
+        [317.5, 574.0], PAPILLA_SVG,
+    ],
+    "portal": [
+        [322.1, 596.4], [315.3, 582.0], [284.6, 596.5], [251.3, 586.4],
+        [231.9, 557.4], [233.4, 522.4], [255.3, 496.3], [288.1, 501.6],
+        [320.7, 502.4], [313.2, 469.9],
+    ],
+    "lymph": [
+        [338.5, 588.0], [314.5, 548.7], [300.1, 504.4], [291.5, 458.8],
+        [291.6, 412.6], [296.7, 366.3], [299.5, 319.9], [293.6, 273.9],
+        [291.5, 228.2], [303.2, 183.2],
+    ],
+    "papilla": [PAPILLA_SVG],
+}
 
 
 def parse_transform(value):
@@ -301,7 +325,7 @@ def build():
     }
     payload = {
         "routes": routes,
-        "points": {"liver": liver, "papilla": papilla, "gallbladderCentre": [270.0, 257.5]},
+        "points": {"liver": liver, "papilla": PAPILLA_SVG, "gallbladderCentre": [270.0, 257.5]},
         "sources": {
             "bile": [BILE_ID],
             "cystic": [GALL_ID, "path7192", "path4783"],
@@ -314,11 +338,12 @@ def build():
             "cystic and gallbladder centre is a hand-sampled centre through the filled gallbladder body _223737152_1_; the SVG stores a filled outline, not a clean centreline",
             "pancreatic main trunk is chained from the inkscape:original-d guide strokes of the path3954 family; several branch gaps are reconstructed by straight joins",
             "portal and lymph are free routes traced from the path6309 mesenteric veins and the rect4987/path6525 oesophageal field",
+            "editable suggestions are simplified to at most ten anchors, keep every gap under 60 SVG units, and snap bile and pancreatic to the duodenal papilla",
         ],
+        "suggestions": SUGGESTIONS,
     }
     OUT_PATH.write_text(json.dumps(payload, indent=2) + "\n")
-    defaults = {"portal": PORTAL_SVG, "lymph": LYMPH_SVG}
-    DEFAULTS_PATH.write_text("window.ROUTE_DEFAULTS = " + json.dumps(defaults, separators=(",", ":")) + ";\n")
+    DEFAULTS_PATH.write_text("window.ROUTE_DEFAULTS = " + json.dumps(SUGGESTIONS, separators=(",", ":")) + ";\n")
     draw_overlay(routes, payload["points"])
     return payload
 

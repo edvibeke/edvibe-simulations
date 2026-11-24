@@ -283,6 +283,30 @@ def part_tag(line):
     return "detail"
 
 
+def svg_viewbox():
+    root = etree.parse(str(SVG_PATH)).getroot()
+    values = [float(value) for value in root.get("viewBox").replace(",", " ").split()]
+    if len(values) != 4:
+        raise ValueError("SVG viewBox is not a rectangle")
+    return values
+
+
+def point_segment_distance(point, a, b):
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length_sq = dx * dx + dy * dy
+    if length_sq == 0:
+        return math.dist(point, a)
+    t = ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length_sq
+    t = max(0.0, min(1.0, t))
+    return math.dist(point, (a[0] + t * dx, a[1] + t * dy))
+
+
+def polyline_distance(point, points):
+    if len(points) == 1:
+        return math.dist(point, points[0])
+    return min(point_segment_distance(point, points[i], points[i + 1]) for i in range(len(points) - 1))
+
+
 def route_polyline(points, mapper=None):
     out = []
     for point in points:
@@ -305,29 +329,51 @@ def route_polyline(points, mapper=None):
 
 def load_routes(mapper):
     route_anchors = {}
-    extracted = {}
     if ROUTE_ANCHORS_PATH.exists():
-        route_anchors = json.loads(ROUTE_ANCHORS_PATH.read_text()).get("routes", {})
-    if EXTRACTED_ROUTES_PATH.exists():
-        extracted = json.loads(EXTRACTED_ROUTES_PATH.read_text()).get("routes", {})
-    sources = {
-        "portal": route_anchors.get("portal"),
-        "lymph": route_anchors.get("lymph"),
-        "bile": extracted.get("bile"),
-        "pancreatic": extracted.get("pancreatic"),
-    }
+        route_anchors = json.loads(ROUTE_ANCHORS_PATH.read_text())
+    sources = route_anchors.get("routes", {})
+    viewbox = svg_viewbox()
+    min_x, min_y, max_x, max_y = viewbox[0], viewbox[1], viewbox[0] + viewbox[2], viewbox[1] + viewbox[3]
     routes = {}
     failures = []
     for name in ROUTE_NAMES:
         points = sources.get(name)
-        if not isinstance(points, list) or len(points) < 2:
-            failures.append("FAIL route missing: " + name)
+        if not isinstance(points, list) or len(points) < 3:
+            failures.append("FAIL route missing: " + name + " needs at least 3 anchors")
             continue
         try:
-            converted = None if name in ("bile", "pancreatic") else mapper
-            routes[name] = route_polyline(points, converted)
+            parsed = []
+            for point in points:
+                if not isinstance(point, (list, tuple)) or len(point) < 2:
+                    raise ValueError("point is not a pair")
+                x, y = number(point[0]), number(point[1])
+                if not math.isfinite(x) or not math.isfinite(y):
+                    raise ValueError("point is not finite")
+                if not (min_x <= x <= max_x and min_y <= y <= max_y):
+                    raise ValueError("point outside canvas")
+                parsed.append([x, y])
+            longest = max(math.dist(parsed[i], parsed[i + 1]) for i in range(len(parsed) - 1))
+            if longest > 60:
+                failures.append(f"FAIL route gap: {name} has a {longest:.2f} SVG unit gap over 60")
+                continue
+            routes[name] = route_polyline(parsed, mapper)
         except (TypeError, ValueError) as error:
             failures.append("FAIL route invalid: " + name + " (" + str(error) + ")")
+    papilla = sources.get("papilla")
+    if not isinstance(papilla, list) or len(papilla) != 1:
+        failures.append("FAIL papilla: expected exactly 1 anchor")
+    else:
+        try:
+            px, py = number(papilla[0][0]), number(papilla[0][1])
+            if not (min_x <= px <= max_x and min_y <= py <= max_y):
+                failures.append("FAIL papilla: point outside canvas")
+            else:
+                centreline = route_anchors["segments"]["duodenum"]["anchors"]
+                distance = polyline_distance((px, py), centreline)
+                if distance > 12:
+                    failures.append(f"FAIL papilla: {distance:.2f} SVG units from duodenum centreline over 12")
+        except (TypeError, ValueError, KeyError, IndexError) as error:
+            failures.append("FAIL papilla invalid: " + str(error))
     return routes, failures
 
 
