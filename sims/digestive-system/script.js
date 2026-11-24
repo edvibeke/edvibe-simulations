@@ -6,6 +6,7 @@
      Canvas2D path remains the default. Enable with ?renderer=webgl or
      localStorage.evRenderer='webgl'. */
   const _params = new URLSearchParams(location.search);
+  const DEBUG = _params.get('debug') === '1';
   const RENDERER = (_params.get('renderer') || localStorage.getItem('evRenderer') || 'canvas2d').toLowerCase();
   const USE_WEBGL = RENDERER === 'webgl' || RENDERER === 'three' || RENDERER === '3d';
   const USE_SVG_ART = true;
@@ -235,42 +236,9 @@
     ]
   };
 
-  const ANCHORS = TRACK.upper.concat(TRACK.small, TRACK.colon);
+  const path = GEOM.pathPoints.map((p) => ({ x: p[0], y: p[1] }));
+  const cum = GEOM.cumulative.slice();
 
-  const path = [];
-  const cum = [];
-
-  (function buildPath() {
-    const a = ANCHORS;
-    let total = 0;
-    const push = (dx, dy) => {
-      const x = gx(dx), y = gy(dy);
-      if (path.length) {
-        const prev = path[path.length - 1];
-        total += Math.hypot(x - prev.x, y - prev.y);
-      }
-      path.push({ x: x, y: y });
-      cum.push(total);
-    };
-    for (let i = 0; i < a.length - 1; i++) {
-      const p0 = a[Math.max(0, i - 1)];
-      const p1 = a[i];
-      const p2 = a[i + 1];
-      const p3 = a[Math.min(a.length - 1, i + 2)];
-      for (let j = 0; j < 9; j++) {
-        const t = j / 9, t2 = t * t, t3 = t2 * t;
-        push(
-          0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t +
-                 (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
-                 (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
-          0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t +
-                 (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
-                 (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
-        );
-      }
-    }
-    push(a[a.length - 1][0], a[a.length - 1][1]);
-  })();
 
   const TUBE_END = 2069.9224723855814;
 
@@ -1265,8 +1233,9 @@
           }
         : sampleAt(p.s);
       const nx = -Math.sin(sp.a), ny = Math.cos(sp.a);
+      const churnLimit = Math.max(0, gs(6) - Math.abs(p.off));
       const churn = p.s > ARC.stomach && p.s < ARC.pylorus
-        ? Math.sin(simMin * 0.09 + p.phase) * gs(4)
+        ? clamp(Math.sin(simMin * 0.09 + p.phase) * gs(4), -churnLimit, churnLimit)
         : 0;
       const r = gs(3.4 + p.grams * 0.13) * shrink;
       ctx.globalAlpha = 1 - 0.65 * p.dig;
@@ -1563,6 +1532,41 @@
     ctx.stroke();
     ctx.fillStyle = '#e2e8f0';
     ctx.fillText(text, x + w / 2, y);
+    return spot;
+  }
+
+  function drawDebug(spot) {
+    if (!DEBUG || !GEOM) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(56,189,248,0.9)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < GEOM.pathPoints.length; i++) {
+      const q = GEOM.pathPoints[i];
+      if (i) ctx.lineTo(q[0], q[1]);
+      else ctx.moveTo(q[0], q[1]);
+    }
+    ctx.stroke();
+    ctx.font = '700 9px ui-monospace, monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (const p of particles) {
+      const q = sampleAt(p.s);
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, gs(6), 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(250,204,21,0.95)';
+      ctx.stroke();
+      ctx.fillStyle = '#fde68a';
+      ctx.fillText(p.s.toFixed(0), q.x + 8, q.y - 8);
+    }
+    if (spot) {
+      ctx.beginPath();
+      ctx.arc(spot.x, spot.y, 4, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(244,114,182,0.95)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   /* ── Panels ──────────────────────────────────────────────
@@ -1977,7 +1981,8 @@
         for (const l of VESSEL_LABELS) label(l.text, gx(l.at[0]), gy(l.at[1]), l.colour);
       }
     }
-    drawBadge();
+    const badgeSpot = drawBadge();
+    drawDebug(badgeSpot);
     drawLegend();
   }
 
