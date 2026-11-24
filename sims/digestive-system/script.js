@@ -660,8 +660,8 @@
       t: 0,
       dur: 1.5 + rnd() * 0.5,
       route: type === 'fat' ? 'lymph' : 'portal',
-      jx: (rnd() - 0.5) * gs(14),
-      jy: (rnd() - 0.5) * gs(10)
+      jx: (rnd() - 0.5) * 1.6,
+      jy: (rnd() - 0.5) * 1.2
     });
   }
 
@@ -1219,7 +1219,7 @@
     }
   }
 
-  function drawParticles() {
+  function drawParticles(t) {
     const shrink = 1 / Math.pow(chewFactor, 0.3);
     const first = GEOM && GEOM.markers['feed first'];
     const last = GEOM && GEOM.markers['feed last'];
@@ -1248,9 +1248,43 @@
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
+    if (mouthHold > 0 && first && last) {
+      const wave = Math.sin(t * Math.PI * 4);
+      const extraCount = clamp(Math.round(6 + (chewFactor - 1) * 9), 6, 24);
+      const each = 18 / extraCount;
+      const radius = Math.max(1.2, gs(3.4 + each * 0.13) * shrink * 0.75);
+      for (let i = 0; i < extraCount; i++) {
+        const u = (i + 0.5) / extraCount;
+        const x = first.x + (last.x - first.x) * u + Math.sin(i * 2.7) * 4 + wave * 2;
+        const y = first.y + (last.y - first.y) * u + Math.cos(i * 1.9) * 2 + wave * 1.2;
+        ctx.globalAlpha = 0.9 - 0.3 * ((i % 4) / 4);
+        ctx.fillStyle = NUTRIENTS[i % NUTRIENTS.length].colour;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(15,23,42,0.35)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
   }
 
+  function secretionFill(colour, marker) {
+    const g = ctx.createLinearGradient(0, 0, 1, 0);
+    g.addColorStop(0, colour);
+    g.addColorStop(1, colour);
+    g.toString = () => marker;
+    return g;
+  }
+
+  const SECRETION_FILLS = {
+    bile: secretionFill('rgba(163,230,53,0.9)', 'rgba(163,230,53,0.9)'),
+    bicarbonate: secretionFill('rgba(192,132,252,0.9)', 'rgba(192,132,252,0.9)')
+  };
+
   function drawDots() {
+    ctx.save();
     for (const d of dots) {
       const q = routePoint(d.route, d.t);
       const fade = 1 - d.t * d.t;
@@ -1261,6 +1295,30 @@
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+    if (USE_SVG_ART && GEOM && headS !== null && headS > ARC.pylorus && headS < ARC.caecum) {
+      const secretions = [
+        {
+          fill: SECRETION_FILLS.bile,
+          from: { x: gx(GALLBLADDER.x - 10), y: gy(GALLBLADDER.y + 14) },
+          to: { x: gx(DUODENUM.x + 6), y: gy(DUODENUM.y - 2) }
+        },
+        {
+          fill: SECRETION_FILLS.bicarbonate,
+          from: { x: gx(DUODENUM.x - 16), y: gy(DUODENUM.y - 2) },
+          to: { x: gx(DUODENUM.x + 44), y: gy(DUODENUM.y - 2) }
+        }
+      ];
+      for (const s of secretions) {
+        ctx.fillStyle = s.fill;
+        for (const t of [0.32, 0.68]) {
+          ctx.beginPath();
+          ctx.arc(s.from.x + (s.to.x - s.from.x) * t, s.from.y + (s.to.y - s.from.y) * t,
+            2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
   }
 
   const GLOW = {
@@ -1517,22 +1575,72 @@
         ? 'In the mouth — chewing, amylase at work'
         : 'Swallowing — the bolus is on its way down')
       : ORGAN_NAME[headOrgan] + ' · pH ' + phAt(s).toFixed(1);
+    const sub = mouthHold > 0 ? 'smaller pieces = more surface for enzymes' : '';
     ctx.font = '700 11px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const w = ctx.measureText(text).width + 20;
+    const w = Math.max(ctx.measureText(text).width, sub ? ctx.measureText(sub).width : 0) + 20;
     const x = clamp(spot.x - w / 2, 6, RAIL.x - w - 10);
-    const y = Math.max(26, spot.y - gs(46));
+    const y = Math.max(26, spot.y - gs(sub ? 58 : 46));
     ctx.fillStyle = 'rgba(2,6,23,0.92)';
     ctx.beginPath();
-    ctx.roundRect(x, y - 12, w, 24, 12);
+    ctx.roundRect(x, y - 12, w, sub ? 40 : 24, 12);
     ctx.fill();
     ctx.strokeStyle = 'rgba(148,163,184,0.4)';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.fillStyle = '#e2e8f0';
     ctx.fillText(text, x + w / 2, y);
+    if (sub) {
+      ctx.font = '600 9px system-ui, sans-serif';
+      ctx.fillStyle = '#fbcfe8';
+      ctx.fillText(sub, x + w / 2, y + 16);
+    }
     return spot;
+  }
+
+  function drawChewingMotion(t) {
+    if (!mouthHold || !USE_SVG_ART || !GEOM || !GEOM.markers || !GEOM.markers['Mouth badge']) return;
+    const badge = GEOM.markers['Mouth badge'];
+    const wave = Math.sin(t * Math.PI * 4);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.fillStyle = svgColour(ART_COLOURS.mouth, 0.3);
+    ctx.strokeStyle = svgColour(ART_COLOURS.mouth, 0.5);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(badge.x + 3 + wave * 2, badge.y + 8 + wave * 0.8, 10, 4.6, -0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(badge.x - 11 + wave * 2, badge.y + 10 + wave * 0.8);
+    ctx.quadraticCurveTo(badge.x + 1 + wave * 2, badge.y + 5 + wave * 0.8, badge.x + 12 + wave * 2, badge.y + 10 + wave * 0.8);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSurfacePill() {
+    if (!mouthHold) return;
+    if (!USE_SVG_ART || !GEOM || !GEOM.markers || !GEOM.markers['Mouth badge']) return;
+    const badge = GEOM.markers['Mouth badge'];
+    const text = 'surface area x ' + chewFactor.toFixed(2);
+    ctx.save();
+    ctx.font = '700 10px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(text).width + 16;
+    const x = clamp(badge.x - w - 18, 6, RAIL.x - w - 10);
+    const y = badge.y + 26;
+    ctx.fillStyle = 'rgba(15,23,42,0.92)';
+    ctx.beginPath();
+    ctx.roundRect(x, y - 9, w, 18, 9);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251,207,232,0.7)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#fbcfe8';
+    ctx.fillText(text, x + 8, y);
+    ctx.restore();
   }
 
   function drawDebug(spot) {
@@ -1847,20 +1955,93 @@
     return SVG_ART.groups;
   }
 
-  function svgArchPath() {
-    if (SVG_ART.arch) return SVG_ART.arch;
-    const pts = GEOM.mouthArch;
+  function mouthPoints() {
+    const first = GEOM.markers['feed first'];
+    const badge = GEOM.markers['Mouth badge'];
+    const join = { x: GEOM.landmarks.oesophagus.x, y: GEOM.landmarks.oesophagus.y };
+    return { first, badge, join };
+  }
+
+  function mouthThroatPath(points) {
+    const { badge, join } = points;
+    const halfJoin = gs(TUBE_W / 2);
     const p = new Path2D();
-    p.moveTo(pts[0][0], pts[0][1]);
-    for (let i = 1; i < pts.length - 1; i++) {
-      const mx = (pts[i][0] + pts[i + 1][0]) / 2;
-      const my = (pts[i][1] + pts[i + 1][1]) / 2;
-      p.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
-    }
-    const last = pts[pts.length - 1];
-    p.lineTo(last[0], last[1]);
-    SVG_ART.arch = p;
+    p.moveTo(badge.x - 8, badge.y + 4);
+    p.bezierCurveTo(badge.x - 4, badge.y + 14, join.x - halfJoin - 1, join.y - 20, join.x - halfJoin, join.y + 1);
+    p.lineTo(join.x + halfJoin, join.y + 1);
+    p.bezierCurveTo(join.x + halfJoin + 1, join.y - 22, badge.x + 10, badge.y + 12, badge.x + 8, badge.y + 5);
+    p.closePath();
     return p;
+  }
+
+  function mouthCavityPath(points) {
+    const { first, badge } = points;
+    const cx = (first.x + badge.x) / 2 - 2;
+    const cy = (first.y + badge.y) / 2 + 2;
+    const q = (x, y) => ({ x: cx + (x - cx) * 1.3, y: cy + (y - cy) * 1.3 });
+    const a = q(first.x + 1, first.y - 7);
+    const b = q(first.x + 16, first.y - 12);
+    const c = q(first.x + 20, first.y + 1);
+    const d = q(first.x + 13, first.y + 10);
+    const e = q(badge.x + 18, badge.y - 10);
+    const f = q(badge.x + 15, badge.y + 8);
+    const g = q(badge.x + 7, badge.y + 12);
+    const h = q(badge.x - 2, badge.y + 17);
+    const i = q(badge.x - 17, badge.y + 13);
+    const j = q(badge.x - 19, badge.y + 1);
+    const k = q(badge.x - 22, badge.y - 10);
+    const l = q(first.x - 9, first.y - 12);
+    const p = new Path2D();
+    p.moveTo(a.x, a.y);
+    p.bezierCurveTo(b.x, b.y, c.x, c.y, d.x, d.y);
+    p.bezierCurveTo(e.x, e.y, f.x, f.y, g.x, g.y);
+    p.bezierCurveTo(h.x, h.y, i.x, i.y, j.x, j.y);
+    p.bezierCurveTo(k.x, k.y, l.x, l.y, a.x, a.y);
+    p.closePath();
+    return p;
+  }
+
+  function paintMouthArt(c) {
+    if (!GEOM || !GEOM.markers || !GEOM.landmarks) return;
+    const points = mouthPoints();
+    const colour = svgColour(ART_COLOURS.mouth, 1);
+    const glow = svgColour(ART_COLOURS.mouth, 0.22);
+    c.save();
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.shadowColor = glow;
+    c.shadowBlur = 10;
+    c.fillStyle = svgColour(ART_COLOURS.mouth, 0.2);
+    c.fill(mouthThroatPath(points));
+    c.shadowBlur = 0;
+    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.62);
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(points.badge.x - 8, points.badge.y + 4);
+    c.bezierCurveTo(points.badge.x - 4, points.badge.y + 14, points.join.x - 11, points.join.y - 20,
+      points.join.x - 10, points.join.y + 1);
+    c.moveTo(points.badge.x + 8, points.badge.y + 5);
+    c.bezierCurveTo(points.badge.x + 10, points.badge.y + 12, points.join.x + 11, points.join.y - 22,
+      points.join.x + 10, points.join.y + 1);
+    c.stroke();
+    c.shadowColor = glow;
+    c.shadowBlur = 12;
+    c.fillStyle = svgColour(ART_COLOURS.mouth, 0.16);
+    c.fill(mouthCavityPath(points));
+    c.shadowBlur = 8;
+    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.72);
+    c.lineWidth = 2.4;
+    c.stroke(mouthCavityPath(points));
+    c.shadowBlur = 0;
+    c.fillStyle = svgColour(ART_COLOURS.mouth, 0.26);
+    c.beginPath();
+    c.ellipse(points.badge.x + 3, points.badge.y + 8, 10, 4.6, -0.22, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.5);
+    c.lineWidth = 1.2;
+    c.stroke();
+    c.restore();
+    return colour;
   }
 
   function svgOutlineGradient(c, stroke) {
@@ -1886,6 +2067,11 @@
         c.rect(0, 60, W, H - 60);
         c.clip();
       }
+      if (tag === 'oesophagus') {
+        c.beginPath();
+        c.rect(0, ARC.oesophagus, W, H - ARC.oesophagus);
+        c.clip();
+      }
       for (const item of group.items) {
         c.save();
         c.transform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
@@ -1908,15 +2094,7 @@
       }
       c.restore();
     }
-    c.save();
-    c.fillStyle = 'rgba(15,23,42,0.86)';
-    c.shadowColor = svgColour(ART_COLOURS.mouth, 0.7);
-    c.shadowBlur = 8;
-    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.68);
-    c.lineWidth = 2.2;
-    c.fill(svgArchPath());
-    c.stroke(svgArchPath());
-    c.restore();
+    paintMouthArt(c);
     c.restore();
   }
 
@@ -1956,7 +2134,8 @@
         drawHaustra(L);
         drawWaves(L, t);
       });
-      drawParticles();
+      drawChewingMotion(t);
+      drawParticles(t);
       drawDots();
     } else {
       ensureStaticCache();
@@ -1971,7 +2150,7 @@
       blit('liver');
       blit('vessels');
       drawGlands(t);
-      drawParticles();
+      drawParticles(t);
       drawDots();
       if (labels) {
         for (let i = 0; i < LABELS.length; i++) {
@@ -1982,6 +2161,7 @@
       }
     }
     const badgeSpot = drawBadge();
+    drawSurfacePill();
     drawDebug(badgeSpot);
     drawLegend();
   }
@@ -2123,6 +2303,8 @@
     chewFactor = Math.min(3.4, chewFactor + 0.24);
     interactions++;
     EV.say('Surface area is now ' + chewFactor.toFixed(2) + ' times.');
+    syncReadout();
+    render(EV.visualTime(performance.now()));
   });
 
   feedBtn.addEventListener('click', () => {
