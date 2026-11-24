@@ -11,7 +11,7 @@ from lxml import etree
 HERE = Path(__file__).resolve().parent
 ROOT = HERE
 SVG_PATH = ROOT / "Digestive_system_diagram_en.svg"
-SCRIPT_PATH = ROOT / "script.js"
+BASELINE_PATH = HERE / "prototype" / "baseline-old.json"
 ANCHORS_PATH = HERE / "anchors.json"
 ROUTE_ANCHORS_PATH = HERE / "prototype" / "anchors.json"
 EXTRACTED_ROUTES_PATH = HERE / "prototype" / "routes-extracted.json"
@@ -22,41 +22,6 @@ NEW_AREA_H = 446.0
 AREA_Y = 80.0
 LAYOUT_K = NEW_AREA_H / OLD_AREA_H
 HEADROOM = 40.0 * LAYOUT_K
-BASELINE_ARC = {
-    "mouth": 20.445337601799142,
-    "oesophagus": 51.158475765998766,
-    "cardia": 109.11641908334575,
-    "stomach": 222.33817763792325,
-    "pylorus": 305.4729717926129,
-    "duodenum": 349.0493503585977,
-    "flexure": 451.3912064807437,
-    "jejunum": 482.0282687407831,
-    "ileum": 780.2816616460475,
-    "caecum": 1209.0296703106515,
-    "hepatic": 1329.5959387617472,
-    "transverse": 1406.3767615877732,
-    "splenic": 1483.0258655103014,
-    "descending": 1563.4619465556823,
-    "rectum": 1679.0892325111606,
-}
-BASELINE_END = 1726.4824209135334
-BASELINE_SCALE = 0.7024968260685569
-BASELINE_OX = 191.11299195937372
-BASELINE_OY = 14.0
-BASELINE_SPEED = {
-    "0": 53.44401183503034,
-    "ARC.oesophagus": 81.9415566895024,
-    "ARC.stomach": 2.417133210617217,
-    "ARC.pylorus": 2.898670180683945,
-    "ARC.jejunum": 6.109120969524182,
-    "ARC.caecum": 0.8306012220305593,
-    "ARC.rectum": 1.1528721185954312,
-}
-BASELINE_STRIDES = {
-    "WAVE_STRIDE": 208.0621412392197,
-    "villus stride": 11.45460181785784,
-    "haustra stride": 13.052304917623076,
-}
 STEP = 0.02
 SMALL_ILEUM_FRACTION = 0.42
 SELF_CROSS_MIN_GAP = 40.0
@@ -684,16 +649,17 @@ def svg_art(items, crop):
 
 
 def parse_old_script():
-    text = SCRIPT_PATH.read_text()
-    lines = text.splitlines()
-    quote = "\n".join(f"{i + 1}: {lines[i]}" for i in range(426, min(440, len(lines))))
+    data = json.loads(BASELINE_PATH.read_text())
+    numeric = data["numericBaseline"]
     return {
-        "quote": quote,
-        "arc": dict(BASELINE_ARC),
-        "end": BASELINE_END,
-        "breaks": [(k if k == "0" else k.split(".")[-1], v) for k, v in BASELINE_SPEED.items()],
-        "strides": dict(BASELINE_STRIDES),
-        "layout": {"S": BASELINE_SCALE, "OX": BASELINE_OX, "OY": BASELINE_OY},
+        "quote": data["quote"],
+        "arc": dict(numeric["arc"]),
+        "end": numeric["end"],
+        "breaks": [tuple(item) for item in numeric["breaks"]],
+        "strides": dict(numeric["strides"]),
+        "layout": dict(numeric["layout"]),
+        "track": data["track"],
+        "anchors": data["anchors"],
     }
 
 
@@ -914,7 +880,7 @@ def append_summary(lines, bundle):
     lines.append("")
     lines.append("### Strides for the new total")
     lines.append("")
-    lines.append("| constant | old (from `script.js`) | proposed |")
+    lines.append("| constant | old (from `baseline-old.json`) | proposed |")
     lines.append("|---|---:|---:|")
     for key, value in new["strides"].items():
         lines.append(f"| {key} | {fmt(old['strides'][key], 2)} | {fmt(value, 2)} |")
@@ -1126,7 +1092,7 @@ def write_report(bundle, lumen):
     lines.append("")
     lines.append("### Strides for the new total")
     lines.append("")
-    lines.append("| constant | old (from `script.js`) | proposed |")
+    lines.append("| constant | old (from `baseline-old.json`) | proposed |")
     lines.append("|---|---:|---:|")
     for key, value in new["strides"].items():
         lines.append(f"| {key} | {fmt(old['strides'][key], 2)} | {fmt(value, 2)} |")
@@ -1294,9 +1260,9 @@ def main():
     times_combined = integrate(arc, tube_end, paired_combined)
     times_split = integrate(arc, tube_end, paired_split)
     strides = {
-        "WAVE_STRIDE": BASELINE_STRIDES["WAVE_STRIDE"] * tube_end / old["end"],
-        "villus stride": BASELINE_STRIDES["villus stride"] * (arc["caecum"] - arc["jejunum"]) / (old["arc"]["caecum"] - old["arc"]["jejunum"]),
-        "haustra stride": BASELINE_STRIDES["haustra stride"] * (arc["rectum"] - arc["caecum"]) / (old["arc"]["rectum"] - old["arc"]["caecum"]),
+        "WAVE_STRIDE": old["strides"]["WAVE_STRIDE"] * tube_end / old["end"],
+        "villus stride": old["strides"]["villus stride"] * (arc["caecum"] - arc["jejunum"]) / (old["arc"]["caecum"] - old["arc"]["jejunum"]),
+        "haustra stride": old["strides"]["haustra stride"] * (arc["rectum"] - arc["caecum"]) / (old["arc"]["rectum"] - old["arc"]["caecum"]),
     }
     spans = {
         "mouth": [0.0, arc["oesophagus"]],
