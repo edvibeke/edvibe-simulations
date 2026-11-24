@@ -13,6 +13,9 @@ ROOT = HERE
 SVG_PATH = ROOT / "Digestive_system_diagram_en.svg"
 SCRIPT_PATH = ROOT / "script.js"
 ANCHORS_PATH = HERE / "anchors.json"
+ROUTE_ANCHORS_PATH = HERE / "prototype" / "anchors.json"
+EXTRACTED_ROUTES_PATH = HERE / "prototype" / "routes-extracted.json"
+ROUTE_NAMES = ["portal", "lymph", "bile", "pancreatic"]
 BOUNDARY = [297.7, 728.2]
 OLD_AREA_H = 372.0
 NEW_AREA_H = 446.0
@@ -278,6 +281,54 @@ def part_tag(line):
     if 302 <= line <= 319:
         return "teeth"
     return "detail"
+
+
+def route_polyline(points, mapper=None):
+    out = []
+    for point in points:
+        if not isinstance(point, (list, tuple)) or len(point) < 2:
+            raise ValueError("route point is not a pair")
+        x, y = number(point[0]), number(point[1])
+        if mapper:
+            x, y = mapper((x, y))
+        value = [round(x, 2), round(y, 2)]
+        if out and math.dist(out[-1], value) < 0.01:
+            continue
+        out.append(value)
+    if len(out) < 2:
+        raise ValueError("route needs at least two points")
+    cumulative = [0.0]
+    for i in range(1, len(out)):
+        cumulative.append(cumulative[-1] + math.dist(out[i - 1], out[i]))
+    return {"points": out, "cumulative": cumulative, "length": cumulative[-1]}
+
+
+def load_routes(mapper):
+    route_anchors = {}
+    extracted = {}
+    if ROUTE_ANCHORS_PATH.exists():
+        route_anchors = json.loads(ROUTE_ANCHORS_PATH.read_text()).get("routes", {})
+    if EXTRACTED_ROUTES_PATH.exists():
+        extracted = json.loads(EXTRACTED_ROUTES_PATH.read_text()).get("routes", {})
+    sources = {
+        "portal": route_anchors.get("portal"),
+        "lymph": route_anchors.get("lymph"),
+        "bile": extracted.get("bile"),
+        "pancreatic": extracted.get("pancreatic"),
+    }
+    routes = {}
+    failures = []
+    for name in ROUTE_NAMES:
+        points = sources.get(name)
+        if not isinstance(points, list) or len(points) < 2:
+            failures.append("FAIL route missing: " + name)
+            continue
+        try:
+            converted = None if name in ("bile", "pancreatic") else mapper
+            routes[name] = route_polyline(points, converted)
+        except (TypeError, ValueError) as error:
+            failures.append("FAIL route invalid: " + name + " (" + str(error) + ")")
+    return routes, failures
 
 
 def catmull(anchors, mapper):
@@ -1078,6 +1129,8 @@ def main():
     def to_logical(p):
         return (crop["ox"] + (p[0] - crop["x"]) * scale, crop["oy"] + (p[1] - crop["y"]) * scale)
 
+    routes, route_failures = load_routes(to_logical)
+
     start_logical = to_logical(start)
     mx = start_logical[0]
     arch = [
@@ -1301,6 +1354,7 @@ def main():
         "landmarks": landmark_meta,
         "landmarkDefs": LANDMARK_DEFS,
         "checks": geometry_checks,
+        "routes": routes,
     }
     geometry_json = json.dumps(geometry, indent=2)
     geometry_js = "window.EV_GEOMETRY = " + json.dumps(geometry, separators=(",", ":")) + ";\n"
@@ -1314,6 +1368,11 @@ def main():
     print("STRIDES " + stride_text)
     lumen = browser_report()
     write_report(bundle, lumen)
+    if route_failures:
+        report_path = HERE / "REPORT.md"
+        report_path.write_text("\n".join(route_failures) + "\n\n" + report_path.read_text())
+        for line in route_failures:
+            print(line)
     print("built", HERE / "REPORT.md")
     print("full lumen", lumen["stats"]["insidePct"])
 

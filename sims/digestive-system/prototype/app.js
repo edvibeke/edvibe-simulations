@@ -632,19 +632,31 @@
   }
 
   const TRACE_SEGMENTS = ['oesophagus', 'stomach', 'duodenum', 'small', 'colon', 'rectum'];
+  const ROUTE_SEGMENTS = ['portal', 'lymph'];
+  const ALL_SEGMENTS = TRACE_SEGMENTS.concat(ROUTE_SEGMENTS);
   const TRACE_ORGAN = {
     oesophagus: 'oesophagus', stomach: 'stomach', duodenum: 'duodenum',
     small: 'small', colon: 'colon', rectum: 'rectum'
   };
   const SEGMENT_LABELS = {
     oesophagus: 'oesophagus', stomach: 'stomach', duodenum: 'duodenum',
-    small: 'small intestine', colon: 'colon', rectum: 'rectum'
+    small: 'small intestine', colon: 'colon', rectum: 'rectum',
+    portal: 'portal vein', lymph: 'lymph duct'
   };
-  const STORAGE_KEY = 'digestive-svg-trace-v3';
+  const STORAGE_KEY = 'digestive-svg-trace-v4';
 
   function emptyTrace() {
     const out = {};
-    TRACE_SEGMENTS.forEach(function (s) { out[s] = []; });
+    ALL_SEGMENTS.forEach(function (s) { out[s] = []; });
+    return out;
+  }
+
+  function defaultTrace() {
+    const out = emptyTrace();
+    ROUTE_SEGMENTS.forEach(function (seg) {
+      const src = window.ROUTE_DEFAULTS && window.ROUTE_DEFAULTS[seg];
+      out[seg] = cleanAnchors(src);
+    });
     return out;
   }
 
@@ -684,15 +696,23 @@
       anchors: JSON.parse(JSON.stringify(PATH_ANCHORS.segments)),
       activeSegment: 'oesophagus'
     };
+    ROUTE_SEGMENTS.forEach(function (seg) {
+      fallback.anchors[seg] = cleanAnchors(window.ROUTE_DEFAULTS && window.ROUTE_DEFAULTS[seg]);
+    });
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return fallback;
       const saved = JSON.parse(raw);
       const src = saved.segments || saved;
+      const routes = saved.routes || {};
       const anchors = emptyTrace();
       TRACE_SEGMENTS.forEach(function (seg) { anchors[seg] = cleanAnchors(src[seg]); });
+      ROUTE_SEGMENTS.forEach(function (seg) {
+        const value = Array.isArray(routes[seg]) ? routes[seg] : src[seg];
+        anchors[seg] = cleanAnchors(value);
+      });
       syncChains(anchors);
-      const active = TRACE_SEGMENTS.indexOf(saved.activeSegment) >= 0 ? saved.activeSegment : 'oesophagus';
+      const active = ALL_SEGMENTS.indexOf(saved.activeSegment) >= 0 ? saved.activeSegment : 'oesophagus';
       return { anchors: anchors, activeSegment: active };
     } catch (e) {
       return fallback;
@@ -714,8 +734,11 @@
 
   function saveTrace() {
     try {
+      const routes = {};
+      ROUTE_SEGMENTS.forEach(function (seg) { routes[seg] = traceAnchors[seg]; });
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         segments: traceAnchors,
+        routes: routes,
         activeSegment: activeSegment
       }));
     } catch (e) {
@@ -753,6 +776,7 @@
 
   function canSelectSegment(seg) {
     const target = TRACE_SEGMENTS.indexOf(seg);
+    if (target < 0) return true;
     for (let i = 0; i < target; i++) {
       const prior = TRACE_SEGMENTS[i];
       if (traceAnchors[prior].length < 3) {
@@ -784,20 +808,25 @@
   function updateTraceUI(data) {
     const counts = document.getElementById('trace-counts');
     if (counts) {
-      counts.innerHTML = TRACE_SEGMENTS.map(function (seg) {
+      counts.innerHTML = ALL_SEGMENTS.map(function (seg) {
         const d = data[seg];
-        const pct = d.pct === null ? '—' : d.pct.toFixed(0) + '%';
+        const pct = d.free ? 'free' : (d.pct === null ? '—' : d.pct.toFixed(0) + '%');
         return '<span class="' + (seg === activeSegment ? 'active' : '') + '">' +
           SEGMENT_LABELS[seg] + ': ' + traceAnchors[seg].length + ' anchors, ' + pct + '</span>';
       }).join('');
     }
     Array.prototype.forEach.call(segmentSelect.options, function (opt, i) {
+      const seg = opt.value;
       let locked = false;
-      for (let j = 0; j < i; j++) {
-        if (traceAnchors[TRACE_SEGMENTS[j]].length < 3) locked = true;
+      if (TRACE_SEGMENTS.indexOf(seg) >= 0) {
+        for (let j = 0; j < i; j++) {
+          const prior = segmentSelect.options[j].value;
+          if (TRACE_SEGMENTS.indexOf(prior) >= 0 && traceAnchors[prior].length < 3) locked = true;
+        }
       }
       opt.disabled = locked;
     });
+
     segmentSelect.value = activeSegment;
   }
 
@@ -828,6 +857,15 @@
         inside: inside,
         pct: ss.length ? (inside / ss.length) * 100 : null,
         length: curve.total
+      };
+    });
+    ROUTE_SEGMENTS.forEach(function (seg) {
+      out[seg] = {
+        samples: [],
+        inside: 0,
+        pct: null,
+        length: traceCurve(seg).total,
+        free: true
       };
     });
     return out;
@@ -946,6 +984,11 @@
 
   function autoCentreSegment() {
     const seg = activeSegment;
+    if (ROUTE_SEGMENTS.indexOf(seg) >= 0) {
+      setMessage('Auto-centre is not available for free routes.');
+      render();
+      return;
+    }
     const before = segmentScore(seg, traceAnchors[seg]);
     if (before === null) {
       setMessage('Auto-centre needs at least two anchors.');
@@ -1011,13 +1054,17 @@
     const ss = data.samples;
     ctx.lineWidth = 2.2 / traceView.s;
     ctx.lineCap = 'round';
-    for (let i = 1; i < ss.length; i++) {
-      const a = ss[i - 1], b = ss[i];
-      ctx.strokeStyle = (a.inside && b.inside) ? 'rgba(34,211,238,.85)' : 'rgba(244,63,94,.98)';
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
+    if (data.free) {
+      drawTraceCurve(traceCurve(seg), seg === 'portal' ? 'rgba(96,165,250,.95)' : 'rgba(252,211,77,.95)', 3);
+    } else {
+      for (let i = 1; i < ss.length; i++) {
+        const a = ss[i - 1], b = ss[i];
+        ctx.strokeStyle = (a.inside && b.inside) ? 'rgba(34,211,238,.85)' : 'rgba(244,63,94,.98)';
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
     }
     const r = 4 / traceView.s;
     traceAnchors[seg].forEach(function (p, i) {
@@ -1042,7 +1089,7 @@
       });
       ctx.restore();
     }
-    TRACE_SEGMENTS.forEach(function (seg) {
+    ALL_SEGMENTS.forEach(function (seg) {
       if (seg === activeSegment) return;
       drawTraceCurve(traceCurve(seg), 'rgba(148,163,184,.22)', 1.5);
     });
@@ -1053,11 +1100,13 @@
     const autoText = lastAutoCentre
       ? ' | auto-centre ' + lastAutoCentre.before.toFixed(1) + '% → ' + lastAutoCentre.after.toFixed(1) + '%'
       : '';
-    ctx.fillText('TRACE EDITOR — ' + SEGMENT_LABELS[activeSegment] + ' — ' +
-      (data[activeSegment].pct === null ? 'n/a' : data[activeSegment].pct.toFixed(1) + '% inside lumen') + autoText, 16, 20);
+    const scoreText = data[activeSegment].free
+      ? 'free route'
+      : (data[activeSegment].pct === null ? 'n/a' : data[activeSegment].pct.toFixed(1) + '% inside lumen');
+    ctx.fillText('TRACE EDITOR — ' + SEGMENT_LABELS[activeSegment] + ' — ' + scoreText + autoText, 16, 20);
     ctx.font = '11px system-ui, sans-serif';
     ctx.fillStyle = '#64748b';
-    ctx.fillText('ordered + chained · click add · drag anchor · drag pan · wheel zoom · Backspace undo', 16, 36);
+    ctx.fillText('click add · drag anchor · drag pan · wheel zoom · Backspace undo', 16, 36);
     updateTraceUI(data);
     window.__TRACE_MESSAGE = lastMessage;
     window.__TRACE_REFERENCE = REFERENCE_ANCHORS;
@@ -1099,6 +1148,9 @@
         problems.push(SEGMENT_LABELS[seg] + ': ' + (pct === null ? 'n/a' : pct.toFixed(1) + '% inside lumen'));
       }
     });
+    ROUTE_SEGMENTS.forEach(function (seg) {
+      if (traceAnchors[seg].length < 2) problems.push(SEGMENT_LABELS[seg] + ': ' + traceAnchors[seg].length + ' anchors');
+    });
     if (problems.length) {
       window.__TRACE_EXPORT_BLOCK = problems;
       setMessage('Export blocked — ' + problems.join('; '));
@@ -1106,7 +1158,7 @@
       return;
     }
     window.__TRACE_EXPORT_BLOCK = null;
-    const out = { segments: {} };
+    const out = { segments: {}, routes: {} };
     TRACE_SEGMENTS.forEach(function (seg) {
       out.segments[seg] = {
         anchors: traceAnchors[seg].map(function (p) {
@@ -1115,6 +1167,11 @@
         samplePctInsideLumen: Math.round(data[seg].pct * 10) / 10,
         samples: data[seg].samples.length
       };
+    });
+    ROUTE_SEGMENTS.forEach(function (seg) {
+      out.routes[seg] = traceAnchors[seg].map(function (p) {
+        return [Math.round(p[0] * 10) / 10, Math.round(p[1] * 10) / 10];
+      });
     });
     const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1125,16 +1182,21 @@
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    setMessage('Exported anchors.json for all six segments.');
+    setMessage('Exported anchors.json for six segments and two free routes.');
     render();
   }
 
   function importAnchors(text) {
     const data = JSON.parse(text);
     const src = data.segments || data;
+    const routes = data.routes || {};
     const next = emptyTrace();
     TRACE_SEGMENTS.forEach(function (seg) {
       const raw = Array.isArray(src[seg]) ? src[seg] : (src[seg] && src[seg].anchors);
+      next[seg] = cleanAnchors(raw);
+    });
+    ROUTE_SEGMENTS.forEach(function (seg) {
+      const raw = Array.isArray(routes[seg]) ? routes[seg] : src[seg];
       next[seg] = cleanAnchors(raw);
     });
     syncChains(next);
