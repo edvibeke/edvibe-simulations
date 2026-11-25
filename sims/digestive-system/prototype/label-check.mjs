@@ -7,17 +7,19 @@ import { Chrome } from '../../../tools/cdp.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(process.argv[2] || '.');
 const DIR = path.join(ROOT, 'sims', 'digestive-system');
+const source = fs.readFileSync(path.join(DIR, 'script.js'), 'utf8');
 
 function patchedIndex() {
   let html = fs.readFileSync(path.join(DIR, 'index.html'), 'utf8');
-  let js = fs.readFileSync(path.join(DIR, 'script.js'), 'utf8');
+  let js = source;
   const probe = `
   window.__labelProbe = {
-    constants: () => ({ W, H, RAIL, ORGAN_LABELS, LABEL_COLOURS, GEOM }),
+    constants: () => ({ W, H, RAIL, ORGAN_LABELS, LABEL_COLOURS, LABEL_STYLE, GEOM, COL }),
     labels: () => labels,
     box: (l) => labelPillBox(l),
     gs,
     groups: () => svgArtGroups(),
+    routeGlowStyle,
     mouthPath: () => mouthCavityPath({
       first: GEOM.markers['feed first'],
       badge: GEOM.markers['Mouth badge'],
@@ -74,16 +76,25 @@ try {
   if (!ready) throw new Error('label probe missing in page');
   const result = JSON.parse(await browser.eval(`
     const probe = window.__labelProbe;
-    const { W, H, RAIL, ORGAN_LABELS, GEOM } = probe.constants();
+    const { W, H, RAIL, ORGAN_LABELS, LABEL_COLOURS, LABEL_STYLE, GEOM, COL } = probe.constants();
     const offences = [];
     const fail = (kind, detail) => offences.push({ kind, detail });
     const ctx = document.createElement('canvas').getContext('2d');
-    const groups = new Map(probe.groups().map((g) => [g.tag, g.items]));
-    const items = (tag) => groups.get(tag) || [];
+    const raw = new Map();
+    for (const g of GEOM.svgArt) {
+      raw.set(g.tag, g.items.map((it) => ({
+        tag: g.tag,
+        id: it.id || '',
+        path: new Path2D(it.d),
+        m: it.m
+      })));
+    }
+    const items = (tag) => raw.get(tag) || [];
     const masks = {
-      mouth: [{ path: probe.mouthPath(), m: [1, 0, 0, 1, 0, 0] }],
+      mouth: [{ tag: 'mouth', id: 'mouthCavityPath', path: probe.mouthPath(), m: [1, 0, 0, 1, 0, 0] }],
       oesophagus: items('oesophagus'),
       liver: items('liver'),
+      liver_detail: items('liver_detail'),
       gallbladder: items('gallbladder'),
       stomach: items('stomach'),
       pancreas: items('pancreas'),
@@ -91,7 +102,26 @@ try {
       small: items('small'),
       colon: items('colon')
     };
-    const outline = items('outline');
+    const all = Object.values(masks).flat();
+    function svgOf(item, x, y) {
+      const m = item.m;
+      const d = m[0] * m[3] - m[1] * m[2];
+      return [
+        +(((m[3] * (x - m[4]) - m[1] * (y - m[5])) / d).toFixed(1)),
+        +(((-m[2] * (x - m[4]) + m[0] * (y - m[5])) / d).toFixed(1))
+      ];
+    }
+    function hitsAt(x, y) {
+      const out = [];
+      for (const item of all) {
+        const m = item.m;
+        ctx.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+        if (ctx.isPointInPath(item.path, x, y)) {
+          out.push({ tag: item.tag, id: item.id, svg: svgOf(item, x, y) });
+        }
+      }
+      return out;
+    }
     function hit(list, x, y) {
       for (const item of list) {
         const m = item.m;
@@ -99,6 +129,16 @@ try {
         if (ctx.isPointInPath(item.path, x, y)) return true;
       }
       return false;
+    }
+    function deepIn(tag, x, y, r) {
+      const list = items(tag);
+      const inside = (px, py) => hit(list, px, py);
+      if (!inside(x, y)) return false;
+      for (let i = 0; i < 24; i++) {
+        const a = (i * Math.PI * 2) / 24;
+        if (!inside(x + Math.cos(a) * r, y + Math.sin(a) * r)) return false;
+      }
+      return true;
     }
     function boxHits(list, box) {
       for (let x = box.x + 3; x <= box.x + box.w - 3; x += 4) {
@@ -140,6 +180,18 @@ try {
       return o1 !== o2 && o3 !== o4;
     }
     function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+    function channel(hex) {
+      const s = hex.replace('#', '');
+      return [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16) / 255);
+    }
+    function luminance(hex) {
+      return channel(hex).map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)))
+        .reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+    }
+    function contrast(a, b) {
+      const la = luminance(a), lb = luminance(b);
+      return +((Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)).toFixed(2);
+    }
     function badgeBox(sub, text, subText) {
       const spot = GEOM.markers['Mouth badge'];
       ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -161,13 +213,50 @@ try {
     const texts = ORGAN_LABELS.map((l) => l.text);
     const expected = ['mouth','oesophagus','liver','gallbladder','stomach','pancreas','duodenum','small intestine','large intestine (colon)','rectum'];
     if (JSON.stringify(texts) !== JSON.stringify(expected)) fail('label-set', JSON.stringify(texts));
+    const endpoints = ORGAN_LABELS.map((l) => ({
+      text: l.text,
+      logical: l.anchor,
+      hits: hitsAt(l.anchor[0], l.anchor[1])
+    }));
+    const endpointTags = {
+      mouth: 'mouth', oesophagus: 'oesophagus', liver: 'liver', gallbladder: 'gallbladder',
+      stomach: 'stomach', pancreas: 'pancreas', duodenum: 'duodenum',
+      'small intestine': 'small', 'large intestine (colon)': 'colon', rectum: 'colon'
+    };
+    for (const e of endpoints) {
+      if (!e.hits.some((h) => h.tag === endpointTags[e.text])) fail('endpoint-tag', e.text + ' ' + JSON.stringify(e.hits));
+    }
+    const pancreas = endpoints.find((e) => e.text === 'pancreas');
+    if (!pancreas.hits.some((h) => h.tag === 'pancreas')) fail('pancreas-endpoint', JSON.stringify(pancreas.hits));
+    if (pancreas.hits.some((h) => h.tag === 'duodenum')) fail('pancreas-duodenum', JSON.stringify(pancreas.hits));
+    if (!pancreas.hits.some((h) => h.id === 'rect3958')) fail('pancreas-gland-id', JSON.stringify(pancreas.hits));
+    const smallEnd = ORGAN_LABELS.find((l) => l.text === 'small intestine').anchor;
+    if (!deepIn('small', smallEnd[0], smallEnd[1], 12)) fail('small-depth', JSON.stringify(smallEnd));
+    const colourKeys = { mouth: 'mouth', oesophagus: 'oesophagus', liver: 'liver', gallbladder: 'gallbladder', stomach: 'stomach', pancreas: 'pancreas', duodenum: 'duodenum', 'small intestine': 'small', 'large intestine (colon)': 'colon', rectum: 'colon' };
+    const contrastRatios = ORGAN_LABELS.map((l) => {
+      if (l.colour !== LABEL_COLOURS[colourKeys[l.text]]) fail('colour', l.text + ' border/leader colour changed');
+      return { text: l.text, ratio: contrast(LABEL_STYLE.text, LABEL_STYLE.pill) };
+    });
+    for (const item of contrastRatios) {
+      if (item.ratio < 4.5) fail('contrast', item.text + ' ' + item.ratio);
+    }
+    if (luminance(LABEL_STYLE.text) < 0.8) fail('text-light', LABEL_STYLE.text);
+    const routeLevels = {
+      portal: { rest: probe.routeGlowStyle(false), active: probe.routeGlowStyle(true) },
+      lymph: { rest: probe.routeGlowStyle(false), active: probe.routeGlowStyle(true) }
+    };
+    for (const route of ['portal', 'lymph']) {
+      const levels = routeLevels[route];
+      if (!(levels.rest.core <= 0.25 && levels.active.core >= 0.8)) fail('route-emphasis', route + ' ' + JSON.stringify(levels));
+    }
+    if (COL.portal !== '#60a5fa' || COL.lymph !== '#fcd34d') fail('route-colour', JSON.stringify({ portal: COL.portal, lymph: COL.lymph }));
     const boxes = ORGAN_LABELS.map((l) => probe.box(l));
     for (let i = 0; i < ORGAN_LABELS.length; i++) {
       const l = ORGAN_LABELS[i], box = boxes[i];
-      if (!hit(masks[l.tag], l.anchor[0], l.anchor[1])) fail('mask', l.text + ' anchor ' + JSON.stringify(l.anchor) + ' outside ' + l.tag);
+      if (!hit(masks[l.tag === 'small intestine' ? 'small' : l.text === 'rectum' ? 'colon' : l.tag], l.anchor[0], l.anchor[1])) fail('mask', l.text + ' anchor ' + JSON.stringify(l.anchor) + ' outside ' + l.tag);
       if (box.x < 8 || box.y < 8 || box.x + box.w > W - 8 || box.y + box.h > H - 8) fail('edge', l.text + ' ' + JSON.stringify(box));
       if (overlap(box, RAIL)) fail('legend', l.text + ' touches legend panel');
-      if (boxHits(outline, box)) fail('outline', l.text + ' touches figure outline');
+      if (boxHits(raw.get('outline') || [], box)) fail('outline', l.text + ' touches figure outline');
       for (const tag of Object.keys(masks)) {
         if (boxHits(masks[tag], box)) fail('organ', l.text + ' box touches ' + tag);
       }
@@ -228,8 +317,22 @@ try {
     if (initial !== true || off !== false || on !== true) fail('toggle-state', JSON.stringify({ initial, off, on }));
     if (diff(before, afterOff) < 20) fail('toggle-hide', 'labels did not disappear');
     if (diff(afterOff, afterOn) < 20) fail('toggle-show', 'labels did not reappear');
-    return JSON.stringify({ count: ORGAN_LABELS.length, offences });
+    return JSON.stringify({ count: ORGAN_LABELS.length, offences, endpoints, contrast: contrastRatios, routeLevels });
   `));
+  for (const e of result.endpoints) {
+    console.log(`endpoint ${e.text}: logical=${JSON.stringify(e.logical)} masks=${JSON.stringify(e.hits)}`);
+  }
+  console.log(`contrast: ${JSON.stringify(result.contrast)}`);
+  console.log(`route glow: ${JSON.stringify(result.routeLevels)}`);
+  if (!source.includes('c.strokeStyle = svgColour(l.colour, 0.72)')) {
+    result.offences.push({ kind: 'leader-colour', detail: 'leader stroke no longer uses organ colour' });
+  }
+  if (!source.includes('c.strokeStyle = svgColour(l.colour, 0.42)')) {
+    result.offences.push({ kind: 'pill-border-colour', detail: 'pill border no longer uses organ colour' });
+  }
+  if (!source.includes('paintRouteGlow(ctx);') || source.includes('paintSvgArt(c);\n    paintRouteGlow(c);')) {
+    result.offences.push({ kind: 'route-cache', detail: 'route glow must be drawn per frame, not baked into SVG cache' });
+  }
   for (const o of result.offences) console.log(`FAIL [${o.kind}] ${o.detail}`);
   console.log(`label-check: labels=${result.count} offences=${result.offences.length}`);
   if (result.offences.length) process.exitCode = 1;
@@ -237,9 +340,6 @@ try {
   console.error('HARNESS ERROR: ' + (e && e.stack || e));
   process.exitCode = 1;
 } finally {
-  if (browser) {
-    try { browser.ws.close(); } catch {}
-    browser.proc.kill();
-  }
+  if (browser) await browser.close();
   srv.close();
 }

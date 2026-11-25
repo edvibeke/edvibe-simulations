@@ -1204,14 +1204,14 @@
   function drawVessels(c = ctx) {
     c.lineCap = 'round';
     c.lineJoin = 'round';
-    c.globalAlpha = 0.5;
+    c.globalAlpha = 0.18;
     c.strokeStyle = COL.portal;
-    c.lineWidth = 3.4;
+    c.lineWidth = 2.2;
     c.beginPath();
     DOT_ROUTES.portal.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])));
     c.stroke();
     c.strokeStyle = COL.lymph;
-    c.lineWidth = 3;
+    c.lineWidth = 2;
     c.beginPath();
     DOT_ROUTES.lymph.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])));
     c.stroke();
@@ -1591,18 +1591,24 @@
     colon: '#d8c0f0'
   };
 
-  const LABEL_STYLE = { font: '700 10px system-ui, sans-serif', padX: 7, height: 18 };
+  const LABEL_STYLE = {
+    font: '700 11px system-ui, sans-serif',
+    text: '#f8fafc',
+    pill: '#020617',
+    padX: 7,
+    height: 20
+  };
 
   const ORGAN_LABELS = [
-    { text: 'mouth', tag: 'mouth', anchor: [295, 90], at: [470, 70], colour: LABEL_COLOURS.mouth },
+    { text: 'mouth', tag: 'mouth', anchor: [295, 90], at: [510, 70], colour: LABEL_COLOURS.mouth },
     { text: 'oesophagus', tag: 'oesophagus', anchor: [315, 140], at: [480, 120], colour: LABEL_COLOURS.oesophagus },
     { text: 'liver', tag: 'liver', anchor: [300, 240], at: [85, 185], colour: LABEL_COLOURS.liver },
     { text: 'gallbladder', tag: 'gallbladder', anchor: [315, 265], at: [85, 235], colour: LABEL_COLOURS.gallbladder },
     { text: 'stomach', tag: 'stomach', anchor: [375, 230], at: [480, 210], colour: LABEL_COLOURS.stomach },
-    { text: 'pancreas', tag: 'pancreas', anchor: [300, 305], at: [480, 285], colour: LABEL_COLOURS.pancreas },
+    { text: 'pancreas', tag: 'pancreas', anchor: [275, 275], at: [480, 285], colour: LABEL_COLOURS.pancreas },
     { text: 'duodenum', tag: 'duodenum', anchor: [265, 325], at: [85, 295], colour: LABEL_COLOURS.duodenum },
-    { text: 'small intestine', tag: 'small', anchor: [375, 335], at: [530, 345], colour: LABEL_COLOURS.small },
-    { text: 'large intestine (colon)', tag: 'colon', anchor: [220, 375], at: [70, 350], colour: LABEL_COLOURS.colon },
+    { text: 'small intestine', tag: 'small', anchor: [355, 395], at: [530, 345], colour: LABEL_COLOURS.small },
+    { text: 'large intestine (colon)', tag: 'colon', anchor: [220, 375], at: [85, 350], colour: LABEL_COLOURS.colon },
     { text: 'rectum', tag: 'colon', anchor: [310, 485], at: [480, 385], colour: LABEL_COLOURS.colon }
   ];
 
@@ -1625,7 +1631,7 @@
     }
     for (const l of ORGAN_LABELS) {
       const box = labelPillBox(l, c);
-      c.fillStyle = 'rgba(2,6,23,0.9)';
+      c.fillStyle = LABEL_STYLE.pill;
       c.beginPath();
       c.roundRect(box.x, box.y, box.w, box.h, 9);
       c.fill();
@@ -1635,7 +1641,7 @@
       c.font = LABEL_STYLE.font;
       c.textAlign = 'center';
       c.textBaseline = 'middle';
-      c.fillStyle = l.colour;
+      c.fillStyle = LABEL_STYLE.text;
       c.fillText(l.text, box.x + box.w / 2, box.y + box.h / 2);
     }
     c.restore();
@@ -2197,6 +2203,12 @@
     c.restore();
   }
 
+  function routeGlowStyle(active) {
+    return active
+      ? { glow: 0.22, shadow: 0.28, core: 0.88, glowWidth: 5, coreWidth: 2.2 }
+      : { glow: 0.05, shadow: 0.08, core: 0.20, glowWidth: 2.5, coreWidth: 1.2 };
+  }
+
   function paintRouteGlow(c) {
     if (!DOT_ROUTES.portal || !DOT_ROUTES.lymph) return;
     c.save();
@@ -2206,19 +2218,21 @@
     c.lineCap = 'round';
     c.lineJoin = 'round';
     for (const route of ['portal', 'lymph']) {
+      const active = dots.some((d) => d.route === route);
+      const style = routeGlowStyle(active);
       const colour = COL[route];
-      c.strokeStyle = svgColour(colour, 0.16);
-      c.shadowColor = svgColour(colour, 0.22);
-      c.shadowBlur = 8;
-      c.lineWidth = 4;
+      c.strokeStyle = svgColour(colour, style.glow);
+      c.shadowColor = svgColour(colour, style.shadow);
+      c.shadowBlur = active ? 8 : 4;
+      c.lineWidth = style.glowWidth;
       c.beginPath();
       DOT_ROUTES[route].forEach((p, i) => (i
         ? c.lineTo(p[0], p[1])
         : c.moveTo(p[0], p[1])));
       c.stroke();
       c.shadowBlur = 0;
-      c.strokeStyle = svgColour(colour, 0.72);
-      c.lineWidth = 1.5;
+      c.strokeStyle = svgColour(colour, style.core);
+      c.lineWidth = style.coreWidth;
       c.stroke();
     }
     c.restore();
@@ -2232,7 +2246,6 @@
     const c = canvas.getContext('2d');
     c.setTransform(scale, 0, 0, scale, 0, 0);
     paintSvgArt(c);
-    paintRouteGlow(c);
     SVG_ART.cache = canvas;
     SVG_ART.scale = scale;
   }
@@ -2255,6 +2268,7 @@
     ctx.clearRect(0, 0, W, H);
     if (USE_SVG_ART && GEOM) {
       blitSvgArt();
+      paintRouteGlow(ctx);
       LAYERS.forEach((L) => {
         drawVilli(L, t * 1.3);
         drawCapillaries(L);
@@ -2277,6 +2291,7 @@
       blit('stomach');
       blit('liver');
       blit('vessels');
+      paintRouteGlow(ctx);
       drawGlands(t);
       drawParticles(t);
       drawDots();
