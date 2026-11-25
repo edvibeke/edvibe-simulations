@@ -1,8 +1,18 @@
 (() => {
   'use strict';
 
-  /* ── Layout ─────────────────────────────────────────────
-     Two coordinate spaces, on purpose.
+  /* ── Renderer selection (Phase 1) ────────────────────────
+     WebGL/Three.js path is opt-in behind a feature flag while the
+     Canvas2D path remains the default. Enable with ?renderer=webgl or
+     localStorage.evRenderer='webgl'. */
+  const _params = new URLSearchParams(location.search);
+  const DEBUG = _params.get('debug') === '1';
+  const RENDERER = (_params.get('renderer') || localStorage.getItem('evRenderer') || 'canvas2d').toLowerCase();
+  const USE_WEBGL = RENDERER === 'webgl' || RENDERER === 'three' || RENDERER === '3d';
+  const USE_SVG_ART = true;
+  const GEOM = window.EV_GEOMETRY;
+
+  /* ── Layout ─────────────────────────────────────
 
      The tract is authored in a roomy design space and mapped into
      the canvas by gx()/gy()/gs(), which leaves a clear column on the
@@ -18,19 +28,37 @@
      and the scale cannot drift. Everything anatomical, in design
      space, has to stay inside FIGURE. */
 
+  const CANVAS = document.getElementById('stage');
+  const NARROW = window.innerWidth <= 600;
+  const COMPACT = window.innerWidth <= 1000;
+  if (NARROW) CANVAS.height = 1200;
+
   const W = 900;
-  const H = 540;
+  const H = NARROW ? 1200 : 540;
+
+  const FIGURE_VIEW = NARROW
+    ? { scale: 2.5, tx: -330, ty: -145 }
+    : { scale: 1, tx: 0, ty: 0 };
+  const viewPoint = (x, y) => [
+    FIGURE_VIEW.tx + x * FIGURE_VIEW.scale,
+    FIGURE_VIEW.ty + y * FIGURE_VIEW.scale
+  ];
+
+  const TEXT = NARROW
+    ? { label: 28, labelPad: 12, labelHeight: 34, badge: 28, sub: 28, surface: 28, legend: 11 }
+    : COMPACT
+      ? { label: 14, labelPad: 8, labelHeight: 22, badge: 14, sub: 14, surface: 14, legend: 11 }
+      : { label: 11, labelPad: 7, labelHeight: 20, badge: 14, sub: 11, surface: 11, legend: 11 };
 
   const RAIL = { x: 600, y: 32, w: 284, h: 330 };
-  const FOOT = { x: 40, y: 400, w: 844, h: 128 };
 
   const MARGIN = 14;
   const AREA = {
-    x: MARGIN, y: MARGIN,
+    x: MARGIN, y: 80,
     w: RAIL.x - MARGIN * 2,
-    h: FOOT.y - MARGIN * 2
+    h: 446
   };
-  const FIGURE = { x: 60, y: 44, w: 750, h: 516 };
+  const FIGURE = { x: 169.45267315559317, y: 80, w: 310.0, h: 529.5397590361446 };
 
   const S = Math.min(AREA.w / FIGURE.w, AREA.h / FIGURE.h);
   const OX = (AREA.x + AREA.w / 2 - S * (FIGURE.x + FIGURE.w / 2)) / (1 - S);
@@ -69,117 +97,199 @@
      and one single stroke cannot say both at once. */
 
   const TRACK = {
-    /* mouth and pharynx, then down to the cardia */
     upper: [
-      [ 462,  74], [ 460,  98], [ 464, 124], [ 472, 152], [ 492, 178],
-      /* stomach: fundus high on the patient's left, body, then the antrum */
-      [ 544, 196], [ 594, 214], [ 622, 250], [ 610, 282],
-      /* pylorus, then the duodenum across to the patient's right, level with
-         the pylorus the way the first part really runs */
-      [ 566, 300], [ 532, 310], [ 498, 312], [ 466, 310],
-      /* then the descending part: a steep dive down the patient's right,
-         behind the sagging transverse colon, and on to the flexure. Steep on
-         purpose — a shallow descent would run alongside the transverse colon
-         instead of crossing it, and the pair would read as one fat tube. */
-      [ 446, 312], [ 430, 330], [ 420, 350], [ 414, 372],
-      [ 418, 396], [ 432, 410], [ 452, 416], [ 478, 416]
+      [358.213, 16.847],
+      [343.978, 19.694],
+      [338.284, 32.505],
+      [343.978, 48.164],
+      [352.519, 62.399],
+      [358.213, 70.94],
+      [358.413, 82.04],
+      [358.413, 91.14],
+      [358.413, 96.64],
+      [358.413, 102.94],
+      [358.413, 113.24],
+      [358.413, 120.04],
+      [358.813, 130.34],
+      [359.613, 138.24],
+      [360.413, 142.94],
+      [364.413, 152.44],
+      [367.013, 165.14],
+      [371.913, 180.14],
+      [373.513, 189.54],
+      [378.913, 201.84],
+      [393.413, 220.14],
+      [406.313, 207.24],
+      [426.513, 191.14],
+      [444.213, 198.74],
+      [443.913, 218.94],
+      [438.213, 237.24],
+      [421.513, 249.24],
+      [404.813, 259.04],
+      [387.113, 265.64],
+      [375.713, 263.14],
+      [370.013, 261.54],
+      [362.513, 260.54],
+      [356.513, 258.34],
+      [348.313, 257.44],
+      [335.413, 252.74],
+      [326.613, 251.44],
+      [314.513, 253.44],
+      [305.013, 277.84],
+      [311.813, 295.34],
+      [336.113, 331.84],
+      [346.913, 328.44],
+      [365.813, 323.04],
+      [377.313, 319.74],
+      [390.213, 316.34],
+      [393.513, 331.14],
+      [393.513, 339.34],
     ],
-    /* jejunum and ileum: three sweeps, each one further to the patient's
-       right, which is where they sit in the abdomen. The rows are 54 apart
-       so that a villus on one row cannot reach the row below it. */
     small: [
-      [ 520, 412], [ 600, 412], [ 690, 412], [ 736, 418],
-      [ 740, 440],
-      [ 734, 466], [ 660, 466], [ 570, 466], [ 480, 466],
-      [ 428, 470], [ 412, 486],
-      /* terminal ileum, across to the caecum in the right iliac fossa */
-      [ 430, 518], [ 380, 520], [ 300, 520], [ 232, 518]
+      [384.613, 341.24],
+      [366.413, 342.64],
+      [350.513, 340.44],
+      [331.713, 337.44],
+      [322.113, 335.84],
+      [315.913, 334.14],
+      [304.913, 333.34],
+      [293.713, 343.14],
+      [288.313, 361.74],
+      [291.313, 381.94],
+      [305.813, 390.14],
+      [309.813, 375.14],
+      [324.613, 372.94],
+      [342.113, 375.64],
+      [348.113, 377.34],
+      [349.713, 381.44],
+      [346.213, 385.24],
+      [338.013, 385.74],
+      [316.413, 393.94],
+      [318.313, 402.94],
+      [324.313, 411.14],
+      [347.213, 396.64],
+      [354.913, 389.54],
+      [360.613, 383.54],
+      [371.313, 388.24],
+      [377.713, 385.74],
+      [393.813, 372.34],
+      [401.913, 351.94],
+      [405.013, 344.74],
+      [404.213, 336.24],
+      [411.113, 326.64],
+      [437.213, 302.54],
+      [449.413, 305.54],
+      [440.213, 327.04],
+      [424.513, 336.64],
+      [433.713, 349.64],
+      [435.313, 368.84],
+      [424.313, 371.94],
+      [425.813, 390.94],
+      [420.513, 399.94],
+      [404.613, 384.04],
+      [391.013, 381.04],
+      [370.613, 398.44],
+      [379.613, 398.44],
+      [389.513, 390.14],
+      [394.013, 401.54],
+      [399.313, 412.14],
+      [409.213, 421.14],
+      [412.213, 435.54],
+      [399.313, 443.84],
+      [391.013, 435.54],
+      [383.413, 421.14],
+      [366.013, 414.34],
+      [353.213, 412.14],
+      [341.013, 416.64],
+      [359.213, 421.14],
+      [370.613, 431.04],
+      [370.613, 446.14],
+      [349.413, 431.74],
+      [335.713, 428.74],
+      [335.713, 438.54],
+      [353.913, 443.84],
+      [378.113, 456.04],
+      [369.013, 459.04],
+      [342.613, 457.54],
+      [325.113, 453.74],
+      [313.813, 440.84],
+      [310.813, 417.34],
+      [300.213, 412.14],
     ],
-    /* caecum, colon frame, sigmoid and rectum */
     colon: [
-      [ 198, 518], [ 168, 510], [ 152, 484], [ 150, 452],
-      [ 154, 418], [ 170, 374], [ 206, 342],
-      /* transverse colon, sagging under the pancreas, lowest just right of
-         centre — which is also what keeps it clear of the descending
-         duodenum, which has to dive behind it */
-      [ 288, 353], [ 366, 361], [ 446, 363], [ 540, 358], [ 662, 347], [ 730, 334],
-      /* splenic flexure, the high point, then down the patient's left */
-      [ 768, 328], [ 792, 352], [ 800, 390], [ 800, 428],
-      /* sigmoid and rectum, finishing near the midline */
-      [ 800, 462], [ 792, 486], [ 762, 502], [ 716, 510], [ 662, 514],
-      [ 604, 514], [ 548, 512]
+      [265.313, 416.64],
+      [267.613, 402.24],
+      [265.313, 379.54],
+      [253.213, 347.04],
+      [263.813, 302.34],
+      [270.613, 290.94],
+      [307.013, 314.44],
+      [372.113, 322.04],
+      [396.513, 315.74],
+      [427.513, 307.04],
+      [461.913, 269.54],
+      [464.213, 293.74],
+      [463.013, 312.34],
+      [463.013, 333.84],
+      [462.213, 351.24],
+      [456.013, 381.14],
+      [459.913, 398.04],
+      [455.113, 409.64],
+      [451.513, 422.54],
+      [446.413, 443.94],
+      [415.713, 465.14],
+      [381.913, 459.64],
+      [358.813, 471.24],
+      [356.813, 485.84],
+      [356.113, 502.24],
+      [355.913, 505.64],
+      [357.913, 510.54],
+      [358.213, 515.64],
+      [358.713, 518.54],
+      [358.813, 522.84],
+      [358.813, 526.34],
+      [359.013, 529.44],
+      [359.013, 532.14],
+      [359.113, 535.14],
+      [359.113, 537.54],
     ]
   };
 
-  const ANCHORS = TRACK.upper.concat(TRACK.small, TRACK.colon);
+  const path = GEOM.pathPoints.map((p) => ({ x: p[0], y: p[1] }));
+  const cum = GEOM.cumulative.slice();
 
-  const path = [];
-  const cum = [];
 
-  (function buildPath() {
-    const a = ANCHORS;
-    let total = 0;
-    const push = (dx, dy) => {
-      const x = gx(dx), y = gy(dy);
-      if (path.length) {
-        const prev = path[path.length - 1];
-        total += Math.hypot(x - prev.x, y - prev.y);
-      }
-      path.push({ x: x, y: y });
-      cum.push(total);
-    };
-    for (let i = 0; i < a.length - 1; i++) {
-      const p0 = a[Math.max(0, i - 1)];
-      const p1 = a[i];
-      const p2 = a[i + 1];
-      const p3 = a[Math.min(a.length - 1, i + 2)];
-      for (let j = 0; j < 9; j++) {
-        const t = j / 9, t2 = t * t, t3 = t2 * t;
-        push(
-          0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t +
-                 (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
-                 (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
-          0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t +
-                 (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
-                 (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
-        );
-      }
-    }
-    push(a[a.length - 1][0], a[a.length - 1][1]);
-  })();
-
-  const TUBE_END = cum[cum.length - 1];
+  const TUBE_END = 2069.9224723855814;
 
   /* Arclength of the landmark nearest each design point. The names are
      what the rest of the file refers to, so the organ boundaries and
      the secretion trigger points cannot drift apart. */
   const ARC = {};
+  const ARC_ORDER = [
+    'mouth', 'oesophagus', 'cardia', 'stomach', 'pylorus', 'duodenum',
+    'flexure', 'jejunum', 'ileum', 'caecum', 'hepatic', 'transverse',
+    'splenic', 'descending', 'rectum'
+  ];
 
   (function findArcs() {
-    const at = (key, dx, dy) => {
-      const x = gx(dx), y = gy(dy);
-      let best = 0, bd = 1e9;
-      for (let i = 0; i < path.length; i++) {
-        const d = Math.hypot(path[i].x - x, path[i].y - y);
-        if (d < bd) { bd = d; best = i; }
+    if (!GEOM || !GEOM.ARC) {
+      throw new Error('ARC missing from generated geometry: load geometry.generated.js before script.js');
+    }
+    const missing = ARC_ORDER.filter((key) => !Number.isFinite(GEOM.ARC[key]));
+    if (missing.length) {
+      throw new Error('ARC missing from generated geometry: ' + missing.join(', '));
+    }
+    for (const key of ARC_ORDER) ARC[key] = GEOM.ARC[key];
+    for (let i = 1; i < ARC_ORDER.length; i++) {
+      const prev = ARC_ORDER[i - 1];
+      const next = ARC_ORDER[i];
+      if (!(ARC[prev] < ARC[next])) {
+        throw new Error(
+          'ARC values must strictly increase: ' + prev + '=' + ARC[prev] +
+          ' is not less than ' + next + '=' + ARC[next]
+        );
       }
-      ARC[key] = cum[best];
-    };
-    at('mouth', 460, 98);
-    at('oesophagus', 472, 152);
-    at('cardia', 492, 178);
-    at('stomach', 594, 214);
-    at('pylorus', 566, 302);
-    at('duodenum', 452, 330);
-    at('flexure', 478, 412);
-    at('jejunum', 600, 412);
-    at('ileum', 570, 466);
-    at('caecum', 198, 518);
-    at('hepatic', 206, 342);
-    at('transverse', 540, 356);
-    at('splenic', 768, 328);
-    at('descending', 800, 428);
-    at('rectum', 662, 514);
+    }
   })();
 
   /* Depth layers, back to front. The transverse colon crosses the
@@ -215,24 +325,49 @@
   /* ── Supporting anatomy, in design space ───────────── */
 
   const LIVER = { x: 262, y: 118, rx: 92, ry: 44, lobe: { x: 372, y: 136, rx: 46, ry: 26 } };
-  const GALLBLADDER = { x: 212, y: 174, rx: 12, ry: 9 };
-  const PANCREAS = { x: 470, y: 318, rx: 82, ry: 13, rot: -0.12 };
   const STOMACH_SHAPE = { cx: 560, cy: 244, rx: 68, ry: 48, rot: -0.42 };
 
-  /* Where the visible upper part of the descending duodenum sits, so the
-     bile and pancreatic ducts are drawn to it rather than to a coordinate
-     typed in here. The rest of the duodenum passes behind the transverse
-     colon, which is why the ducts stop at this point. */
-  const DUODENUM = { x: 424, y: 336 };
-  const PANCREATIC_HEAD = { x: 400, y: 322 };
+  const DOT_ROUTES = {};
+  const DOT_NECK_Y = 40;
 
-  /* The portal vein leaves the small intestine at the pancreatic head and
-     has to finish inside the liver, because that is the whole point of
-     drawing it: sugars and amino acids go to the liver first. */
-  const PORTAL = [[452, 336], [416, 300], [374, 266], [318, 228], [276, 192], [248, 152]];
-  /* The lymph duct climbs out of the villi, behind the stomach, and up
-     towards the left shoulder. */
-  const LYMPH = [[690, 440], [738, 362], [762, 292], [770, 212], [752, 140], [724, 104]];
+  function validRoutePoints(points) {
+    return Array.isArray(points) && points.length >= 2 && points.every((p) =>
+      Array.isArray(p) && p.length === 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]));
+  }
+
+  function trimRouteAtCanvasY(points, y) {
+    const out = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i], b = points[i + 1];
+      if (a[1] >= y) out.push([a[0], a[1]]);
+      if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1]) {
+        const f = (y - a[1]) / (b[1] - a[1]);
+        out.push([a[0] + (b[0] - a[0]) * f, y]);
+        break;
+      }
+    }
+    if (!out.length) throw new Error('DOT route does not reach canvas y=' + y);
+    return out;
+  }
+
+  (function loadDotRoutes() {
+    const names = ['portal', 'lymph', 'bile', 'pancreatic'];
+    if (!GEOM || !GEOM.routes) {
+      throw new Error('DOT routes missing: load geometry.generated.js before script.js');
+    }
+    const missing = names.filter((name) => !validRoutePoints(GEOM.routes[name] && GEOM.routes[name].points));
+    if (missing.length) {
+      throw new Error('DOT routes missing or invalid: ' + missing.join(', '));
+    }
+    const bileEnd = GEOM.routes.bile.points[GEOM.routes.bile.points.length - 1];
+    const pancreaticEnd = GEOM.routes.pancreatic.points[GEOM.routes.pancreatic.points.length - 1];
+    if (Math.hypot(bileEnd[0] - pancreaticEnd[0], bileEnd[1] - pancreaticEnd[1]) > 0.01) {
+      throw new Error('DOT papilla missing: bile and pancreatic routes must share one endpoint');
+    }
+    for (const name of names) DOT_ROUTES[name] = GEOM.routes[name].points.map((p) => [p[0], p[1]]);
+    DOT_ROUTES.lymph = trimRouteAtCanvasY(DOT_ROUTES.lymph, DOT_NECK_Y);
+    DOT_ROUTES.papilla = [bileEnd[0], bileEnd[1]];
+  })();
 
   /* Villi are short enough that two neighbouring loops of bowel do not
      grow into each other. */
@@ -268,6 +403,7 @@
   /* Fraction of already-digested nutrient taken across the villi per
      simulated minute. Fat lags because it has to be packaged first. */
   const ABSORB = { carb: 0.012, protein: 0.011, fat: 0.004 };
+  const DOT_GRAMS = { carb: 3, protein: 3, fat: 0.5 };
 
   const STOMACH_OPT_PH = 1.9;
   const STOMACH_TOL = 0.60;
@@ -329,6 +465,26 @@
   const glucoseValue  = document.getElementById('glucoseValue');
   const waterValue    = document.getElementById('waterValue');
   const transitValue  = document.getElementById('transitValue');
+
+  const footerPct     = document.getElementById('footerPct');
+  const footerSurface = document.getElementById('footerSurface');
+  const footerAbsorbed = {
+    carb: document.getElementById('footerAbsCarb'),
+    protein: document.getElementById('footerAbsProtein'),
+    fat: document.getElementById('footerAbsFat')
+  };
+  const footerWater    = document.getElementById('footerWater');
+  const footerInsulin  = document.getElementById('footerInsulin');
+  const footerLeftover = document.getElementById('footerLeftover');
+  const mobileOrgan  = document.getElementById('mobileOrgan');
+  const mobilePh     = document.getElementById('mobilePh');
+  const mobileEnzyme = document.getElementById('mobileEnzyme');
+  const mobileState  = document.getElementById('mobileState');
+  const footerSegments = {};
+  for (const n of NUTRIENTS) {
+    footerSegments[n.key] = document.getElementById('footerSeg' + n.key[0].toUpperCase() + n.key.slice(1));
+    if (footerSegments[n.key]) footerSegments[n.key].style.background = n.colour;
+  }
 
   /* ── State ──────────────────────────────────────────── */
 
@@ -418,12 +574,13 @@
 
   const MIN_PER_SEC = 46;
   const SPEED = [
-    { s: 0,               v: 60 },
-    { s: ARC.oesophagus,  v: 34 },
-    { s: ARC.stomach,     v: 2.8 },
-    { s: ARC.pylorus,     v: 4.8 },
-    { s: ARC.caecum,      v: 1.4 },
-    { s: ARC.rectum,      v: 2.0 }
+    { s: 0, v: 64.07534752264388 },
+    { s: ARC.oesophagus, v: 98.24175882666144 },
+    { s: ARC.stomach, v: 2.8978340537883365 },
+    { s: ARC.pylorus, v: 3.34 },
+    { s: ARC.jejunum, v: 7.324376216149951 },
+    { s: ARC.caecum, v: 0.9958283468430951 },
+    { s: ARC.rectum, v: 1.3822068948751376 }
   ];
 
   function speedAt(s) {
@@ -432,7 +589,7 @@
     return v;
   }
 
-  const WAVE_STRIDE = 240;
+  const WAVE_STRIDE = 249.45084675454848;
   const waveDrift = (s, t) => t * speedAt(s) * MIN_PER_SEC * 0.5;
 
   function waveIntensityAt(s, t) {
@@ -535,26 +692,36 @@
 
   /* ── Absorbed-nutrient packets ──────────────────────── */
 
+  function noteDot(kind, route, index, at) {
+    const hook = window.__EV_DOT_EMIT__;
+    if (typeof hook === 'function') hook({ kind: kind, route: route, index: index, at: at });
+  }
+
   function routePoint(route, t) {
-    const pts = route === 'lymph' ? LYMPH : PORTAL;
+    const pts = DOT_ROUTES[route] || DOT_ROUTES.portal;
     const span = pts.length - 1;
-    const seg = Math.min(span - 1, Math.floor(t * span));
-    const f = clamp(t * span - seg, 0, 1);
+    const u = clamp(t, 0, 1);
+    const seg = Math.min(span - 1, Math.floor(u * span));
+    const f = clamp(u * span - seg, 0, 1);
     return {
-      x: gx(pts[seg][0]) + (gx(pts[seg + 1][0]) - gx(pts[seg][0])) * f,
-      y: gy(pts[seg][1]) + (gy(pts[seg + 1][1]) - gy(pts[seg][1])) * f
+      x: pts[seg][0] + (pts[seg + 1][0] - pts[seg][0]) * f,
+      y: pts[seg][1] + (pts[seg + 1][1] - pts[seg][1]) * f
     };
   }
 
   function emitDot(type) {
     if (dots.length > 24) return;
-    dots.push({
+    const route = type === 'fat' ? 'lymph' : 'portal';
+    const d = {
+      type: type,
       t: 0,
       dur: 1.5 + rnd() * 0.5,
-      route: type === 'fat' ? 'lymph' : 'portal',
-      jx: (rnd() - 0.5) * gs(14),
-      jy: (rnd() - 0.5) * gs(10)
-    });
+      route: route,
+      jx: (rnd() - 0.5) * 1.6,
+      jy: (rnd() - 0.5) * 1.2
+    };
+    dots.push(d);
+    noteDot(type, route, dots.length - 1, (f) => routePoint(route, f));
   }
 
   /* ── One simulation step ────────────────────────────── */
@@ -616,7 +783,7 @@
       let ds = waveIntensityAt(p.s, simSec) * speedAt(p.s) * peristalsis * dMin;
       if (p.s > ARC.stomach && p.s < ARC.pylorus) {
         const churn = Math.sin(simMin * 0.09 + p.phase) * 0.85 + 0.2;
-        ds = ds * 0.2 + churn * 1.3;
+        ds = ds * 0.2 + churn * 1.5586021505376353;
       }
       p.s += ds;
 
@@ -652,8 +819,8 @@
           absorbed[p.type] += amount;
           if (p.type === 'carb') carbFlux += amount;
           p.emit += amount;
-          while (p.emit >= 3) {
-            p.emit -= 3;
+          while (p.emit >= DOT_GRAMS[p.type]) {
+            p.emit -= DOT_GRAMS[p.type];
             emitDot(p.type);
           }
         }
@@ -715,28 +882,28 @@
   const TUBE_W = 24;
 
   /* One layer's worth of the centreline, as a canvas path. */
-  function traceLayer(L) {
-    ctx.beginPath();
+  function traceLayer(L, c = ctx) {
+    c.beginPath();
     const a = sampleAt(L.s0), b = sampleAt(L.s1);
-    ctx.moveTo(a.x, a.y);
+    c.moveTo(a.x, a.y);
     for (let i = 0; i < path.length; i++) {
-      if (cum[i] > L.s0 && cum[i] < L.s1) ctx.lineTo(path[i].x, path[i].y);
+      if (cum[i] > L.s0 && cum[i] < L.s1) c.lineTo(path[i].x, path[i].y);
     }
-    ctx.lineTo(b.x, b.y);
+    c.lineTo(b.x, b.y);
   }
 
-  function drawWall(L) {
-    ctx.save();
-    traceLayer(L);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = gs(TUBE_W);
-    ctx.strokeStyle = COL.wallFull;
-    ctx.stroke();
-    ctx.lineWidth = gs(TUBE_W - 6);
-    ctx.strokeStyle = COL.lumenFull;
-    ctx.stroke();
-    ctx.restore();
+  function drawWall(L, c = ctx) {
+    c.save();
+    traceLayer(L, c);
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.lineWidth = gs(TUBE_W);
+    c.strokeStyle = COL.wallFull;
+    c.stroke();
+    c.lineWidth = gs(TUBE_W - 6);
+    c.strokeStyle = COL.lumenFull;
+    c.stroke();
+    c.restore();
   }
 
   /* Villi, clipped to whichever layer is being drawn and to the stretch
@@ -746,7 +913,7 @@
     const outer = gs(VILLUS_OUTER);
     const s0 = Math.max(L.s0, ARC.pylorus);
     const s1 = Math.min(L.s1, ARC.caecum);
-    for (let s = s0; s < s1; s += 9) {
+    for (let s = s0; s < s1; s += 13.733205405281158) {
       const p = sampleAt(s);
       const grow = 0.6 + 0.4 * Math.sin(s * 0.06 + t);
       const reach = inner + (outer - inner) * grow;
@@ -763,146 +930,315 @@
     ctx.globalAlpha = 1;
   }
 
-  function drawHaustra(L) {
+  function drawHaustra(L, c = ctx) {
     const s0 = Math.max(L.s0, ARC.caecum);
     const s1 = Math.min(L.s1, TUBE_END);
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 2.4;
-    for (let s = s0; s < s1; s += 22) {
+    c.strokeStyle = 'rgba(0,0,0,0.3)';
+    c.lineWidth = 2.4;
+    for (let s = s0; s < s1; s += 15.648731164677208) {
       const p = sampleAt(s);
       const nx = -Math.sin(p.a), ny = Math.cos(p.a);
       for (const side of [-1, 1]) {
-        ctx.beginPath();
-        ctx.moveTo(p.x + nx * side * gs(3), p.y + ny * side * gs(3));
-        ctx.lineTo(p.x + nx * side * gs(10), p.y + ny * side * gs(10));
-        ctx.stroke();
+        c.beginPath();
+        c.moveTo(p.x + nx * side * gs(3), p.y + ny * side * gs(3));
+        c.lineTo(p.x + nx * side * gs(10), p.y + ny * side * gs(10));
+        c.stroke();
       }
     }
   }
 
-  function drawStomach() {
+  function drawStomach(c = ctx) {
     const sh = STOMACH_SHAPE;
-    ctx.save();
-    ctx.translate(gx(sh.cx), gy(sh.cy));
-    ctx.rotate(sh.rot);
-    ctx.fillStyle = COL.wallFull;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, gs(sh.rx), gs(sh.ry), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = COL.lumenFull;
-    ctx.beginPath();
-    ctx.ellipse(gs(4), gs(2), gs(sh.rx - 9), gs(sh.ry - 9), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(251,207,232,0.3)';
-    ctx.lineWidth = 1.6;
+    const cos = Math.cos(sh.rot), sin = Math.sin(sh.rot);
+    const at = (u, v, inset, endpoint) => {
+      const k = endpoint ? inset * 0.15 : inset;
+      const lx = u * sh.rx * (1 - k);
+      const ly = v * sh.ry * (1 - k);
+      return {
+        x: gx(sh.cx + lx * cos - ly * sin),
+        y: gy(sh.cy + lx * sin + ly * cos)
+      };
+    };
+    const nodes = [
+      [-0.52, -1.82], [0.06, -1.30], [0.72, -0.95], [1.05, -0.15],
+      [0.92, 0.78], [0.40, 1.18], [-0.25, 1.12], [-0.42, 0.62],
+      [-0.55, 0], [-0.58, -0.85]
+    ];
+    const path = (p, inset) => {
+      const q = nodes.map((n, i) => at(n[0], n[1], inset, i === 0 || i === 6));
+      const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      const start = mid(q[q.length - 1], q[0]);
+      p.beginPath();
+      p.moveTo(start.x, start.y);
+      for (let i = 0; i < q.length; i++) {
+        const m = mid(q[i], q[(i + 1) % q.length]);
+        p.quadraticCurveTo(q[i].x, q[i].y, m.x, m.y);
+      }
+      p.closePath();
+    };
+    const ca = Math.abs(cos), sa = Math.abs(sin);
+    const hx = sh.rx * ca + sh.ry * sa, hy = sh.rx * sa + sh.ry * ca;
+    const bounds = { x: gx(sh.cx) - gs(hx), y: gy(sh.cy) - gs(hy), w: gs(hx * 2), h: gs(hy * 2) };
+    c.save();
+    path(c, 0);
+    c.fillStyle = organGradient(c, bounds, GLOW.stomach.inner, GLOW.stomach.outer);
+    c.fill();
+    rimGlow(c, GLOW.stomach.rim, GLOW.stomach.blur, (p) => { path(p, 0); p.stroke(); });
+    path(c, 0.14);
+    c.fillStyle = COL.lumenFull;
+    c.fill();
+    c.save();
+    path(c, 0.14);
+    c.clip();
+    const fundus = at(0.05, -1.02, 0.14, false);
+    c.fillStyle = GLOW.stomach.fundus;
+    c.beginPath();
+    c.ellipse(fundus.x, fundus.y, gs(sh.rx * 0.36), gs(sh.ry * 0.28), sh.rot, 0, Math.PI * 2);
+    c.fill();
+    const shine = at(0.34, -0.62, 0.14, false);
+    c.fillStyle = GLOW.stomach.highlight;
+    c.beginPath();
+    c.ellipse(shine.x, shine.y, gs(sh.rx * 0.24), gs(sh.ry * 0.12), sh.rot, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = GLOW.stomach.rugae;
+    c.lineWidth = 1.1;
     for (let i = -3; i <= 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-gs(sh.rx), gs(i * 10));
-      ctx.quadraticCurveTo(0, gs(i * 10 + 6), gs(sh.rx), gs(i * 10));
-      ctx.stroke();
+      const v = i * 0.16;
+      const a = at(-0.86, v, 0.14, false);
+      const b = at(0.82, v + 0.05, 0.14, false);
+      const m = at(-0.05, v + 0.12, 0.14, false);
+      c.beginPath();
+      c.moveTo(a.x, a.y);
+      c.quadraticCurveTo(m.x, m.y, b.x, b.y);
+      c.stroke();
     }
-    ctx.restore();
-    ctx.save();
-    ctx.translate(gx(sh.cx), gy(sh.cy));
-    ctx.rotate(sh.rot);
-    ctx.strokeStyle = COL.wall;
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, gs(sh.rx), gs(sh.ry), 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+    c.restore();
+    c.restore();
   }
 
-  function drawLiver() {
-    ctx.beginPath();
-    ctx.ellipse(gx(LIVER.x), gy(LIVER.y), gs(LIVER.rx), gs(LIVER.ry), 0, 0, Math.PI * 2);
-    ctx.ellipse(gx(LIVER.lobe.x), gy(LIVER.lobe.y), gs(LIVER.lobe.rx), gs(LIVER.lobe.ry), 0.4, 0, Math.PI * 2);
-    ctx.fillStyle = COL.liver;
-    ctx.fill();
-    ctx.strokeStyle = '#fb7185';
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
+  function drawLiver(c = ctx) {
+    const L = LIVER;
+    const bx0 = gx(L.x - L.rx);
+    const by0 = gy(L.y - L.ry);
+    const bx1 = gx(L.lobe.x + L.lobe.rx);
+    const by1 = gy(Math.max(L.y + L.ry, L.lobe.y + L.lobe.ry));
+    const path = (p) => {
+      p.beginPath();
+      p.moveTo(gx(L.x - L.rx), gy(L.y));
+      p.bezierCurveTo(
+        gx(L.x - L.rx * 0.86), gy(L.y - L.ry * 0.92),
+        gx(L.x + L.rx * 0.28), gy(L.y - L.ry),
+        gx(L.x + L.rx * 0.66), gy(L.y - L.ry * 0.62)
+      );
+      p.quadraticCurveTo(
+        gx(L.x + L.rx * 0.84), gy(L.y - L.ry * 0.18),
+        gx(L.lobe.x - L.lobe.rx * 0.42), gy(L.lobe.y - L.lobe.ry * 0.88)
+      );
+      p.bezierCurveTo(
+        gx(L.lobe.x + L.lobe.rx * 0.42), gy(L.lobe.y - L.lobe.ry),
+        gx(L.lobe.x + L.lobe.rx), gy(L.lobe.y - L.lobe.ry * 0.36),
+        gx(L.lobe.x + L.lobe.rx), gy(L.lobe.y)
+      );
+      p.bezierCurveTo(
+        gx(L.lobe.x + L.lobe.rx), gy(L.lobe.y + L.lobe.ry * 0.56),
+        gx(L.lobe.x + L.lobe.rx * 0.42), gy(L.lobe.y + L.lobe.ry),
+        gx(L.lobe.x), gy(L.lobe.y + L.lobe.ry)
+      );
+      p.quadraticCurveTo(
+        gx(L.x + L.rx * 0.42), gy(L.y + L.ry),
+        gx(L.x + L.rx * 0.18), gy(L.y + L.ry * 0.92)
+      );
+      p.bezierCurveTo(
+        gx(L.x - L.rx * 0.28), gy(L.y + L.ry * 0.98),
+        gx(L.x - L.rx * 0.82), gy(L.y + L.ry * 0.72),
+        gx(L.x - L.rx), gy(L.y)
+      );
+      p.closePath();
+    };
+    c.save();
+    path(c);
+    c.fillStyle = organGradient(c, { x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0 },
+      GLOW.liver.inner, GLOW.liver.outer);
+    c.fill();
+    rimGlow(c, GLOW.liver.rim, GLOW.liver.blur, (p) => { path(p); p.stroke(); });
+    c.save();
+    path(c);
+    c.clip();
+    c.fillStyle = GLOW.liver.highlight;
+    c.beginPath();
+    c.ellipse(gx(L.x - L.rx * 0.25), gy(L.y - L.ry * 0.42),
+      gs(L.rx * 0.45), gs(L.ry * 0.28), -0.15, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+    const lp = (u, v) => [L.x + u * L.rx, L.y + v * L.ry];
+    const lo = (u, v) => [L.lobe.x + u * L.lobe.rx, L.lobe.y + v * L.lobe.ry];
+    veinStroke(c, [lp(-0.78, -0.02), lp(-0.34, -0.18), lp(0.14, -0.24), lp(0.6, -0.5)],
+      GLOW.liver.vein, 1.1);
+    veinStroke(c, [lp(-0.34, -0.18), lp(-0.42, 0.34), lp(-0.2, 0.66)],
+      GLOW.liver.vein, 0.9);
+    veinStroke(c, [lp(0.14, -0.24), lp(0.34, 0.26), lp(0.18, 0.7)],
+      GLOW.liver.vein, 0.9);
+    veinStroke(c, [lo(-0.82, 0.06), lo(-0.05, -0.04), lo(0.78, -0.12)],
+      GLOW.liver.vein, 0.9);
+    c.restore();
   }
 
-  /* Bile and pancreatic juice both arrive at the duodenum, so the ducts
-     are drawn to the duodenum's own coordinates rather than to numbers
-     typed in here. */
+  function drawGlandsUpper(c = ctx) {
+    const pts = DOT_ROUTES.bile.points;
+    const gb = { x: pts[3][0], y: pts[3][1], rx: 12, ry: 9 };
+    const pap = DOT_ROUTES.papilla;
+    const bx0 = gx(gb.x - gb.rx);
+    const by0 = gy(gb.y - gb.ry);
+    const bx1 = gx(gb.x + gb.rx);
+    const by1 = gy(gb.y + gb.ry);
+    const shape = (p) => {
+      p.beginPath();
+      p.moveTo(gx(gb.x + gb.rx * 0.72), gy(gb.y - gb.ry * 0.86));
+      p.bezierCurveTo(
+        gx(gb.x + gb.rx * 0.2), gy(gb.y - gb.ry * 0.6),
+        gx(gb.x - gb.rx * 0.35), gy(gb.y - gb.ry * 0.5),
+        gx(gb.x - gb.rx * 0.78), gy(gb.y + gb.ry * 0.05)
+      );
+      p.bezierCurveTo(
+        gx(gb.x - gb.rx * 0.95), gy(gb.y + gb.ry * 0.72),
+        gx(gb.x - gb.rx * 0.2), gy(gb.y + gb.ry),
+        gx(gb.x + gb.rx * 0.28), gy(gb.y + gb.ry * 0.72)
+      );
+      p.bezierCurveTo(
+        gx(gb.x + gb.rx * 0.86), gy(gb.y + gb.ry * 0.35),
+        gx(gb.x + gb.rx * 0.92), gy(gb.y - gb.ry * 0.2),
+        gx(gb.x + gb.rx * 0.72), gy(gb.y - gb.ry * 0.86)
+      );
+      p.closePath();
+    };
+    c.save();
+    shape(c);
+    c.fillStyle = organGradient(c, { x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0 },
+      GLOW.gall.inner, GLOW.gall.outer);
+    c.fill();
+    rimGlow(c, GLOW.gall.rim, GLOW.gall.blur, (p) => { shape(p); p.stroke(); });
+    c.save();
+    shape(c);
+    c.clip();
+    c.fillStyle = GLOW.gall.highlight;
+    c.beginPath();
+    c.ellipse(gx(gb.x - gb.rx * 0.32), gy(gb.y - gb.ry * 0.28),
+      gs(gb.rx * 0.26), gs(gb.ry * 0.17), -0.5, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+    c.restore();
+    c.strokeStyle = COL.bile;
+    c.lineWidth = 2.6;
+    c.beginPath();
+    pts.forEach((p, i) => (i ? c.lineTo(p[0], p[1])
+      : c.moveTo(p[0], p[1])));
+    c.lineTo(pap[0], pap[1]);
+    c.stroke();
+  }
+
+  function drawGlandsLower(c = ctx) {
+    const pts = DOT_ROUTES.pancreatic.points;
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+    const pa = {
+      x: (Math.min(...xs) + Math.max(...xs)) / 2 + 28,
+      y: (Math.min(...ys) + Math.max(...ys)) / 2,
+      rx: Math.max(30, (Math.max(...xs) - Math.min(...xs)) * 0.55),
+      ry: Math.max(10, (Math.max(...ys) - Math.min(...ys)) * 0.5),
+      rot: -0.12
+    };
+    const pap = DOT_ROUTES.papilla;
+    const cos = Math.cos(pa.rot), sin = Math.sin(pa.rot);
+    const at = (u, v) => ({
+      x: gx(pa.x + u * pa.rx * cos - v * pa.ry * sin),
+      y: gy(pa.y + u * pa.rx * sin + v * pa.ry * cos)
+    });
+    const nodes = [
+      [-0.88, -0.75], [-0.62, -0.55], [-0.25, -0.85], [0.15, -0.65],
+      [0.55, -0.78], [0.98, -0.20], [1.00, 0.18], [0.60, 0.55],
+      [0.18, 0.72], [-0.22, 0.62], [-0.60, 0.85], [-0.92, 0.70]
+    ];
+    const path = (p) => {
+      const q = nodes.map((n) => at(n[0], n[1]));
+      const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+      const start = mid(q[q.length - 1], q[0]);
+      p.beginPath();
+      p.moveTo(start.x, start.y);
+      for (let i = 0; i < q.length; i++) {
+        const m = mid(q[i], q[(i + 1) % q.length]);
+        p.quadraticCurveTo(q[i].x, q[i].y, m.x, m.y);
+      }
+      p.closePath();
+    };
+    const ca = Math.abs(cos), sa = Math.abs(sin);
+    const hx = pa.rx * ca + pa.ry * sa, hy = pa.rx * sa + pa.ry * ca;
+    const bounds = { x: gx(pa.x) - gs(hx), y: gy(pa.y) - gs(hy), w: gs(hx * 2), h: gs(hy * 2) };
+    c.save();
+    path(c);
+    c.fillStyle = organGradient(c, bounds, GLOW.pancreas.inner, GLOW.pancreas.outer);
+    c.fill();
+    rimGlow(c, GLOW.pancreas.rim, GLOW.pancreas.blur, (p) => { path(p); p.stroke(); });
+    c.save();
+    path(c);
+    c.clip();
+    c.strokeStyle = GLOW.pancreas.lobule;
+    c.lineWidth = 0.9;
+    for (let u = -0.55; u <= 0.8; u += 0.22) {
+      const a = at(u, -0.5), m = at(u + 0.04, 0), b = at(u, 0.5);
+      c.beginPath();
+      c.moveTo(a.x, a.y);
+      c.quadraticCurveTo(m.x, m.y, b.x, b.y);
+      c.stroke();
+    }
+    c.restore();
+    c.restore();
+    c.strokeStyle = COL.pancreas;
+    c.lineWidth = 2.2;
+    c.beginPath();
+    pts.forEach((p, i) => (i ? c.lineTo(p[0], p[1])
+      : c.moveTo(p[0], p[1])));
+    c.lineTo(pap[0], pap[1]);
+    c.stroke();
+  }
+
   function drawGlands(t) {
-    const gb = GALLBLADDER;
-    const pa = PANCREAS;
-    const du = DUODENUM;
-
-    ctx.fillStyle = '#65a30d';
-    ctx.beginPath();
-    ctx.ellipse(gx(gb.x), gy(gb.y), gs(gb.rx), gs(gb.ry), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#a3e635';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-
-    /* bile duct: gallbladder -> behind the pancreas -> the duodenum */
-    ctx.strokeStyle = COL.bile;
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    ctx.moveTo(gx(gb.x - 4), gy(gb.y + 8));
-    ctx.quadraticCurveTo(gx(du.x + 30), gy(du.y - 40), gx(du.x + 6), gy(du.y - 2));
-    ctx.stroke();
-
+    drawGlandsUpper(ctx);
     const flow = 0.15 + 0.85 * bileFlow;
     ctx.fillStyle = 'rgba(163,230,53,0.85)';
     for (let i = 0; i < 6; i++) {
       const u = (t * 0.3 * flow + i / 6) % 1;
+      const q = routePoint('bile', u);
+      noteSecretion('bile', 'bile', i, u);
       ctx.beginPath();
-      ctx.arc(gx(gb.x - 10 - u * 130), gy(gb.y + 14 + u * 156) + Math.sin(u * 7) * gs(4), 2.2, 0, Math.PI * 2);
+      ctx.arc(q.x, q.y + Math.sin(u * 7) * gs(1.5), 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    ctx.save();
-    ctx.translate(gx(pa.x), gy(pa.y));
-    ctx.rotate(pa.rot);
-    ctx.fillStyle = COL.pancreas;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, gs(pa.rx), gs(pa.ry), 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#e879f9';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.restore();
-
-    /* pancreatic duct: head -> the duodenum */
-    ctx.strokeStyle = COL.pancreas;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(gx(PANCREATIC_HEAD.x), gy(PANCREATIC_HEAD.y));
-    ctx.quadraticCurveTo(gx(du.x + 2), gy(du.y - 26), gx(du.x + 2), gy(du.y - 6));
-    ctx.stroke();
-
-    /* bicarbonate flushing the acid out of the duodenum */
+    drawGlandsLower(ctx);
     ctx.fillStyle = 'rgba(192,132,252,0.8)';
     for (let i = 0; i < 7; i++) {
       const u = (t * 0.26 + i / 7) % 1;
+      const q = routePoint('pancreatic', u);
+      noteSecretion('bicarbonate', 'pancreatic', i, u);
       ctx.beginPath();
-      ctx.arc(gx(du.x - 16 + u * 60), gy(du.y - 2) + Math.sin(u * 6 + i) * gs(8), 2.2, 0, Math.PI * 2);
+      ctx.arc(q.x, q.y + Math.sin(u * 6 + i) * gs(1.5), 2.2, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  function drawVessels() {
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.globalAlpha = 0.5;
-    ctx.strokeStyle = COL.portal;
-    ctx.lineWidth = 3.4;
-    ctx.beginPath();
-    PORTAL.forEach((p, i) => (i ? ctx.lineTo(gx(p[0]), gy(p[1])) : ctx.moveTo(gx(p[0]), gy(p[1]))));
-    ctx.stroke();
-    ctx.strokeStyle = COL.lymph;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    LYMPH.forEach((p, i) => (i ? ctx.lineTo(gx(p[0]), gy(p[1])) : ctx.moveTo(gx(p[0]), gy(p[1]))));
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+  function drawVessels(c = ctx) {
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.globalAlpha = 0.18;
+    c.strokeStyle = COL.portal;
+    c.lineWidth = 2.2;
+    c.beginPath();
+    DOT_ROUTES.portal.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])));
+    c.stroke();
+    c.strokeStyle = COL.lymph;
+    c.lineWidth = 2;
+    c.beginPath();
+    DOT_ROUTES.lymph.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])));
+    c.stroke();
+    c.globalAlpha = 1;
   }
 
   /* Capillary stubs reaching from the lumen out past the villi, drawn per
@@ -952,13 +1288,23 @@
     }
   }
 
-  function drawParticles() {
+  function drawParticles(t) {
     const shrink = 1 / Math.pow(chewFactor, 0.3);
+    const first = GEOM && GEOM.markers['feed first'];
+    const last = GEOM && GEOM.markers['feed last'];
     for (const p of particles) {
-      const sp = sampleAt(p.s);
+      const inMouth = USE_SVG_ART && first && last && mouthHold > 0 && p.s <= ARC.mouth;
+      const sp = inMouth
+        ? {
+            x: first.x + (last.x - first.x) * clamp((p.s - 2) / 16, 0, 1),
+            y: first.y + (last.y - first.y) * clamp((p.s - 2) / 16, 0, 1),
+            a: -Math.PI / 2
+          }
+        : sampleAt(p.s);
       const nx = -Math.sin(sp.a), ny = Math.cos(sp.a);
+      const churnLimit = Math.max(0, gs(6) - Math.abs(p.off));
       const churn = p.s > ARC.stomach && p.s < ARC.pylorus
-        ? Math.sin(simMin * 0.09 + p.phase) * gs(4)
+        ? clamp(Math.sin(simMin * 0.09 + p.phase) * gs(4), -churnLimit, churnLimit)
         : 0;
       const r = gs(3.4 + p.grams * 0.13) * shrink;
       ctx.globalAlpha = 1 - 0.65 * p.dig;
@@ -971,9 +1317,53 @@
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
+    if (mouthHold > 0 && first && last) {
+      const wave = Math.sin(t * Math.PI * 4);
+      const extraCount = clamp(Math.round(6 + (chewFactor - 1) * 9), 6, 24);
+      const each = 18 / extraCount;
+      const radius = Math.max(1.2, gs(3.4 + each * 0.13) * shrink * 0.75);
+      for (let i = 0; i < extraCount; i++) {
+        const u = (i + 0.5) / extraCount;
+        const x = first.x + (last.x - first.x) * u + Math.sin(i * 2.7) * 4 + wave * 2;
+        const y = first.y + (last.y - first.y) * u + Math.cos(i * 1.9) * 2 + wave * 1.2;
+        ctx.globalAlpha = 0.9 - 0.3 * ((i % 4) / 4);
+        ctx.fillStyle = NUTRIENTS[i % NUTRIENTS.length].colour;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(15,23,42,0.35)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function secretionFill(colour, marker) {
+    const g = ctx.createLinearGradient(0, 0, 1, 0);
+    g.addColorStop(0, colour);
+    g.addColorStop(1, colour);
+    g.toString = () => marker;
+    return g;
+  }
+
+  const SECRETION_FILLS = {
+    bile: secretionFill('rgba(163,230,53,0.9)', 'rgba(163,230,53,0.9)'),
+    bicarbonate: secretionFill('rgba(192,132,252,0.9)', 'rgba(192,132,252,0.9)')
+  };
+  const SECRETION_EMIT_STATE = { bile: {}, bicarbonate: {} };
+
+  function noteSecretion(kind, route, index, u) {
+    const state = SECRETION_EMIT_STATE[kind];
+    const previous = state[index];
+    if (previous === undefined || u < previous - 0.000001) {
+      noteDot(kind, route, index, (f) => routePoint(route, f));
+    }
+    state[index] = u;
   }
 
   function drawDots() {
+    ctx.save();
     for (const d of dots) {
       const q = routePoint(d.route, d.t);
       const fade = 1 - d.t * d.t;
@@ -984,80 +1374,488 @@
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+    if (USE_SVG_ART && GEOM && headS !== null && headS > ARC.pylorus && headS < ARC.caecum) {
+      const secretions = [
+        { kind: 'bile', route: 'bile', fill: SECRETION_FILLS.bile },
+        { kind: 'bicarbonate', route: 'pancreatic', fill: SECRETION_FILLS.bicarbonate }
+      ];
+      for (const s of secretions) {
+        ctx.fillStyle = s.fill;
+        [0.32, 0.68].forEach((u, i) => {
+          const q = routePoint(s.route, u);
+          noteSecretion(s.kind, s.route, i, u);
+          ctx.beginPath();
+          ctx.arc(q.x, q.y, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+    }
+    ctx.restore();
+  }
+
+  const GLOW = {
+    liver: {
+      inner: 'rgba(249,115,22,0.96)',
+      outer: 'rgba(69,10,10,0.72)',
+      rim: 'rgba(249,115,22,0.30)',
+      vein: 'rgba(253,186,116,0.28)',
+      highlight: 'rgba(253,224,171,0.30)',
+      blur: 12
+    },
+    gall: {
+      inner: 'rgba(163,230,53,0.98)',
+      outer: 'rgba(34,77,14,0.70)',
+      rim: 'rgba(163,230,53,0.36)',
+      highlight: 'rgba(236,253,245,0.45)',
+      blur: 10
+    },
+    stomach: {
+      inner: 'rgba(190,18,60,0.94)',
+      outer: 'rgba(76,5,25,0.60)',
+      rim: 'rgba(244,63,94,0.40)',
+      rugae: 'rgba(255,228,230,0.16)',
+      highlight: 'rgba(255,228,230,0.20)',
+      fundus: 'rgba(244,63,94,0.22)',
+      blur: 12
+    },
+    pancreas: {
+      inner: 'rgba(232,121,249,0.92)',
+      outer: 'rgba(112,26,117,0.62)',
+      rim: 'rgba(232,121,249,0.30)',
+      lobule: 'rgba(255,241,255,0.18)',
+      blur: 10
+    },
+    tube: {
+      small: {
+        outer: 'rgba(127,29,29,0.82)',
+        inner: 'rgba(248,113,113,0.52)',
+        rim: 'rgba(248,113,113,0.26)',
+        gloss: 'rgba(254,205,211,0.34)',
+        wave: 'rgba(254,205,211,0.45)',
+        capillary: 'rgba(248,113,113,0.26)',
+        villus: 'rgba(251,182,182,0.38)',
+        blur: 10
+      },
+      large: {
+        outer: 'rgba(109,70,117,0.72)',
+        inner: 'rgba(233,213,255,0.46)',
+        rim: 'rgba(216,180,254,0.28)',
+        gloss: 'rgba(250,232,255,0.36)',
+        haustra: 'rgba(109,70,117,0.45)',
+        wave: 'rgba(250,232,255,0.40)',
+        blur: 10
+      },
+      smooth: {
+        outer: 'rgba(136,70,80,0.72)',
+        inner: 'rgba(253,186,200,0.40)',
+        rim: 'rgba(251,113,133,0.24)',
+        gloss: 'rgba(255,228,230,0.32)',
+        wave: 'rgba(255,228,230,0.38)',
+        blur: 8
+      }
+    }
+  };
+
+  function organGradient(c, bounds, innerColour, outerColour) {
+    const cx = bounds.x + bounds.w * 0.36;
+    const cy = bounds.y + bounds.h * 0.3;
+    const r = Math.max(bounds.w, bounds.h) * 0.78;
+    const g = c.createRadialGradient(cx, cy, Math.min(bounds.w, bounds.h) * 0.06, cx, cy, r);
+    g.addColorStop(0, innerColour);
+    g.addColorStop(1, outerColour);
+    return g;
+  }
+
+  function rimGlow(c, colour, blur, paint) {
+    c.save();
+    c.shadowColor = colour;
+    c.shadowBlur = clamp(gs(blur), 6, 14);
+    c.strokeStyle = colour;
+    c.lineWidth = 1.4;
+    paint(c);
+    c.restore();
+  }
+
+  function veinStroke(c, points, colour, width) {
+    c.save();
+    c.strokeStyle = colour;
+    c.lineWidth = width;
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.beginPath();
+    for (let i = 0; i < points.length; i++) {
+      if (i) c.lineTo(gx(points[i][0]), gy(points[i][1]));
+      else c.moveTo(gx(points[i][0]), gy(points[i][1]));
+    }
+    c.stroke();
+    c.restore();
+  }
+
+  const STATIC_CACHE = { scale: 0, layers: {} };
+  const LABEL_CACHE = { canvas: null, scale: 0 };
+
+  function staticCacheScale() {
+    return Math.max(
+      window.devicePixelRatio || 1,
+      stage.canvas.width / W,
+      stage.canvas.height / H
+    );
+  }
+
+  function cacheRect(x0, y0, x1, y1) {
+    return { x: x0, y: y0, w: Math.max(1, x1 - x0), h: Math.max(1, y1 - y0) };
+  }
+
+  function cacheUnion(a, b) {
+    return cacheRect(Math.min(a.x, b.x), Math.min(a.y, b.y),
+      Math.max(a.x + a.w, b.x + b.w), Math.max(a.y + a.h, b.y + b.h));
+  }
+
+  function cachePoints(points, pad) {
+    const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
+    return cacheRect(Math.min(...xs) - pad, Math.min(...ys) - pad,
+      Math.max(...xs) + pad, Math.max(...ys) + pad);
+  }
+
+  function cacheTract(L, pad) {
+    const pts = [];
+    const a = sampleAt(L.s0), b = sampleAt(L.s1);
+    pts.push([a.x, a.y], [b.x, b.y]);
+    for (let i = 0; i < path.length; i++) {
+      if (cum[i] > L.s0 && cum[i] < L.s1) pts.push([path[i].x, path[i].y]);
+    }
+    return cachePoints(pts, pad);
+  }
+
+  function cacheEllipse(cx, cy, rx, ry, rot, pad) {
+    const c = Math.abs(Math.cos(rot || 0)), s = Math.abs(Math.sin(rot || 0));
+    const hx = rx * c + ry * s, hy = rx * s + ry * c;
+    return cacheRect(gx(cx) - hx - pad, gy(cy) - hy - pad,
+      gx(cx) + hx + pad, gy(cy) + hy + pad);
+  }
+
+  function buildStaticCache() {
+    const scale = staticCacheScale();
+    const layers = {};
+    const make = (bounds, draw) => {
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(bounds.w * scale);
+      cv.height = Math.round(bounds.h * scale);
+      const cc = cv.getContext('2d');
+      cc.setTransform(scale, 0, 0, scale, -bounds.x * scale, -bounds.y * scale);
+      draw(cc);
+      return { canvas: cv, x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h };
+    };
+    LAYERS.forEach((L, i) => {
+      layers['wall-' + i] = make(cacheTract(L, gs(TUBE_W / 2) + 3),
+        (c) => drawWall(L, c));
+      layers['haustra-' + i] = make(cacheTract(L, 14),
+        (c) => drawHaustra(L, c));
+    });
+    const sh = STOMACH_SHAPE;
+    layers.stomach = make(cacheEllipse(sh.cx, sh.cy, sh.rx, sh.ry, sh.rot, 12),
+      (c) => drawStomach(c));
+    const L = LIVER;
+    const liverBox = cacheRect(gx(L.x - L.rx), gy(L.y - L.ry),
+      gx(L.lobe.x + L.lobe.rx), gy(Math.max(L.y + L.ry, L.lobe.y + L.lobe.ry)));
+    layers.liver = make(cacheRect(liverBox.x - 14, liverBox.y - 14,
+      liverBox.x + liverBox.w + 14, liverBox.y + liverBox.h + 14),
+      (c) => drawLiver(c));
+    layers.vessels = make(cachePoints(DOT_ROUTES.portal.concat(DOT_ROUTES.lymph), 6),
+      (c) => drawVessels(c));
+    const bilePts = DOT_ROUTES.bile.points;
+    const gallPts = bilePts.concat([
+      [bilePts[3][0] - 12, bilePts[3][1] - 9],
+      [bilePts[3][0] + 12, bilePts[3][1] + 9]
+    ]);
+    layers['glands-upper'] = make(cachePoints(gallPts, 12),
+      (c) => drawGlandsUpper(c));
+    const pancreaticPts = DOT_ROUTES.pancreatic.points;
+    const paXs = pancreaticPts.map((p) => p[0]), paYs = pancreaticPts.map((p) => p[1]);
+    const pa = {
+      x: (Math.min(...paXs) + Math.max(...paXs)) / 2 + 28,
+      y: (Math.min(...paYs) + Math.max(...paYs)) / 2,
+      rx: Math.max(30, (Math.max(...paXs) - Math.min(...paXs)) * 0.55),
+      ry: Math.max(10, (Math.max(...paYs) - Math.min(...paYs)) * 0.5),
+      rot: -0.12
+    };
+    layers['glands-lower'] = make(cacheUnion(cacheEllipse(pa.x, pa.y, pa.rx, pa.ry, pa.rot, 12),
+      cachePoints(pancreaticPts, 4)),
+      (c) => drawGlandsLower(c));
+    STATIC_CACHE.scale = scale;
+    STATIC_CACHE.layers = layers;
+  }
+
+  function ensureStaticCache() {
+    if (USE_SVG_ART && GEOM) return;
+    if (STATIC_CACHE.layers.liver && STATIC_CACHE.scale === staticCacheScale()) return;
+    buildStaticCache();
+  }
+
+  function blit(key) {
+    const layer = STATIC_CACHE.layers[key];
+    if (layer) ctx.drawImage(layer.canvas, layer.x, layer.y, layer.w, layer.h);
   }
 
   /* ── Labels ──────────────────────────────────────────────
-     Each label is placed in open space with a leader line back to the
-     structure it names. The positions are all outside the tube's own
-     corridor and outside both panels. */
+     Each label is placed in open space with a leader line back to a
+     point inside the structure it names. The positions are fixed in
+     canvas space and painted once into their own cache. */
 
-  const LABELS = [
-    { text: 'mouth',             at: [ 462,  74], to: [ 516,  70], colour: COL.legend },
-    { text: 'oesophagus',        at: [ 472, 152], to: [ 548, 128], colour: COL.legend },
-    { text: 'stomach',           at: [ 560, 220], to: [ 700, 196], colour: COL.legend },
-    { text: 'liver',             at: [ 262,  92], to: [ 262,  64], colour: '#fb7185' },
-    { text: 'gallbladder',       at: [ 212, 176], to: [ 148, 152], colour: '#a3e635' },
-    { text: 'pancreas',          at: [ 500, 314], to: [ 700, 300], colour: '#e879f9' },
-    { text: 'duodenum',          at: [ 428, 350], to: [ 340, 318], colour: COL.legend },
-    { text: 'small intestine',   at: [ 428, 466], to: [ 300, 415], colour: COL.legend },
-    { text: 'large intestine',   at: [ 168, 396], to: [ 120, 300], colour: COL.legend },
-    { text: 'rectum',            at: [ 662, 514], to: [ 700, 560], colour: COL.legend }
+  const LABEL_COLOURS = {
+    mouth: '#f9bb9d',
+    oesophagus: '#ff9a7a',
+    liver: '#ff451f',
+    gallbladder: '#39ff14',
+    stomach: '#dc143c',
+    pancreas: '#ff3dff',
+    duodenum: '#ff9a3d',
+    small: '#ff6f61',
+    colon: '#d8c0f0'
+  };
+
+  const LABEL_STYLE = {
+    font: '700 ' + TEXT.label + 'px system-ui, sans-serif',
+    text: '#f8fafc',
+    pill: '#020617',
+    padX: TEXT.labelPad,
+    height: TEXT.labelHeight
+  };
+
+  const ORGAN_LABELS = [
+    { text: 'mouth', tag: 'mouth', anchor: [295, 90], at: [510, 70], colour: LABEL_COLOURS.mouth },
+    { text: 'oesophagus', tag: 'oesophagus', anchor: [315, 140], at: [480, 120], colour: LABEL_COLOURS.oesophagus },
+    { text: 'liver', tag: 'liver', anchor: [300, 240], at: [85, 185], colour: LABEL_COLOURS.liver },
+    { text: 'gallbladder', tag: 'gallbladder', anchor: [315, 265], at: [85, 235], colour: LABEL_COLOURS.gallbladder },
+    { text: 'stomach', tag: 'stomach', anchor: [375, 230], at: [480, 210], colour: LABEL_COLOURS.stomach },
+    { text: 'pancreas', tag: 'pancreas', anchor: [275, 275], at: [480, 285], colour: LABEL_COLOURS.pancreas },
+    { text: 'duodenum', tag: 'duodenum', anchor: [265, 325], at: [85, 295], colour: LABEL_COLOURS.duodenum },
+    { text: 'small intestine', tag: 'small', anchor: [355, 395], at: [530, 345], colour: LABEL_COLOURS.small },
+    { text: 'large intestine (colon)', tag: 'colon', anchor: [220, 375], at: [85, 350], colour: LABEL_COLOURS.colon },
+    { text: 'rectum', tag: 'colon', anchor: [310, 485], at: [480, 385], colour: LABEL_COLOURS.colon }
   ];
 
-  const VESSEL_LABELS = [
-    { text: 'portal vein → liver', at: [ 180, 214], colour: 'rgba(147,197,253,0.9)' },
-    { text: 'lymph duct',          at: [ 716, 258], colour: 'rgba(252,211,77,0.9)' }
+  const PHONE_LABELS = [
+    { text: 'mouth', tag: 'mouth', anchor: [295, 90], at: [800, 120], colour: LABEL_COLOURS.mouth },
+    { text: 'oesophagus', tag: 'oesophagus', anchor: [315, 140], at: [800, 230], colour: LABEL_COLOURS.oesophagus },
+    { text: 'liver', tag: 'liver', anchor: [300, 240], at: [100, 500], colour: LABEL_COLOURS.liver },
+    { text: 'gallbladder', tag: 'gallbladder', anchor: [315, 265], at: [100, 610], colour: LABEL_COLOURS.gallbladder },
+    { text: 'stomach', tag: 'stomach', anchor: [375, 230], at: [800, 700], colour: LABEL_COLOURS.stomach },
+    { text: 'pancreas', tag: 'pancreas', anchor: [255, 295], at: [95, 720], colour: LABEL_COLOURS.pancreas },
+    { text: 'duodenum', tag: 'duodenum', anchor: [265, 325], at: [95, 820], colour: LABEL_COLOURS.duodenum },
+    { text: 'small intestine', tag: 'small', anchor: [355, 395], at: [800, 930], lines: ['small', 'intestine'], colour: LABEL_COLOURS.small },
+    { text: 'large intestine (colon)', tag: 'colon', anchor: [220, 375], at: [95, 1010], lines: ['large', 'intestine', '(colon)'], colour: LABEL_COLOURS.colon },
+    { text: 'rectum', tag: 'colon', anchor: [310, 485], at: [800, 1080], colour: LABEL_COLOURS.colon }
   ];
+  const PHONE_LABEL_BY_TEXT = new Map(PHONE_LABELS.map((l) => [l.text, l]));
+  const PHONE_LABEL_ORDER = PHONE_LABELS.map((l) => l.text);
+  const PHONE_CURRENT_TEXT = {
+    mouth: 'mouth', oesophagus: 'oesophagus', stomach: 'stomach',
+    duodenum: 'duodenum', ileum: 'small intestine',
+    colon: 'large intestine (colon)', rectum: 'rectum'
+  };
 
-  function label(text, x, y, colour) {
-    ctx.font = '700 11px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = colour || COL.labelDim;
-    ctx.fillText(text, x, y);
+  function visibleLabels() {
+    if (!NARROW) return ORGAN_LABELS;
+    const current = headS === null || mouthHold > 0
+      ? 'mouth'
+      : PHONE_CURRENT_TEXT[headOrgan] || 'mouth';
+    const at = PHONE_LABEL_ORDER.indexOf(current);
+    const start = clamp(at - 1, 0, PHONE_LABELS.length - 4);
+    return PHONE_LABELS.slice(start, start + 4);
   }
 
-  function leader(text, dx, dy, lx, ly, colour) {
-    const tx = gx(dx), ty = gy(dy);
-    const ex = gx(lx), ey = gy(ly);
-    ctx.strokeStyle = 'rgba(148,163,184,0.32)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(tx, ty);
-    ctx.lineTo(ex, ey);
-    ctx.stroke();
-    label(text, ex, ey - 9, colour);
+  function labelPillBox(l, c = ctx) {
+    c.font = LABEL_STYLE.font;
+    const lines = l.lines || [l.text];
+    const w = Math.max(...lines.map((line) => c.measureText(line).width)) + LABEL_STYLE.padX * 2;
+    const h = l.lines ? LABEL_STYLE.height * l.lines.length : LABEL_STYLE.height;
+    return { x: l.at[0] - w / 2, y: l.at[1] - h / 2, w, h };
   }
 
-  function drawLabels() {
-    if (!labels) return;
-    for (const l of LABELS) leader(l.text, l.at[0], l.at[1], l.to[0], l.to[1], l.colour);
-    for (const l of VESSEL_LABELS) label(l.text, gx(l.at[0]), gy(l.at[1]), l.colour);
+  function drawOrganLabels(c) {
+    const list = visibleLabels();
+    c.save();
+    c.lineWidth = NARROW ? 2.5 : 1;
+    for (const l of list) {
+      const end = NARROW ? viewPoint(l.anchor[0], l.anchor[1]) : l.anchor;
+      c.strokeStyle = svgColour(l.colour, 0.72);
+      c.beginPath();
+      c.moveTo(end[0], end[1]);
+      c.lineTo(l.at[0], l.at[1]);
+      c.stroke();
+    }
+    for (const l of list) {
+      const box = labelPillBox(l, c);
+      c.fillStyle = LABEL_STYLE.pill;
+      c.beginPath();
+      c.roundRect(box.x, box.y, box.w, box.h, NARROW ? 16 : 9);
+      c.fill();
+      c.strokeStyle = svgColour(l.colour, 0.42);
+      c.lineWidth = NARROW ? 2 : 1;
+      c.stroke();
+      c.font = LABEL_STYLE.font;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillStyle = LABEL_STYLE.text;
+      const lines = l.lines || [l.text];
+      const step = LABEL_STYLE.height;
+      lines.forEach((line, i) => {
+        c.fillText(line, box.x + box.w / 2, box.y + step * (i + 0.5));
+      });
+    }
+    c.restore();
+  }
+
+  function buildLabelCache() {
+    const scale = staticCacheScale();
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
+    const c = canvas.getContext('2d');
+    c.setTransform(scale, 0, 0, scale, 0, 0);
+    drawOrganLabels(c);
+    LABEL_CACHE.canvas = canvas;
+    LABEL_CACHE.scale = scale;
+  }
+
+  function ensureLabelCache() {
+    if (LABEL_CACHE.canvas && LABEL_CACHE.scale === staticCacheScale()) return;
+    buildLabelCache();
+  }
+
+  function blitOrganLabels() {
+    if (NARROW) {
+      drawOrganLabels(ctx);
+      return;
+    }
+    ensureLabelCache();
+    ctx.drawImage(LABEL_CACHE.canvas, 0, 0, W, H);
   }
 
   function drawBadge() {
-    const s = clamp(headS === null ? 0 : headS, TUBE_END);
-    const spot = sampleAt(s);
+    // No meal means no location to badge — the readout says "No meal yet".
+    if (headS === null) return;
+    const s = clamp(headS, 0, TUBE_END);
+    const mouthSpot = USE_SVG_ART && GEOM && mouthHold > 0 && GEOM.markers['Mouth badge'];
+    const rawSpot = mouthSpot || sampleAt(s);
+    const spot = NARROW
+      ? { x: viewPoint(rawSpot.x, rawSpot.y)[0], y: viewPoint(rawSpot.x, rawSpot.y)[1] }
+      : rawSpot;
     const text = mouthHold > 0
       ? (mouthHold > SWALLOW_SEC
         ? 'In the mouth — chewing, amylase at work'
         : 'Swallowing — the bolus is on its way down')
       : ORGAN_NAME[headOrgan] + ' · pH ' + phAt(s).toFixed(1);
-    ctx.font = '700 11px system-ui, sans-serif';
+    const sub = mouthHold > 0 ? 'smaller pieces = more surface for enzymes' : '';
+    ctx.font = '700 ' + TEXT.badge + 'px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const w = ctx.measureText(text).width + 20;
-    const x = clamp(spot.x - w / 2, 6, RAIL.x - w - 10);
-    const y = Math.max(26, spot.y - gs(46));
+    const w = Math.max(ctx.measureText(text).width, sub ? ctx.measureText(sub).width : 0) + (NARROW ? 32 : 20);
+    const hi = NARROW ? W - w - 8 : RAIL.x - w - 10;
+    const x = clamp(spot.x - w / 2, 6, hi);
+    const y = NARROW
+      ? Math.max(80, spot.y - (sub ? 120 : 90))
+      : Math.max(26, spot.y - gs(sub ? 66 : 50));
+    const h = NARROW ? (sub ? 78 : 42) : (sub ? 40 : 24);
     ctx.fillStyle = 'rgba(2,6,23,0.92)';
     ctx.beginPath();
-    ctx.roundRect(x, y - 12, w, 24, 12);
+    ctx.roundRect(x, y - h / 2, w, h, NARROW ? 20 : 12);
     ctx.fill();
     ctx.strokeStyle = 'rgba(148,163,184,0.4)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = NARROW ? 2 : 1;
     ctx.stroke();
     ctx.fillStyle = '#e2e8f0';
-    ctx.fillText(text, x + w / 2, y);
+    ctx.fillText(text, x + w / 2, y - (sub ? (NARROW ? 18 : 9) : 0));
+    if (sub) {
+      ctx.font = '600 ' + TEXT.sub + 'px system-ui, sans-serif';
+      ctx.fillStyle = '#fbcfe8';
+      ctx.fillText(sub, x + w / 2, y + (NARROW ? 20 : 10));
+    }
+    return rawSpot;
+  }
+
+  function drawChewingMotion(t) {
+    if (!mouthHold || !USE_SVG_ART || !GEOM || !GEOM.markers || !GEOM.markers['Mouth badge']) return;
+    const badge = GEOM.markers['Mouth badge'];
+    const wave = Math.sin(t * Math.PI * 4);
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.fillStyle = svgColour(ART_COLOURS.mouth, 0.3);
+    ctx.strokeStyle = svgColour(ART_COLOURS.mouth, 0.5);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(badge.x + 3 + wave * 2, badge.y + 8 + wave * 0.8, 10, 4.6, -0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(badge.x - 11 + wave * 2, badge.y + 10 + wave * 0.8);
+    ctx.quadraticCurveTo(badge.x + 1 + wave * 2, badge.y + 5 + wave * 0.8, badge.x + 12 + wave * 2, badge.y + 10 + wave * 0.8);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSurfacePill() {
+    if (!mouthHold) return;
+    if (!USE_SVG_ART || !GEOM || !GEOM.markers || !GEOM.markers['Mouth badge']) return;
+    const rawBadge = GEOM.markers['Mouth badge'];
+    const badge = NARROW
+      ? { x: viewPoint(rawBadge.x, rawBadge.y)[0], y: viewPoint(rawBadge.x, rawBadge.y)[1] }
+      : rawBadge;
+    const text = 'surface area x ' + chewFactor.toFixed(2);
+    ctx.save();
+    ctx.font = '700 ' + TEXT.surface + 'px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(text).width + (NARROW ? 28 : 16);
+    const hi = NARROW ? W - w - 8 : RAIL.x - w - 10;
+    const x = clamp(badge.x - w - 18, 6, hi);
+    const y = badge.y + (NARROW ? 80 : 26);
+    const h = NARROW ? 30 : 18;
+    ctx.fillStyle = 'rgba(15,23,42,0.92)';
+    ctx.beginPath();
+    ctx.roundRect(x, y - h / 2, w, h, h / 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(251,207,232,0.7)';
+    ctx.lineWidth = NARROW ? 2 : 1;
+    ctx.stroke();
+    ctx.fillStyle = '#fbcfe8';
+    ctx.fillText(text, x + (NARROW ? 14 : 8), y);
+    ctx.restore();
+  }
+
+  function drawDebug(spot) {
+    if (!DEBUG || !GEOM) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(56,189,248,0.9)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i < GEOM.pathPoints.length; i++) {
+      const q = GEOM.pathPoints[i];
+      if (i) ctx.lineTo(q[0], q[1]);
+      else ctx.moveTo(q[0], q[1]);
+    }
+    ctx.stroke();
+    ctx.font = '700 9px ui-monospace, monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    for (const p of particles) {
+      const q = sampleAt(p.s);
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, gs(6), 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(250,204,21,0.95)';
+      ctx.stroke();
+      ctx.fillStyle = '#fde68a';
+      ctx.fillText(p.s.toFixed(0), q.x + 8, q.y - 8);
+    }
+    if (spot) {
+      ctx.beginPath();
+      ctx.arc(spot.x, spot.y, 4, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(244,114,182,0.95)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   /* ── Panels ──────────────────────────────────────────────
@@ -1083,7 +1881,7 @@
     ctx.font = '800 12px system-ui, sans-serif';
     ctx.fillStyle = COL.legend;
     ctx.fillText('WHAT IS IN THE MEAL', x + 18, y + 26);
-    ctx.font = '600 10px system-ui, sans-serif';
+    ctx.font = '600 11px system-ui, sans-serif';
     ctx.fillStyle = COL.labelDim;
     ctx.fillText('every part is broken down', x + 18, y + 42);
     ctx.fillText('somewhere different', x + 18, y + 56);
@@ -1103,7 +1901,7 @@
       ctx.font = '700 11px system-ui, sans-serif';
       ctx.fillStyle = '#e2e8f0';
       ctx.fillText(r[1], x + 38, ly);
-      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.font = '600 11px system-ui, sans-serif';
       ctx.fillStyle = COL.labelDim;
       ctx.fillText(r[2], x + 38, ly + 13);
       ctx.fillText(r[3], x + 38, ly + 25);
@@ -1120,7 +1918,7 @@
     ctx.font = '700 11px system-ui, sans-serif';
     ctx.fillStyle = COL.legend;
     ctx.fillText('THE ENZYME IN CHARGE', x + 18, ly + 12);
-    ctx.font = '600 10px system-ui, sans-serif';
+    ctx.font = '600 11px system-ui, sans-serif';
     ctx.fillStyle = COL.labelDim;
     ctx.fillText('each one has a narrow pH window', x + 18, ly + 27);
 
@@ -1248,27 +2046,350 @@
     return passed.reduce((a, p) => a + p.grams * (1 - p.dig * 0.65), 0);
   }
 
+  const SVG_ART = { groups: null, arch: null, cache: null, scale: 0, measure: null };
+
+  const SVG_PALETTE = {
+    oesophagus: { fill: 'rgba(255,122,89,.24)', stroke: '#ff9a7a', glow: 'rgba(255,90,60,.16)', blur: 8 },
+    stomach: { fill: 'rgba(220,20,60,.42)', stroke: '#dc143c', glow: 'rgba(220,20,60,.26)', blur: 13 },
+    stomach_fundus: { fill: 'rgba(255,110,140,.62)', stroke: '#ff789e', glow: 'rgba(255,90,130,.22)', blur: 12 },
+    liver: { fill: 'rgba(255,69,35,.62)', stroke: '#ff451f', glow: 'rgba(255,69,35,.30)', blur: 14 },
+    liver_detail: { fill: 'rgba(255,89,40,.28)', stroke: '#ff5928', glow: 'rgba(255,89,40,.16)', blur: 6 },
+    liver_glow: { fill: 'rgba(255,120,60,.22)', stroke: '#ff7840', glow: 'rgba(255,120,60,.16)', blur: 8 },
+    gallbladder: { fill: 'rgba(57,255,20,.55)', stroke: '#39ff14', glow: 'rgba(57,255,20,.28)', blur: 14 },
+    pancreas: { fill: 'rgba(255,0,255,.46)', stroke: '#ff3dff', glow: 'rgba(255,0,255,.26)', blur: 14 },
+    duodenum: { fill: 'rgba(255,145,45,.44)', stroke: '#ff9a3d', glow: 'rgba(255,140,50,.22)', blur: 11 },
+    small: { fill: 'rgba(255,92,78,.55)', stroke: '#ff6f61', glow: 'rgba(255,80,70,.26)', blur: 14, inner: 'rgba(255,190,175,.22)' },
+    colon: { fill: 'rgba(216,192,240,.16)', stroke: '#d8c0f0', glow: 'rgba(196,162,235,.14)', blur: 9 },
+    colon_detail: { fill: 'rgba(216,192,240,.12)', stroke: '#d8c0f0', glow: 'rgba(196,162,235,.12)', blur: 6 },
+    outline: { fill: 'rgba(103,232,249,.04)', stroke: 'rgba(103,232,249,.16)', glow: 'rgba(34,211,238,.10)', blur: 6 },
+    detail: { fill: 'rgba(148,163,184,.14)', stroke: '#94a3b8', glow: 'rgba(148,163,184,.10)', blur: 6 }
+  };
+
+  const SVG_HIDDEN_TAGS = new Set(['annotation', 'salivary', 'teeth', 'mouth']);
+  const SVG_DRAW_ORDER = [
+    'outline', 'oesophagus', 'duodenum', 'colon', 'liver_glow',
+    'liver_detail', 'liver', 'pancreas', 'gallbladder', 'small',
+    'stomach_fundus', 'stomach', 'detail'
+  ];
+
+  function svgColour(hex, alpha) {
+    const v = hex.replace('#', '');
+    const n = parseInt(v.length === 3 ? v.replace(/./g, (c) => c + c) : v, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + alpha + ')';
+  }
+
+  function svgMeasureNode() {
+    if (SVG_ART.measure) return SVG_ART.measure;
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.style.position = 'absolute';
+    svg.style.left = '-9999px';
+    const path = document.createElementNS(ns, 'path');
+    svg.appendChild(path);
+    document.body.appendChild(svg);
+    SVG_ART.measure = { svg, path };
+    return SVG_ART.measure;
+  }
+
+  function svgItemBox(item) {
+    const measure = svgMeasureNode();
+    measure.path.setAttribute('d', item.d);
+    const box = measure.path.getBBox();
+    const m = item.m;
+    let minY = Infinity, maxY = -Infinity;
+    for (const x of [box.x, box.x + box.width]) {
+      for (const y of [box.y, box.y + box.height]) {
+        const Y = m[1] * x + m[3] * y + m[5];
+        if (Y < minY) minY = Y;
+        if (Y > maxY) maxY = Y;
+      }
+    }
+    return { minY, maxY };
+  }
+
+  function svgArtGroups() {
+    if (SVG_ART.groups) return SVG_ART.groups;
+    if (!GEOM || !GEOM.svgArt) return [];
+    SVG_ART.groups = GEOM.svgArt.map((group) => ({
+      tag: group.tag,
+      items: group.items
+        .filter((item) => {
+          if (SVG_HIDDEN_TAGS.has(group.tag)) return false;
+          const box = svgItemBox(item);
+          return box.maxY > 100;
+        })
+        .map((item) => {
+          const box = svgItemBox(item);
+          return {
+            m: item.m,
+            fill: item.fill,
+            stroke: item.stroke,
+            strokeWidth: item.strokeWidth,
+            minY: box.minY,
+            maxY: box.maxY,
+            path: new Path2D(item.d)
+          };
+        })
+    }));
+    return SVG_ART.groups;
+  }
+
+  function mouthPoints() {
+    const first = GEOM.markers['feed first'];
+    const badge = GEOM.markers['Mouth badge'];
+    const join = { x: GEOM.landmarks.oesophagus.x, y: GEOM.landmarks.oesophagus.y };
+    return { first, badge, join };
+  }
+
+  function mouthThroatPath(points) {
+    const { badge, join } = points;
+    const halfJoin = gs(TUBE_W / 2);
+    const p = new Path2D();
+    p.moveTo(badge.x - 8, badge.y + 4);
+    p.bezierCurveTo(badge.x - 4, badge.y + 14, join.x - halfJoin - 1, join.y - 20, join.x - halfJoin, join.y + 1);
+    p.lineTo(join.x + halfJoin, join.y + 1);
+    p.bezierCurveTo(join.x + halfJoin + 1, join.y - 22, badge.x + 10, badge.y + 12, badge.x + 8, badge.y + 5);
+    p.closePath();
+    return p;
+  }
+
+  function mouthCavityPath(points) {
+    const { first, badge } = points;
+    const cx = (first.x + badge.x) / 2 - 2;
+    const cy = (first.y + badge.y) / 2 + 2;
+    const q = (x, y) => ({ x: cx + (x - cx) * 1.3, y: cy + (y - cy) * 1.3 });
+    const a = q(first.x + 1, first.y - 7);
+    const b = q(first.x + 16, first.y - 12);
+    const c = q(first.x + 20, first.y + 1);
+    const d = q(first.x + 13, first.y + 10);
+    const e = q(badge.x + 18, badge.y - 10);
+    const f = q(badge.x + 15, badge.y + 8);
+    const g = q(badge.x + 7, badge.y + 12);
+    const h = q(badge.x - 2, badge.y + 17);
+    const i = q(badge.x - 17, badge.y + 13);
+    const j = q(badge.x - 19, badge.y + 1);
+    const k = q(badge.x - 22, badge.y - 10);
+    const l = q(first.x - 9, first.y - 12);
+    const p = new Path2D();
+    p.moveTo(a.x, a.y);
+    p.bezierCurveTo(b.x, b.y, c.x, c.y, d.x, d.y);
+    p.bezierCurveTo(e.x, e.y, f.x, f.y, g.x, g.y);
+    p.bezierCurveTo(h.x, h.y, i.x, i.y, j.x, j.y);
+    p.bezierCurveTo(k.x, k.y, l.x, l.y, a.x, a.y);
+    p.closePath();
+    return p;
+  }
+
+  function paintMouthArt(c) {
+    if (!GEOM || !GEOM.markers || !GEOM.landmarks) return;
+    const points = mouthPoints();
+    const colour = svgColour(ART_COLOURS.mouth, 1);
+    const glow = svgColour(ART_COLOURS.mouth, 0.22);
+    c.save();
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.shadowColor = glow;
+    c.shadowBlur = 10;
+    c.fillStyle = svgColour(ART_COLOURS.mouth, 0.2);
+    c.fill(mouthThroatPath(points));
+    c.shadowBlur = 0;
+    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.62);
+    c.lineWidth = 2;
+    c.beginPath();
+    c.moveTo(points.badge.x - 8, points.badge.y + 4);
+    c.bezierCurveTo(points.badge.x - 4, points.badge.y + 14, points.join.x - 11, points.join.y - 20,
+      points.join.x - 10, points.join.y + 1);
+    c.moveTo(points.badge.x + 8, points.badge.y + 5);
+    c.bezierCurveTo(points.badge.x + 10, points.badge.y + 12, points.join.x + 11, points.join.y - 22,
+      points.join.x + 10, points.join.y + 1);
+    c.stroke();
+    c.shadowColor = glow;
+    c.shadowBlur = 12;
+    c.fillStyle = svgColour(ART_COLOURS.mouth, 0.16);
+    c.fill(mouthCavityPath(points));
+    c.shadowBlur = 8;
+    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.72);
+    c.lineWidth = 2.4;
+    c.stroke(mouthCavityPath(points));
+    c.shadowBlur = 0;
+    c.fillStyle = svgColour(ART_COLOURS.mouth, 0.26);
+    c.beginPath();
+    c.ellipse(points.badge.x + 3, points.badge.y + 8, 10, 4.6, -0.22, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = svgColour(ART_COLOURS.mouth, 0.5);
+    c.lineWidth = 1.2;
+    c.stroke();
+    c.restore();
+    return colour;
+  }
+
+  function svgOutlineGradient(c, stroke) {
+    const g = c.createLinearGradient(0, 60, 0, 100);
+    g.addColorStop(0, 'rgba(103,232,249,0)');
+    g.addColorStop(1, stroke ? 'rgba(103,232,249,0.16)' : 'rgba(103,232,249,0.04)');
+    return g;
+  }
+
+  function paintSvgArt(c) {
+    if (!GEOM) return;
+    c.save();
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    const groups = new Map(svgArtGroups().map((group) => [group.tag, group]));
+    for (const tag of SVG_DRAW_ORDER) {
+      const group = groups.get(tag);
+      if (!group || !group.items.length) continue;
+      const style = SVG_PALETTE[tag] || (tag === 'rectum' ? SVG_PALETTE.colon : SVG_PALETTE.detail);
+      c.save();
+      if (tag === 'outline') {
+        c.beginPath();
+        c.rect(0, 60, W, H - 60);
+        c.clip();
+      }
+      if (tag === 'oesophagus') {
+        c.beginPath();
+        c.rect(0, ARC.oesophagus, W, H - ARC.oesophagus);
+        c.clip();
+      }
+      for (const item of group.items) {
+        c.save();
+        c.transform(item.m[0], item.m[1], item.m[2], item.m[3], item.m[4], item.m[5]);
+        if (item.fill !== 'none') {
+          c.shadowColor = style.glow;
+          c.shadowBlur = clamp(style.blur, 6, 14);
+          c.fillStyle = tag === 'outline' ? svgOutlineGradient(c, false) : style.fill;
+          c.fill(item.path);
+          if (style.inner) {
+            c.shadowBlur = 8;
+            c.fillStyle = style.inner;
+            c.fill(item.path);
+          }
+        }
+        c.shadowBlur = 0;
+        c.strokeStyle = tag === 'outline' ? svgOutlineGradient(c, true) : style.stroke;
+        c.lineWidth = Math.max(0.9, item.strokeWidth || 1);
+        c.stroke(item.path);
+        c.restore();
+      }
+      c.restore();
+    }
+    paintMouthArt(c);
+    c.restore();
+  }
+
+  function routeGlowStyle(active) {
+    return active
+      ? { glow: 0.22, shadow: 0.28, core: 0.88, glowWidth: 5, coreWidth: 2.2 }
+      : { glow: 0.05, shadow: 0.08, core: 0.20, glowWidth: 2.5, coreWidth: 1.2 };
+  }
+
+  function paintRouteGlow(c) {
+    if (!DOT_ROUTES.portal || !DOT_ROUTES.lymph) return;
+    c.save();
+    c.beginPath();
+    c.rect(0, DOT_NECK_Y, W, H - DOT_NECK_Y);
+    c.clip();
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    for (const route of ['portal', 'lymph']) {
+      const active = dots.some((d) => d.route === route);
+      const style = routeGlowStyle(active);
+      const colour = COL[route];
+      c.strokeStyle = svgColour(colour, style.glow);
+      c.shadowColor = svgColour(colour, style.shadow);
+      c.shadowBlur = active ? 8 : 4;
+      c.lineWidth = style.glowWidth;
+      c.beginPath();
+      DOT_ROUTES[route].forEach((p, i) => (i
+        ? c.lineTo(p[0], p[1])
+        : c.moveTo(p[0], p[1])));
+      c.stroke();
+      c.shadowBlur = 0;
+      c.strokeStyle = svgColour(colour, style.core);
+      c.lineWidth = style.coreWidth;
+      c.stroke();
+    }
+    c.restore();
+  }
+
+  function buildSvgCache() {
+    const scale = staticCacheScale();
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
+    const c = canvas.getContext('2d');
+    c.setTransform(scale, 0, 0, scale, 0, 0);
+    paintSvgArt(c);
+    SVG_ART.cache = canvas;
+    SVG_ART.scale = scale;
+  }
+
+  function ensureSvgCache() {
+    if (!USE_SVG_ART || !GEOM) return;
+    if (SVG_ART.cache && SVG_ART.scale === staticCacheScale()) return;
+    buildSvgCache();
+  }
+
+  function blitSvgArt() {
+    if (SVG_ART.cache) ctx.drawImage(SVG_ART.cache, 0, 0, W, H);
+  }
+
+  const ART_COLOURS = { mouth: '#f9bb9d' };
+
   /* ── Render ─────────────────────────────────────────── */
+
+  function applyFigureTransform(c) {
+    if (!NARROW) return;
+    c.translate(FIGURE_VIEW.tx, FIGURE_VIEW.ty);
+    c.scale(FIGURE_VIEW.scale, FIGURE_VIEW.scale);
+  }
 
   function render(t) {
     ctx.clearRect(0, 0, W, H);
-    for (const L of LAYERS) {
-      drawWall(L);
-      drawVilli(L, t * 1.3);
-      drawCapillaries(L);
-      drawHaustra(L);
-      drawWaves(L, t);
+    ctx.save();
+    applyFigureTransform(ctx);
+    if (USE_SVG_ART && GEOM) {
+      blitSvgArt();
+      paintRouteGlow(ctx);
+      LAYERS.forEach((L) => {
+        drawVilli(L, t * 1.3);
+        drawCapillaries(L);
+        drawHaustra(L);
+        drawWaves(L, t);
+      });
+      drawChewingMotion(t);
+      drawParticles(t);
+      drawDots();
+    } else {
+      ensureStaticCache();
+      LAYERS.forEach((L, i) => {
+        blit('wall-' + i);
+        drawVilli(L, t * 1.3);
+        drawCapillaries(L);
+        blit('haustra-' + i);
+        drawWaves(L, t);
+      });
+      blit('stomach');
+      blit('liver');
+      blit('vessels');
+      paintRouteGlow(ctx);
+      drawGlands(t);
+      drawParticles(t);
+      drawDots();
     }
-    drawStomach();
-    drawLiver();
-    drawVessels();
-    drawGlands(t);
-    drawParticles();
-    drawDots();
-    drawLabels();
-    drawBadge();
-    drawLegend();
-    drawFooter();
+    ctx.restore();
+    if (labels) blitOrganLabels();
+    const badgeSpot = drawBadge();
+    drawSurfacePill();
+    if (DEBUG) {
+      ctx.save();
+      applyFigureTransform(ctx);
+      drawDebug(badgeSpot);
+      ctx.restore();
+    }
+    if (!COMPACT) drawLegend();
   }
 
   /* ── Readout ────────────────────────────────────────── */
@@ -1287,8 +2408,22 @@
         ? ORGAN_NAME[headOrgan]
         : (passed.length ? 'Eliminated' : 'No meal yet');
 
-    digestedValue.textContent = Math.round(pct * 100) + '%';
-    digestedValue.style.color = pct > 0.8 ? '#10b981' : pct > 0.5 ? '#facc15' : '#f87171';
+    if (mobileOrgan) {
+      const s = clamp(headS === null ? 0 : headS, 0, TUBE_END);
+      const organ = mouthHold > 0 ? 'mouth' : organAt(s);
+      const ph = phAt(s);
+      const working = mouthHold > SWALLOW_SEC || enzymesWorking(organ, ph);
+      mobileOrgan.textContent = ORGAN_NAME[organ];
+      mobilePh.textContent = 'pH ' + ph.toFixed(1);
+      mobileEnzyme.textContent = ORGAN_ENZYME[organ];
+      mobileEnzyme.style.color = working ? '#34d399' : '#f59e0b';
+      mobileState.textContent = working ? 'enzyme active here' : 'enzyme inactive here';
+    }
+
+    const pctText = Math.round(pct * 100) + '%';
+    const pctColour = pct > 0.8 ? '#10b981' : pct > 0.5 ? '#facc15' : '#f87171';
+    digestedValue.textContent = pctText;
+    digestedValue.style.color = pctColour;
 
     energyValue.textContent = Math.round(
       absorbed.carb * KCAL.carb + absorbed.protein * KCAL.protein + absorbed.fat * KCAL.fat
@@ -1301,6 +2436,26 @@
     waterValue.textContent = Math.round(waterOut) + ' mL';
     transitValue.textContent = (simMin / 60).toFixed(1) + ' h';
 
+    footerPct.textContent = pctText;
+    footerPct.style.color = pctColour;
+    let barAt = 0;
+    for (const n of NUTRIENTS) {
+      const el = footerSegments[n.key];
+      if (!el) continue;
+      const width = mealG > 0 ? Math.min(dig[n.key], n.grams) / mealG * 100 : 0;
+      el.style.left = barAt + '%';
+      el.style.width = width + '%';
+      barAt += width;
+    }
+    footerSurface.textContent = '×' + chewFactor.toFixed(2);
+    footerAbsorbed.carb.textContent = absorbed.carb.toFixed(1) + ' g';
+    footerAbsorbed.protein.textContent = absorbed.protein.toFixed(1) + ' g';
+    footerAbsorbed.fat.textContent = absorbed.fat.toFixed(1) + ' g';
+    footerWater.textContent = Math.round(waterOut) + ' / ' + Math.round(waterIn) + ' mL';
+    footerInsulin.textContent = insulin.toFixed(1) + ' mU/L';
+    footerInsulin.style.color = insulin > 0.4 ? '#facc15' : '#64748b';
+    footerLeftover.textContent = passed.length ? leftover().toFixed(0) + ' g' : '—';
+
     if (interactions >= 8) EV.revealInsight();
   }
 
@@ -1310,7 +2465,7 @@
     const dt = EV.delta(now, lastTime);
     lastTime = now;
     if (!paused && dt > 0) step(dt);
-    render(EV.visualTime(dt));
+    render(EV.visualTime(now));
     syncReadout();
     rafId = requestAnimationFrame(tick);
   }
@@ -1386,6 +2541,8 @@
     chewFactor = Math.min(3.4, chewFactor + 0.24);
     interactions++;
     EV.say('Surface area is now ' + chewFactor.toFixed(2) + ' times.');
+    syncReadout();
+    render(EV.visualTime(performance.now()));
   });
 
   feedBtn.addEventListener('click', () => {
@@ -1414,13 +2571,92 @@
     resetRun();
   });
 
-  /* ── Init ───────────────────────────────────────────── */
+  /* Phase 1 overlay parity check */
+  const _c = document.getElementById('stage');
+  if (_c.width !== W || _c.height !== H) console.warn('Canvas size mismatch', _c.width, _c.height, 'expected', W, H);
 
   periValue.textContent = '1.00×';
   acidValue.textContent = '2.0';
   bileValue.textContent = '60%';
   fibreValue.textContent = '10 g';
-  EV.onToggle(labelsBtn, () => { labels = !labels; return labels; });
-  resetRun();
-  start();
+  EV.onToggle(labelsBtn, () => {
+    labels = !labels;
+    render(EV.visualTime(performance.now()));
+    return labels;
+  });
+
+  stage.onPaint = () => {
+    ensureStaticCache();
+    ensureSvgCache();
+    render(EV.visualTime(performance.now()));
+    syncReadout();
+  };
+
+  if (USE_WEBGL) {
+    (async () => {
+      try {
+        const THREE = await import('https://unpkg.com/three@0.160.0/build/three.module.js');
+        const canvas = document.getElementById('stage');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(W, H, false);
+        scene.fog = new THREE.Fog(0x0f172a, 300, 900);
+        window.__scene = scene; window.__THREE = THREE; window.__camera = camera; window.__renderer = renderer;
+        const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
+        camera.position.set(0, 0, 600);
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(200, 300, 400);
+        const sh = { cx: 560, cy: 244, rx: 68, ry: 48, rot: -0.42 };
+        const geo = new THREE.SphereGeometry(1, 32, 16);
+        geo.scale(sh.rx, sh.ry, (sh.rx + sh.ry) / 2);
+        const mat = new THREE.MeshPhysicalMaterial({ color: 0xf472b6, roughness: 0.45, clearcoat: 0.6, clearcoatRoughness: 0.3, transmission: 0.15, thickness: 2 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(sh.cx - 450, -(sh.cy - 270), 0);
+        mesh.rotation.z = sh.rot;
+        const liver = { x: 262, y: 118, rx: 92, ry: 44 };
+        const lgeo = new THREE.SphereGeometry(1, 32, 16);
+        lgeo.scale(liver.rx, liver.ry, (liver.rx + liver.ry) / 2);
+        const lmat = new THREE.MeshPhysicalMaterial({ color: 0x9f1239, roughness: 0.4, clearcoat: 0.3 });
+        const lmesh = new THREE.Mesh(lgeo, lmat);
+        lmesh.position.set(liver.x - 450, -(liver.y - 270), 0);
+        const gb = { x: 212, y: 174, rx: 12, ry: 9 };
+        const ggeo = new THREE.SphereGeometry(1, 16, 12);
+        ggeo.scale(gb.rx, gb.ry, (gb.rx + gb.ry) / 2);
+        const gmat = new THREE.MeshPhysicalMaterial({ color: 0x84cc16, roughness: 0.35, clearcoat: 0.5 });
+        const gmesh = new THREE.Mesh(ggeo, gmat);
+        gmesh.position.set(gb.x - 450, -(gb.y - 270), 0);
+        const pz = { x: 470, y: 318, rx: 82, ry: 13, rot: -0.12 };
+        const pgeo = new THREE.SphereGeometry(1, 24, 12);
+        pgeo.scale(pz.rx, pz.ry, (pz.rx + pz.ry) / 2);
+        const pmat = new THREE.MeshPhysicalMaterial({ color: 0xfbbf24, roughness: 0.4, clearcoat: 0.3 });
+        const pmesh = new THREE.Mesh(pgeo, pmat);
+        pmesh.position.set(pz.x - 450, -(pz.y - 270), 0);
+        pmesh.rotation.z = pz.rot;
+        const pts = [
+          [462,74],[460,98],[544,196],[622,250],[566,300],[414,372],[432,410],[480,466],[430,518],[232,518],[150,452],[366,361],[730,334],[800,428],[604,514]
+        ].map(p => new THREE.Vector3(p[0]-450, -(p[1]-270), 0));
+        const curve = new THREE.CatmullRomCurve3(pts);
+        const tgeo = new THREE.TubeGeometry(curve, 120, 6, 8, false);
+        const tmat = new THREE.MeshPhysicalMaterial({ color: 0xf472b6, roughness: 0.55, clearcoat: 0.4 });
+        const tmesh = new THREE.Mesh(tgeo, tmat);
+        scene.add(tmesh);
+        const bolusGeo = new THREE.SphereGeometry(8, 16, 12);
+        const bolusMat = new THREE.MeshPhysicalMaterial({ color: 0xec4899, roughness: 0.3, clearcoat: 0.8 });
+        const bolus = new THREE.Mesh(bolusGeo, bolusMat);
+        scene.add(bolus);
+        let bt = 0;
+        const origLoop = loop;
+        function loop2() {
+          bt = (bt + 0.002) % 1;
+          const p = curve.getPoint(bt);
+          bolus.position.copy(p);
+          renderer.render(scene, camera);
+          requestAnimationFrame(loop2);
+        }
+        loop2();
+      } catch (e) { console.warn('WebGL init failed, falling back to Canvas2D', e); resetRun(); start(); }
+    })();
+  } else {
+    resetRun();
+    start();
+  }
 })();

@@ -35,6 +35,79 @@
   <main class="ev-stage" id="main" tabindex="-1">
     <canvas id="stage" width="900" height="540" role="img"
             aria-label="A whole digestive tract from mouth to anus, showing a meal travelling down by peristalsis, being broken down by pH-gated enzymes in the stomach and small intestine, absorbed through the villi into the blood and lymph, and having its water reclaimed in the colon"></canvas>
+
+    <section class="ev-stage-panels" aria-label="Meal and enzyme details">
+      <div class="ev-stage-panel">
+        <h2>What is in the meal</h2>
+        <p>Every part is broken down somewhere different.</p>
+        <ul class="ev-meal-list">
+          <li><span class="ev-meal-dot" style="background:#fbbf24"></span><strong>Carbohydrate</strong><span>mouth, then small intestine</span></li>
+          <li><span class="ev-meal-dot" style="background:#f472b6"></span><strong>Protein</strong><span>stomach, then small intestine</span></li>
+          <li><span class="ev-meal-dot" style="background:#fb923c"></span><strong>Fat</strong><span>small intestine — bile must emulsify it</span></li>
+          <li><span class="ev-meal-dot" style="background:#a3e635"></span><strong>Fibre</strong><span>no human enzyme — it reaches the colon</span></li>
+        </ul>
+      </div>
+      <div class="ev-stage-panel">
+        <h2>The enzyme in charge</h2>
+        <p>Each one has a narrow pH window.</p>
+        <div class="ev-enzyme-head">
+          <strong id="mobileOrgan">Mouth</strong>
+          <span id="mobilePh">pH 2.0</span>
+        </div>
+        <p class="ev-enzyme-name" id="mobileEnzyme">salivary amylase</p>
+        <p class="ev-enzyme-state" id="mobileState">enzyme active here</p>
+      </div>
+    </section>
+
+    <section class="ev-footer" aria-label="Digestion details">
+      <div class="ev-footer__col">
+        <div class="ev-footer__head">
+          <span class="ev-footer__label">Digested</span>
+          <strong class="ev-footer__value" id="footerPct">0%</strong>
+        </div>
+        <div class="ev-footer__bar" aria-hidden="true">
+          <span class="ev-footer__seg" id="footerSegCarb"></span>
+          <span class="ev-footer__seg" id="footerSegProtein"></span>
+          <span class="ev-footer__seg" id="footerSegFat"></span>
+          <span class="ev-footer__seg" id="footerSegFibre"></span>
+        </div>
+        <p class="ev-footer__hint">chopped by enzymes into units small enough to absorb</p>
+        <div class="ev-footer__head">
+          <span class="ev-footer__label">Surface area</span>
+          <strong class="ev-footer__value" id="footerSurface">&times;1.00</strong>
+        </div>
+        <p class="ev-footer__hint">chew more and every enzyme goes faster</p>
+      </div>
+
+      <div class="ev-footer__col">
+        <h3 class="ev-footer__title">Absorbed into the body</h3>
+        <div class="ev-footer__row">
+          <span>Carbohydrate</span><strong class="ev-footer__value" id="footerAbsCarb">0.0 g</strong>
+        </div>
+        <p class="ev-footer__hint">portal vein &rarr; liver</p>
+        <div class="ev-footer__row">
+          <span>Protein</span><strong class="ev-footer__value" id="footerAbsProtein">0.0 g</strong>
+        </div>
+        <p class="ev-footer__hint">portal vein &rarr; liver</p>
+        <div class="ev-footer__row">
+          <span>Fat</span><strong class="ev-footer__value" id="footerAbsFat">0.0 g</strong>
+        </div>
+        <p class="ev-footer__hint">lymph duct, not the blood</p>
+      </div>
+
+      <div class="ev-footer__col">
+        <h3 class="ev-footer__title">Colon</h3>
+        <div class="ev-footer__row">
+          <span>water reabsorbed</span><strong class="ev-footer__value" id="footerWater">0 / 0 mL</strong>
+        </div>
+        <div class="ev-footer__row">
+          <span>insulin released</span><strong class="ev-footer__value" id="footerInsulin">0.0 mU/L</strong>
+        </div>
+        <div class="ev-footer__row">
+          <span>left over</span><strong class="ev-footer__value" id="footerLeftover">&mdash;</strong>
+        </div>
+      </div>
+    </section>
   </main>
 
   <section class="ev-controls" aria-label="Controls">
@@ -138,6 +211,7 @@
 
   <script src="../../shared/edvibe-sim.js"></script>
   <script src="../../shared/lucide.min.js"></script>
+  <script src="prototype/geometry.generated.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
