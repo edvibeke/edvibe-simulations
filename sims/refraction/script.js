@@ -202,7 +202,7 @@
       ctx.arc(NORMAL_X, BOUNDARY_Y, arcR,
               Math.PI / 2,
               Math.PI / 2 - theta2,
-              false);
+              true);
       ctx.stroke();
 
       const l2x = NORMAL_X + arcR * 0.7 * Math.sin(theta2 / 2);

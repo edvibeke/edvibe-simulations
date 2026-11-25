@@ -1,0 +1,2036 @@
+{
+  "verdict": "PASS",
+  "note": "Only full-canvas clear/blit operations use y=0; no anatomy path or text does.",
+  "designs": {
+    "a": {
+      "totalHits": 75,
+      "canvasClears": 38,
+      "canvasBlits": 37,
+      "anatomyHits": [],
+      "allHits": [
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        }
+      ]
+    },
+    "b": {
+      "totalHits": 55,
+      "canvasClears": 28,
+      "canvasBlits": 27,
+      "anatomyHits": [],
+      "allHits": [
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "clearRect",
+          "args": [
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        },
+        {
+          "kind": "context",
+          "method": "drawImage",
+          "args": [
+            "HTMLCanvasElement",
+            0,
+            0,
+            900,
+            540
+          ],
+          "ys": [
+            0
+          ],
+          "canvasWidth": 966,
+          "canvasHeight": 580
+        }
+      ]
+    }
+  }
+}

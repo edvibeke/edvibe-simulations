@@ -155,8 +155,11 @@
       }
     }
 
-    // Advance generation
-    if (deathsThisGen >= deathsPerGen) {
+    // Advance generation on the death threshold, or immediately if the
+    // field emptied before reaching it — otherwise extinction is permanent:
+    // no beetles means no further deaths, so the threshold never arrives and
+    // the refill below would never run.
+    if (deathsThisGen >= deathsPerGen || beetles.length === 0) {
       generation++;
       deathsThisGen = 0;
 

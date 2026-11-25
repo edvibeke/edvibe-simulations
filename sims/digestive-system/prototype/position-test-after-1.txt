@@ -1,0 +1,3 @@
+position-test: 102 sampled frames, tolerance 6.064px, offences 0
+by kind: {}
+PASS: food, centreline, badge and dot positions agree for the whole meal

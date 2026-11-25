@@ -419,6 +419,15 @@
     electron.x = Math.max(0, Math.min(W, x));
     electron.y = Math.max(0, Math.min(H, y));
     electron.everDragged = true;
+
+    // Same drop test as pointerup, so the bond is reachable without a pointer.
+    const gap = clGapPosition();
+    const d = Math.hypot(electron.x - gap.x, electron.y - gap.y);
+    if (d <= DROP_RADIUS) {
+      transferElectron();
+      render();
+      return;
+    }
     stage.paint();
   }, { step: 10, bigStep: 30, start: () => electron });
 

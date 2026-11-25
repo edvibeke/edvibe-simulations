@@ -308,17 +308,20 @@
     const dt = EV.delta(now, lastTime);
     lastTime = now;
 
-    // Smooth the pH toward its target (so slider jerks look nice)
+    // Smooth the pH toward its target (so slider jerks look nice).
+    // Under reduced motion the clock is stopped, so snap instead of easing.
     const target = targetPH();
     const diff = target - displayedPH;
-    if (Math.abs(diff) > 0.01) {
-      displayedPH += diff * Math.min(1, dt * 12);
-    } else {
+    if (EV.reducedMotion() || Math.abs(diff) <= 0.01) {
       displayedPH = target;
+    } else {
+      displayedPH += diff * Math.min(1, dt * 12);
     }
 
-    // Spawn bubbles occasionally while conditions are non-neutral
-    if (Math.abs(mix) > 15 && now - lastSpawn > 180) {
+    // Spawn bubbles occasionally while conditions are non-neutral.
+    // Skipped under reduced motion: updateBubbles(dt = 0) could never
+    // move or clear them, so they would pile up without bound.
+    if (!EV.reducedMotion() && Math.abs(mix) > 15 && now - lastSpawn > 180) {
       spawnBubble();
       lastSpawn = now;
     }

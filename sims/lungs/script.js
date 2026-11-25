@@ -209,7 +209,7 @@
     ctx.fillText('O₂-rich blood to body', 450, 262 - 46);
 
     // diaphragm
-    const controlY = 500 - in_ * 58;
+    const controlY = 442 + in_ * 58;
     ctx.strokeStyle = '#c084fc';
     ctx.lineWidth = 10;
     ctx.beginPath();

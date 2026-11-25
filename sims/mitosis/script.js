@@ -254,6 +254,10 @@
   function lerpPt(a, b, t) { return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) }; }
 
   function advanceToward(dt) {
+    if (EV.reducedMotion()) {
+      displayedParams = snapshotOf(FRAMES[currentStage]);
+      return;
+    }
     const k = Math.min(1, dt * 3.2);   // ~300 ms smoothing
 
     displayedParams.envelopeOpacity = lerp(displayedParams.envelopeOpacity, targetParams.envelopeOpacity, k);
@@ -501,13 +505,14 @@
   /* ── Loop ───────────────────────────────────────────── */
 
   function tick(now) {
+    const raw = (now - lastTime) / 1000;
     const dt = EV.delta(now, lastTime);
     lastTime = now;
 
     advanceToward(dt);
 
     if (playing) {
-      playTimer += dt;
+      playTimer += EV.reducedMotion() ? Math.min(raw, 0.05) : dt;
       if (playTimer > 2.6) {
         playTimer = 0;
         if (currentStage < FRAMES.length - 1) {
@@ -530,10 +535,12 @@
 
   /* ── Readout ────────────────────────────────────────── */
 
+  const CHROM_COUNT = ['4', '4', '4', '8', '8', '4 each'];
+
   function syncReadout() {
     stageName.textContent = FRAMES[currentStage].name;
     stageDesc.textContent = FRAMES[currentStage].description;
-    chromValue.textContent = currentStage >= 4 ? '8' : '4';
+    chromValue.textContent = CHROM_COUNT[currentStage];
   }
 
   /* ── Reset ──────────────────────────────────────────── */

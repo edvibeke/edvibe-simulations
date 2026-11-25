@@ -1,0 +1,23 @@
+position-test: 102 sampled frames, tolerance 6.064px, offences 1557
+by kind: {"landmark":15,"particle-offset":345,"off-centreline":1197}
+FAIL frame 30 [particle-offset] mouth p0 s=2.67 drawn=304.55,82.87 sample=325.78,27.07 d=59.70 > 6.06
+FAIL frame 30 [particle-offset] mouth p1 s=4.00 drawn=310.79,83.39 sample=324.45,27.17 d=57.86 > 6.06
+FAIL frame 30 [particle-offset] mouth p2 s=5.33 drawn=300.11,83.92 sample=323.12,27.30 d=61.12 > 6.06
+FAIL frame 30 [particle-offset] mouth p3 s=6.67 drawn=302.11,84.44 sample=321.80,27.46 d=60.29 > 6.06
+FAIL frame 30 [particle-offset] mouth p4 s=8.00 drawn=298.54,84.96 sample=320.49,27.68 d=61.35 > 6.06
+FAIL frame 30 [particle-offset] mouth p5 s=9.33 drawn=303.56,85.48 sample=319.19,27.98 d=59.59 > 6.06
+FAIL frame 30 [particle-offset] mouth p6 s=10.67 drawn=298.30,86.01 sample=317.93,28.41 d=60.85 > 6.06
+FAIL frame 30 [particle-offset] mouth p7 s=12.00 drawn=297.09,86.53 sample=316.75,29.03 d=60.77 > 6.06
+FAIL frame 30 [particle-offset] mouth p8 s=13.33 drawn=294.27,87.05 sample=315.72,29.86 d=61.08 > 6.06
+FAIL frame 30 [particle-offset] mouth p9 s=14.67 drawn=292.31,87.58 sample=314.83,30.86 d=61.03 > 6.06
+FAIL landmark [landmark] mouth: sampleAt=311.65,40.00 committed=293.41,95.59 delta=18.24,-55.59
+FAIL landmark [landmark] oesophagus: sampleAt=328.43,72.37 committed=310.19,127.96 delta=18.24,-55.59
+FAIL landmark [landmark] cardia: sampleAt=333.66,141.01 committed=315.41,196.60 delta=18.24,-55.59
+FAIL landmark [landmark] stomach: sampleAt=400.61,197.02 committed=382.37,252.61 delta=18.24,-55.59
+FAIL landmark [landmark] pylorus: sampleAt=320.10,229.45 committed=301.85,285.03 delta=18.24,-55.59
+FAIL landmark [landmark] duodenum: sampleAt=283.63,246.63 committed=265.38,302.22 delta=18.24,-55.59
+FAIL landmark [landmark] flexure: sampleAt=358.17,298.43 committed=339.92,354.01 delta=18.24,-55.59
+FAIL landmark [landmark] jejunum: sampleAt=321.95,299.35 committed=303.71,354.94 delta=18.24,-55.59
+FAIL landmark [landmark] ileum: sampleAt=405.25,269.96 committed=387.00,325.55 delta=18.24,-55.59
+FAIL landmark [landmark] caecum: sampleAt=279.58,359.74 committed=261.34,415.33 delta=18.24,-55.59
+FAILED: 1557 position offences (first 10 shown)

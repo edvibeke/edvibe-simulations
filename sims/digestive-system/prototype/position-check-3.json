@@ -1,0 +1,70 @@
+{
+  "chew": 3,
+  "counts": {
+    "bile": 2,
+    "bicarbonate": 2,
+    "protein": 4,
+    "carb": 12,
+    "fat": 6
+  },
+  "routeSamples": {
+    "portal": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "lymph": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "bile": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "pancreatic": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "emitted": 26,
+  "offences": [],
+  "masks": {
+    "liver": 4,
+    "bile": 8,
+    "pancreatic": 30,
+    "small": 10
+  },
+  "geometry": {
+    "routes": {
+      "portal": 6,
+      "lymph": 8,
+      "bile": 7,
+      "pancreatic": 8
+    },
+    "papillaAnchor": [
+      316.2,
+      576.7
+    ],
+    "papillaDistance": 0,
+    "oesophagusSamples": 11
+  }
+}
