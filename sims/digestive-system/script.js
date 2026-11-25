@@ -1469,6 +1469,7 @@
   }
 
   const STATIC_CACHE = { scale: 0, layers: {} };
+  const LABEL_CACHE = { canvas: null, scale: 0 };
 
   function staticCacheScale() {
     return Math.max(
@@ -1558,11 +1559,6 @@
     layers['glands-lower'] = make(cacheUnion(cacheEllipse(pa.x, pa.y, pa.rx, pa.ry, pa.rot, 12),
       cachePoints(pancreaticPts, 4)),
       (c) => drawGlandsLower(c));
-    LABELS.forEach((l, i) => {
-      layers['leader-' + i] = make(cachePoints([
-        [gx(l.at[0]), gy(l.at[1])], [gx(l.to[0]), gy(l.to[1])]
-      ], 3), (c) => leaderLine(l.at[0], l.at[1], l.to[0], l.to[1], c));
-    });
     STATIC_CACHE.scale = scale;
     STATIC_CACHE.layers = layers;
   }
@@ -1579,43 +1575,92 @@
   }
 
   /* ── Labels ──────────────────────────────────────────────
-     Each label is placed in open space with a leader line back to the
-     structure it names. The positions are all outside the tube's own
-     corridor and outside both panels. */
+     Each label is placed in open space with a leader line back to a
+     point inside the structure it names. The positions are fixed in
+     canvas space and painted once into their own cache. */
 
-  const LABELS = [
-    { text: 'mouth',             at: [ 462,  74], to: [ 516,  70], colour: COL.legend },
-    { text: 'oesophagus',        at: [ 472, 152], to: [ 548, 128], colour: COL.legend },
-    { text: 'stomach',           at: [ 560, 220], to: [ 700, 196], colour: COL.legend },
-    { text: 'liver',             at: [ 262,  92], to: [ 262,  64], colour: '#fb7185' },
-    { text: 'gallbladder',       at: [ 212, 176], to: [ 148, 152], colour: '#a3e635' },
-    { text: 'pancreas',          at: [ 500, 314], to: [ 700, 300], colour: '#e879f9' },
-    { text: 'duodenum',          at: [ 428, 350], to: [ 340, 318], colour: COL.legend },
-    { text: 'small intestine',   at: [ 428, 466], to: [ 300, 415], colour: COL.legend },
-    { text: 'large intestine',   at: [ 168, 396], to: [ 120, 300], colour: COL.legend },
-    { text: 'rectum',            at: [ 662, 514], to: [ 700, 560], colour: COL.legend }
+  const LABEL_COLOURS = {
+    mouth: '#f9bb9d',
+    oesophagus: '#ff9a7a',
+    liver: '#ff451f',
+    gallbladder: '#39ff14',
+    stomach: '#dc143c',
+    pancreas: '#ff3dff',
+    duodenum: '#ff9a3d',
+    small: '#ff6f61',
+    colon: '#d8c0f0'
+  };
+
+  const LABEL_STYLE = { font: '700 10px system-ui, sans-serif', padX: 7, height: 18 };
+
+  const ORGAN_LABELS = [
+    { text: 'mouth', tag: 'mouth', anchor: [295, 90], at: [470, 70], colour: LABEL_COLOURS.mouth },
+    { text: 'oesophagus', tag: 'oesophagus', anchor: [315, 140], at: [480, 120], colour: LABEL_COLOURS.oesophagus },
+    { text: 'liver', tag: 'liver', anchor: [300, 240], at: [85, 185], colour: LABEL_COLOURS.liver },
+    { text: 'gallbladder', tag: 'gallbladder', anchor: [315, 265], at: [85, 235], colour: LABEL_COLOURS.gallbladder },
+    { text: 'stomach', tag: 'stomach', anchor: [375, 230], at: [480, 210], colour: LABEL_COLOURS.stomach },
+    { text: 'pancreas', tag: 'pancreas', anchor: [300, 305], at: [480, 285], colour: LABEL_COLOURS.pancreas },
+    { text: 'duodenum', tag: 'duodenum', anchor: [265, 325], at: [85, 295], colour: LABEL_COLOURS.duodenum },
+    { text: 'small intestine', tag: 'small', anchor: [375, 335], at: [530, 345], colour: LABEL_COLOURS.small },
+    { text: 'large intestine (colon)', tag: 'colon', anchor: [220, 375], at: [70, 350], colour: LABEL_COLOURS.colon },
+    { text: 'rectum', tag: 'colon', anchor: [310, 485], at: [480, 385], colour: LABEL_COLOURS.colon }
   ];
 
-  const VESSEL_LABELS = [
-    { text: 'portal vein → liver', at: [ 180, 214], colour: 'rgba(147,197,253,0.9)' },
-    { text: 'lymph duct',          at: [ 716, 258], colour: 'rgba(252,211,77,0.9)' }
-  ];
-
-  function label(text, x, y, colour, c = ctx) {
-    c.font = '700 11px system-ui, sans-serif';
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    c.fillStyle = colour || COL.labelDim;
-    c.fillText(text, x, y);
+  function labelPillBox(l, c = ctx) {
+    c.font = LABEL_STYLE.font;
+    const w = c.measureText(l.text).width + LABEL_STYLE.padX * 2;
+    const h = LABEL_STYLE.height;
+    return { x: l.at[0] - w / 2, y: l.at[1] - h / 2, w, h };
   }
 
-  function leaderLine(dx, dy, lx, ly, c = ctx) {
-    c.strokeStyle = 'rgba(148,163,184,0.32)';
-    c.lineWidth = 1;
-    c.beginPath();
-    c.moveTo(gx(dx), gy(dy));
-    c.lineTo(gx(lx), gy(ly));
-    c.stroke();
+  function drawOrganLabels(c) {
+    c.save();
+    for (const l of ORGAN_LABELS) {
+      c.strokeStyle = svgColour(l.colour, 0.72);
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(l.anchor[0], l.anchor[1]);
+      c.lineTo(l.at[0], l.at[1]);
+      c.stroke();
+    }
+    for (const l of ORGAN_LABELS) {
+      const box = labelPillBox(l, c);
+      c.fillStyle = 'rgba(2,6,23,0.9)';
+      c.beginPath();
+      c.roundRect(box.x, box.y, box.w, box.h, 9);
+      c.fill();
+      c.strokeStyle = svgColour(l.colour, 0.42);
+      c.lineWidth = 1;
+      c.stroke();
+      c.font = LABEL_STYLE.font;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillStyle = l.colour;
+      c.fillText(l.text, box.x + box.w / 2, box.y + box.h / 2);
+    }
+    c.restore();
+  }
+
+  function buildLabelCache() {
+    const scale = staticCacheScale();
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
+    const c = canvas.getContext('2d');
+    c.setTransform(scale, 0, 0, scale, 0, 0);
+    drawOrganLabels(c);
+    LABEL_CACHE.canvas = canvas;
+    LABEL_CACHE.scale = scale;
+  }
+
+  function ensureLabelCache() {
+    if (LABEL_CACHE.canvas && LABEL_CACHE.scale === staticCacheScale()) return;
+    buildLabelCache();
+  }
+
+  function blitOrganLabels() {
+    ensureLabelCache();
+    ctx.drawImage(LABEL_CACHE.canvas, 0, 0, W, H);
   }
 
   function drawBadge() {
@@ -1635,7 +1680,7 @@
     ctx.textBaseline = 'middle';
     const w = Math.max(ctx.measureText(text).width, sub ? ctx.measureText(sub).width : 0) + 20;
     const x = clamp(spot.x - w / 2, 6, RAIL.x - w - 10);
-    const y = Math.max(26, spot.y - gs(sub ? 58 : 46));
+    const y = Math.max(26, spot.y - gs(sub ? 66 : 50));
     ctx.fillStyle = 'rgba(2,6,23,0.92)';
     ctx.beginPath();
     ctx.roundRect(x, y - 12, w, sub ? 40 : 24, 12);
@@ -2219,6 +2264,7 @@
       drawChewingMotion(t);
       drawParticles(t);
       drawDots();
+      if (labels) blitOrganLabels();
     } else {
       ensureStaticCache();
       LAYERS.forEach((L, i) => {
@@ -2234,13 +2280,7 @@
       drawGlands(t);
       drawParticles(t);
       drawDots();
-      if (labels) {
-        for (let i = 0; i < LABELS.length; i++) {
-          blit('leader-' + i);
-          label(LABELS[i].text, gx(LABELS[i].to[0]), gy(LABELS[i].to[1]) - 9, LABELS[i].colour);
-        }
-        for (const l of VESSEL_LABELS) label(l.text, gx(l.at[0]), gy(l.at[1]), l.colour);
-      }
+      if (labels) blitOrganLabels();
     }
     const badgeSpot = drawBadge();
     drawSurfacePill();
@@ -2423,7 +2463,11 @@
   acidValue.textContent = '2.0';
   bileValue.textContent = '60%';
   fibreValue.textContent = '10 g';
-  EV.onToggle(labelsBtn, () => { labels = !labels; return labels; });
+  EV.onToggle(labelsBtn, () => {
+    labels = !labels;
+    render(EV.visualTime(performance.now()));
+    return labels;
+  });
 
   stage.onPaint = () => {
     ensureStaticCache();
