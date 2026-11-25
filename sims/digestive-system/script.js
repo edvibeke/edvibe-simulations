@@ -384,6 +384,7 @@
   /* Fraction of already-digested nutrient taken across the villi per
      simulated minute. Fat lags because it has to be packaged first. */
   const ABSORB = { carb: 0.012, protein: 0.011, fat: 0.004 };
+  const DOT_GRAMS = { carb: 3, protein: 3, fat: 0.5 };
 
   const STOMACH_OPT_PH = 1.9;
   const STOMACH_TOL = 0.60;
@@ -795,8 +796,8 @@
           absorbed[p.type] += amount;
           if (p.type === 'carb') carbFlux += amount;
           p.emit += amount;
-          while (p.emit >= 3) {
-            p.emit -= 3;
+          while (p.emit >= DOT_GRAMS[p.type]) {
+            p.emit -= DOT_GRAMS[p.type];
             emitDot(p.type);
           }
         }
