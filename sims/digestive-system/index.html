@@ -36,6 +36,29 @@
     <canvas id="stage" width="900" height="540" role="img"
             aria-label="A whole digestive tract from mouth to anus, showing a meal travelling down by peristalsis, being broken down by pH-gated enzymes in the stomach and small intestine, absorbed through the villi into the blood and lymph, and having its water reclaimed in the colon"></canvas>
 
+    <section class="ev-stage-panels" aria-label="Meal and enzyme details">
+      <div class="ev-stage-panel">
+        <h2>What is in the meal</h2>
+        <p>Every part is broken down somewhere different.</p>
+        <ul class="ev-meal-list">
+          <li><span class="ev-meal-dot" style="background:#fbbf24"></span><strong>Carbohydrate</strong><span>mouth, then small intestine</span></li>
+          <li><span class="ev-meal-dot" style="background:#f472b6"></span><strong>Protein</strong><span>stomach, then small intestine</span></li>
+          <li><span class="ev-meal-dot" style="background:#fb923c"></span><strong>Fat</strong><span>small intestine — bile must emulsify it</span></li>
+          <li><span class="ev-meal-dot" style="background:#a3e635"></span><strong>Fibre</strong><span>no human enzyme — it reaches the colon</span></li>
+        </ul>
+      </div>
+      <div class="ev-stage-panel">
+        <h2>The enzyme in charge</h2>
+        <p>Each one has a narrow pH window.</p>
+        <div class="ev-enzyme-head">
+          <strong id="mobileOrgan">Mouth</strong>
+          <span id="mobilePh">pH 2.0</span>
+        </div>
+        <p class="ev-enzyme-name" id="mobileEnzyme">salivary amylase</p>
+        <p class="ev-enzyme-state" id="mobileState">enzyme active here</p>
+      </div>
+    </section>
+
     <section class="ev-footer" aria-label="Digestion details">
       <div class="ev-footer__col">
         <div class="ev-footer__head">

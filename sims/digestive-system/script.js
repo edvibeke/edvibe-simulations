@@ -28,8 +28,27 @@
      and the scale cannot drift. Everything anatomical, in design
      space, has to stay inside FIGURE. */
 
+  const CANVAS = document.getElementById('stage');
+  const NARROW = window.innerWidth <= 600;
+  const COMPACT = window.innerWidth <= 1000;
+  if (NARROW) CANVAS.height = 1200;
+
   const W = 900;
-  const H = 540;
+  const H = NARROW ? 1200 : 540;
+
+  const FIGURE_VIEW = NARROW
+    ? { scale: 2.5, tx: -330, ty: -145 }
+    : { scale: 1, tx: 0, ty: 0 };
+  const viewPoint = (x, y) => [
+    FIGURE_VIEW.tx + x * FIGURE_VIEW.scale,
+    FIGURE_VIEW.ty + y * FIGURE_VIEW.scale
+  ];
+
+  const TEXT = NARROW
+    ? { label: 28, labelPad: 12, labelHeight: 34, badge: 28, sub: 28, surface: 28, legend: 11 }
+    : COMPACT
+      ? { label: 14, labelPad: 8, labelHeight: 22, badge: 14, sub: 14, surface: 14, legend: 11 }
+      : { label: 11, labelPad: 7, labelHeight: 20, badge: 14, sub: 11, surface: 11, legend: 11 };
 
   const RAIL = { x: 600, y: 32, w: 284, h: 330 };
 
@@ -457,6 +476,10 @@
   const footerWater    = document.getElementById('footerWater');
   const footerInsulin  = document.getElementById('footerInsulin');
   const footerLeftover = document.getElementById('footerLeftover');
+  const mobileOrgan  = document.getElementById('mobileOrgan');
+  const mobilePh     = document.getElementById('mobilePh');
+  const mobileEnzyme = document.getElementById('mobileEnzyme');
+  const mobileState  = document.getElementById('mobileState');
   const footerSegments = {};
   for (const n of NUTRIENTS) {
     footerSegments[n.key] = document.getElementById('footerSeg' + n.key[0].toUpperCase() + n.key.slice(1));
@@ -1592,11 +1615,11 @@
   };
 
   const LABEL_STYLE = {
-    font: '700 11px system-ui, sans-serif',
+    font: '700 ' + TEXT.label + 'px system-ui, sans-serif',
     text: '#f8fafc',
     pill: '#020617',
-    padX: 7,
-    height: 20
+    padX: TEXT.labelPad,
+    height: TEXT.labelHeight
   };
 
   const ORGAN_LABELS = [
@@ -1612,37 +1635,74 @@
     { text: 'rectum', tag: 'colon', anchor: [310, 485], at: [480, 385], colour: LABEL_COLOURS.colon }
   ];
 
+  const PHONE_LABELS = [
+    { text: 'mouth', tag: 'mouth', anchor: [295, 90], at: [800, 120], colour: LABEL_COLOURS.mouth },
+    { text: 'oesophagus', tag: 'oesophagus', anchor: [315, 140], at: [800, 230], colour: LABEL_COLOURS.oesophagus },
+    { text: 'liver', tag: 'liver', anchor: [300, 240], at: [100, 500], colour: LABEL_COLOURS.liver },
+    { text: 'gallbladder', tag: 'gallbladder', anchor: [315, 265], at: [100, 610], colour: LABEL_COLOURS.gallbladder },
+    { text: 'stomach', tag: 'stomach', anchor: [375, 230], at: [800, 700], colour: LABEL_COLOURS.stomach },
+    { text: 'pancreas', tag: 'pancreas', anchor: [255, 295], at: [95, 720], colour: LABEL_COLOURS.pancreas },
+    { text: 'duodenum', tag: 'duodenum', anchor: [265, 325], at: [95, 820], colour: LABEL_COLOURS.duodenum },
+    { text: 'small intestine', tag: 'small', anchor: [355, 395], at: [800, 930], lines: ['small', 'intestine'], colour: LABEL_COLOURS.small },
+    { text: 'large intestine (colon)', tag: 'colon', anchor: [220, 375], at: [95, 1010], lines: ['large', 'intestine', '(colon)'], colour: LABEL_COLOURS.colon },
+    { text: 'rectum', tag: 'colon', anchor: [310, 485], at: [800, 1080], colour: LABEL_COLOURS.colon }
+  ];
+  const PHONE_LABEL_BY_TEXT = new Map(PHONE_LABELS.map((l) => [l.text, l]));
+  const PHONE_LABEL_ORDER = PHONE_LABELS.map((l) => l.text);
+  const PHONE_CURRENT_TEXT = {
+    mouth: 'mouth', oesophagus: 'oesophagus', stomach: 'stomach',
+    duodenum: 'duodenum', ileum: 'small intestine',
+    colon: 'large intestine (colon)', rectum: 'rectum'
+  };
+
+  function visibleLabels() {
+    if (!NARROW) return ORGAN_LABELS;
+    const current = headS === null || mouthHold > 0
+      ? 'mouth'
+      : PHONE_CURRENT_TEXT[headOrgan] || 'mouth';
+    const at = PHONE_LABEL_ORDER.indexOf(current);
+    const start = clamp(at - 1, 0, PHONE_LABELS.length - 4);
+    return PHONE_LABELS.slice(start, start + 4);
+  }
+
   function labelPillBox(l, c = ctx) {
     c.font = LABEL_STYLE.font;
-    const w = c.measureText(l.text).width + LABEL_STYLE.padX * 2;
-    const h = LABEL_STYLE.height;
+    const lines = l.lines || [l.text];
+    const w = Math.max(...lines.map((line) => c.measureText(line).width)) + LABEL_STYLE.padX * 2;
+    const h = l.lines ? LABEL_STYLE.height * l.lines.length : LABEL_STYLE.height;
     return { x: l.at[0] - w / 2, y: l.at[1] - h / 2, w, h };
   }
 
   function drawOrganLabels(c) {
+    const list = visibleLabels();
     c.save();
-    for (const l of ORGAN_LABELS) {
+    c.lineWidth = NARROW ? 2.5 : 1;
+    for (const l of list) {
+      const end = NARROW ? viewPoint(l.anchor[0], l.anchor[1]) : l.anchor;
       c.strokeStyle = svgColour(l.colour, 0.72);
-      c.lineWidth = 1;
       c.beginPath();
-      c.moveTo(l.anchor[0], l.anchor[1]);
+      c.moveTo(end[0], end[1]);
       c.lineTo(l.at[0], l.at[1]);
       c.stroke();
     }
-    for (const l of ORGAN_LABELS) {
+    for (const l of list) {
       const box = labelPillBox(l, c);
       c.fillStyle = LABEL_STYLE.pill;
       c.beginPath();
-      c.roundRect(box.x, box.y, box.w, box.h, 9);
+      c.roundRect(box.x, box.y, box.w, box.h, NARROW ? 16 : 9);
       c.fill();
       c.strokeStyle = svgColour(l.colour, 0.42);
-      c.lineWidth = 1;
+      c.lineWidth = NARROW ? 2 : 1;
       c.stroke();
       c.font = LABEL_STYLE.font;
       c.textAlign = 'center';
       c.textBaseline = 'middle';
       c.fillStyle = LABEL_STYLE.text;
-      c.fillText(l.text, box.x + box.w / 2, box.y + box.h / 2);
+      const lines = l.lines || [l.text];
+      const step = LABEL_STYLE.height;
+      lines.forEach((line, i) => {
+        c.fillText(line, box.x + box.w / 2, box.y + step * (i + 0.5));
+      });
     }
     c.restore();
   }
@@ -1665,6 +1725,10 @@
   }
 
   function blitOrganLabels() {
+    if (NARROW) {
+      drawOrganLabels(ctx);
+      return;
+    }
     ensureLabelCache();
     ctx.drawImage(LABEL_CACHE.canvas, 0, 0, W, H);
   }
@@ -1674,34 +1738,41 @@
     if (headS === null) return;
     const s = clamp(headS, 0, TUBE_END);
     const mouthSpot = USE_SVG_ART && GEOM && mouthHold > 0 && GEOM.markers['Mouth badge'];
-    const spot = mouthSpot || sampleAt(s);
+    const rawSpot = mouthSpot || sampleAt(s);
+    const spot = NARROW
+      ? { x: viewPoint(rawSpot.x, rawSpot.y)[0], y: viewPoint(rawSpot.x, rawSpot.y)[1] }
+      : rawSpot;
     const text = mouthHold > 0
       ? (mouthHold > SWALLOW_SEC
         ? 'In the mouth — chewing, amylase at work'
         : 'Swallowing — the bolus is on its way down')
       : ORGAN_NAME[headOrgan] + ' · pH ' + phAt(s).toFixed(1);
     const sub = mouthHold > 0 ? 'smaller pieces = more surface for enzymes' : '';
-    ctx.font = '700 11px system-ui, sans-serif';
+    ctx.font = '700 ' + TEXT.badge + 'px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const w = Math.max(ctx.measureText(text).width, sub ? ctx.measureText(sub).width : 0) + 20;
-    const x = clamp(spot.x - w / 2, 6, RAIL.x - w - 10);
-    const y = Math.max(26, spot.y - gs(sub ? 66 : 50));
+    const w = Math.max(ctx.measureText(text).width, sub ? ctx.measureText(sub).width : 0) + (NARROW ? 32 : 20);
+    const hi = NARROW ? W - w - 8 : RAIL.x - w - 10;
+    const x = clamp(spot.x - w / 2, 6, hi);
+    const y = NARROW
+      ? Math.max(80, spot.y - (sub ? 120 : 90))
+      : Math.max(26, spot.y - gs(sub ? 66 : 50));
+    const h = NARROW ? (sub ? 78 : 42) : (sub ? 40 : 24);
     ctx.fillStyle = 'rgba(2,6,23,0.92)';
     ctx.beginPath();
-    ctx.roundRect(x, y - 12, w, sub ? 40 : 24, 12);
+    ctx.roundRect(x, y - h / 2, w, h, NARROW ? 20 : 12);
     ctx.fill();
     ctx.strokeStyle = 'rgba(148,163,184,0.4)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = NARROW ? 2 : 1;
     ctx.stroke();
     ctx.fillStyle = '#e2e8f0';
-    ctx.fillText(text, x + w / 2, y);
+    ctx.fillText(text, x + w / 2, y - (sub ? (NARROW ? 18 : 9) : 0));
     if (sub) {
-      ctx.font = '600 9px system-ui, sans-serif';
+      ctx.font = '600 ' + TEXT.sub + 'px system-ui, sans-serif';
       ctx.fillStyle = '#fbcfe8';
-      ctx.fillText(sub, x + w / 2, y + 16);
+      ctx.fillText(sub, x + w / 2, y + (NARROW ? 20 : 10));
     }
-    return spot;
+    return rawSpot;
   }
 
   function drawChewingMotion(t) {
@@ -1727,24 +1798,29 @@
   function drawSurfacePill() {
     if (!mouthHold) return;
     if (!USE_SVG_ART || !GEOM || !GEOM.markers || !GEOM.markers['Mouth badge']) return;
-    const badge = GEOM.markers['Mouth badge'];
+    const rawBadge = GEOM.markers['Mouth badge'];
+    const badge = NARROW
+      ? { x: viewPoint(rawBadge.x, rawBadge.y)[0], y: viewPoint(rawBadge.x, rawBadge.y)[1] }
+      : rawBadge;
     const text = 'surface area x ' + chewFactor.toFixed(2);
     ctx.save();
-    ctx.font = '700 10px system-ui, sans-serif';
+    ctx.font = '700 ' + TEXT.surface + 'px system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const w = ctx.measureText(text).width + 16;
-    const x = clamp(badge.x - w - 18, 6, RAIL.x - w - 10);
-    const y = badge.y + 26;
+    const w = ctx.measureText(text).width + (NARROW ? 28 : 16);
+    const hi = NARROW ? W - w - 8 : RAIL.x - w - 10;
+    const x = clamp(badge.x - w - 18, 6, hi);
+    const y = badge.y + (NARROW ? 80 : 26);
+    const h = NARROW ? 30 : 18;
     ctx.fillStyle = 'rgba(15,23,42,0.92)';
     ctx.beginPath();
-    ctx.roundRect(x, y - 9, w, 18, 9);
+    ctx.roundRect(x, y - h / 2, w, h, h / 2);
     ctx.fill();
     ctx.strokeStyle = 'rgba(251,207,232,0.7)';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = NARROW ? 2 : 1;
     ctx.stroke();
     ctx.fillStyle = '#fbcfe8';
-    ctx.fillText(text, x + 8, y);
+    ctx.fillText(text, x + (NARROW ? 14 : 8), y);
     ctx.restore();
   }
 
@@ -1805,7 +1881,7 @@
     ctx.font = '800 12px system-ui, sans-serif';
     ctx.fillStyle = COL.legend;
     ctx.fillText('WHAT IS IN THE MEAL', x + 18, y + 26);
-    ctx.font = '600 10px system-ui, sans-serif';
+    ctx.font = '600 11px system-ui, sans-serif';
     ctx.fillStyle = COL.labelDim;
     ctx.fillText('every part is broken down', x + 18, y + 42);
     ctx.fillText('somewhere different', x + 18, y + 56);
@@ -1825,7 +1901,7 @@
       ctx.font = '700 11px system-ui, sans-serif';
       ctx.fillStyle = '#e2e8f0';
       ctx.fillText(r[1], x + 38, ly);
-      ctx.font = '600 10px system-ui, sans-serif';
+      ctx.font = '600 11px system-ui, sans-serif';
       ctx.fillStyle = COL.labelDim;
       ctx.fillText(r[2], x + 38, ly + 13);
       ctx.fillText(r[3], x + 38, ly + 25);
@@ -1842,7 +1918,7 @@
     ctx.font = '700 11px system-ui, sans-serif';
     ctx.fillStyle = COL.legend;
     ctx.fillText('THE ENZYME IN CHARGE', x + 18, ly + 12);
-    ctx.font = '600 10px system-ui, sans-serif';
+    ctx.font = '600 11px system-ui, sans-serif';
     ctx.fillStyle = COL.labelDim;
     ctx.fillText('each one has a narrow pH window', x + 18, ly + 27);
 
@@ -2264,8 +2340,16 @@
 
   /* ── Render ─────────────────────────────────────────── */
 
+  function applyFigureTransform(c) {
+    if (!NARROW) return;
+    c.translate(FIGURE_VIEW.tx, FIGURE_VIEW.ty);
+    c.scale(FIGURE_VIEW.scale, FIGURE_VIEW.scale);
+  }
+
   function render(t) {
     ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    applyFigureTransform(ctx);
     if (USE_SVG_ART && GEOM) {
       blitSvgArt();
       paintRouteGlow(ctx);
@@ -2278,7 +2362,6 @@
       drawChewingMotion(t);
       drawParticles(t);
       drawDots();
-      if (labels) blitOrganLabels();
     } else {
       ensureStaticCache();
       LAYERS.forEach((L, i) => {
@@ -2295,12 +2378,18 @@
       drawGlands(t);
       drawParticles(t);
       drawDots();
-      if (labels) blitOrganLabels();
     }
+    ctx.restore();
+    if (labels) blitOrganLabels();
     const badgeSpot = drawBadge();
     drawSurfacePill();
-    drawDebug(badgeSpot);
-    drawLegend();
+    if (DEBUG) {
+      ctx.save();
+      applyFigureTransform(ctx);
+      drawDebug(badgeSpot);
+      ctx.restore();
+    }
+    if (!COMPACT) drawLegend();
   }
 
   /* ── Readout ────────────────────────────────────────── */
@@ -2318,6 +2407,18 @@
       : particles.length
         ? ORGAN_NAME[headOrgan]
         : (passed.length ? 'Eliminated' : 'No meal yet');
+
+    if (mobileOrgan) {
+      const s = clamp(headS === null ? 0 : headS, 0, TUBE_END);
+      const organ = mouthHold > 0 ? 'mouth' : organAt(s);
+      const ph = phAt(s);
+      const working = mouthHold > SWALLOW_SEC || enzymesWorking(organ, ph);
+      mobileOrgan.textContent = ORGAN_NAME[organ];
+      mobilePh.textContent = 'pH ' + ph.toFixed(1);
+      mobileEnzyme.textContent = ORGAN_ENZYME[organ];
+      mobileEnzyme.style.color = working ? '#34d399' : '#f59e0b';
+      mobileState.textContent = working ? 'enzyme active here' : 'enzyme inactive here';
+    }
 
     const pctText = Math.round(pct * 100) + '%';
     const pctColour = pct > 0.8 ? '#10b981' : pct > 0.5 ? '#facc15' : '#f87171';

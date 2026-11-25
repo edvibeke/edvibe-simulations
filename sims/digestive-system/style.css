@@ -1,7 +1,74 @@
 /* Sim-specific styles — base shared by shared/edvibe-sim.css */
 
+html, body { max-width: 100%; overflow-x: hidden; }
+main { min-width: 0; }
+
 .ev-readout { grid-template-columns: repeat(6, 1fr); }
 .ev-readout__value { font-size: 1.35rem; }
+
+.ev-stage-panels { display: none; }
+
+.ev-stage-panel {
+  min-width: 0;
+  background: linear-gradient(160deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.92));
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 13px;
+}
+
+.ev-stage-panel h2 {
+  margin: 0 0 4px;
+  color: var(--ev-text);
+  font-size: 14px;
+}
+
+.ev-stage-panel p {
+  margin: 0 0 10px;
+  color: var(--ev-text-dim);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.ev-meal-list { list-style: none; margin: 0; padding: 0; }
+.ev-meal-list li {
+  display: grid;
+  grid-template-columns: 10px minmax(90px, auto) minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.ev-meal-list strong { color: var(--ev-text); font-size: 13px; }
+.ev-meal-list li > span:last-child { color: var(--ev-text-dim); font-size: 13px; }
+.ev-meal-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.ev-enzyme-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+.ev-enzyme-head span { color: var(--ev-text-dim); font-family: ui-monospace, monospace; }
+.ev-enzyme-name { color: #fbcfe8; font-weight: 700; }
+.ev-enzyme-state { color: #34d399; font-weight: 600; }
+
+@media (max-width: 1000px) {
+  body { padding: 8px; }
+  .ev-stage { padding: 8px; }
+  .ev-stage-panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    max-width: 1000px;
+    margin: 0 auto 16px;
+  }
+}
+
+@media (max-width: 700px) {
+  .ev-stage-panels { grid-template-columns: minmax(0, 1fr); }
+}
 
 @media (max-width: 900px) {
   .ev-readout { grid-template-columns: repeat(3, 1fr); }
