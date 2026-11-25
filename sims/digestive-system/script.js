@@ -577,7 +577,7 @@
     { s: 0, v: 64.07534752264388 },
     { s: ARC.oesophagus, v: 98.24175882666144 },
     { s: ARC.stomach, v: 2.8978340537883365 },
-    { s: ARC.pylorus, v: 3.4752873671640923 },
+    { s: ARC.pylorus, v: 3.34 },
     { s: ARC.jejunum, v: 7.324376216149951 },
     { s: ARC.caecum, v: 0.9958283468430951 },
     { s: ARC.rectum, v: 1.3822068948751376 }
