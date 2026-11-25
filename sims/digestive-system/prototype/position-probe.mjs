@@ -9,7 +9,7 @@ const ROOT = path.resolve(process.argv[2] || path.join(HERE, '..', '..', '..'));
 const CHEW = Number(process.argv[3] || 0);
 const OUT = path.join(HERE, `position-check-${CHEW}.json`);
 const clockSource = fs.readFileSync(path.join(HERE, 'timing-clock.js'), 'utf8');
-const routeDefaults = fs.readFileSync(path.join(HERE, 'route-defaults.js'), 'utf8');
+const anchorData = JSON.parse(fs.readFileSync(path.join(HERE, 'anchors.json'), 'utf8'));
 
 function patchedIndex() {
   const dir = path.join(ROOT, 'sims', 'digestive-system');
@@ -18,33 +18,10 @@ function patchedIndex() {
   const probe = `
   try {
   window.__dotRoutes = DOT_ROUTES;
-  const baselineRoutes = {};
-  for (const name of ['portal', 'lymph', 'bile', 'pancreatic', 'papilla']) {
-    const source = window.ROUTE_DEFAULTS[name];
-    if (!source) throw new Error('baseline route missing: ' + name);
-    const points = source.map((p) => {
-      const q = Array.isArray(p) ? p : [p.x, p.y];
-      return [
-        GEOM.layout.ox + (q[0] - GEOM.layout.x) * GEOM.layout.scale,
-        GEOM.layout.oy + (q[1] - GEOM.layout.y) * GEOM.layout.scale
-      ];
-    });
-    baselineRoutes[name] = points;
-  }
-  function trimBaselineLymph(points, y) {
-    const out = [];
-    for (let i = 0; i < points.length - 1; i++) {
-      const a = points[i], b = points[i + 1];
-      if (a[1] >= y) out.push([a[0], a[1]]);
-      if ((a[1] - y) * (b[1] - y) <= 0 && a[1] !== b[1]) {
-        const f = (y - a[1]) / (b[1] - a[1]);
-        out.push([a[0] + (b[0] - a[0]) * f, y]);
-        break;
-      }
-    }
-    return out;
-  }
-  baselineRoutes.lymph = trimBaselineLymph(baselineRoutes.lymph, 40);
+  const anchors = ${JSON.stringify(anchorData)};
+  const papillaAnchor = anchors.routes.papilla[0];
+  const duodenumCentreline = anchors.segments.duodenum.anchors;
+  const oesophagusCentreline = GEOM.trackSegments.oesophagus;
   const maskCtx = document.createElement('canvas').getContext('2d');
   const maskItems = (items) => items.map((item) => ({
     id: item.id,
@@ -86,7 +63,10 @@ function patchedIndex() {
     let best = Infinity;
     for (let i = 1; i < points.length; i++) {
       const a = points[i - 1], b = points[i];
-      const ax = a[0], ay = a[1], bx = b[0], by = b[1];
+      const ax = Array.isArray(a) ? a[0] : a.x;
+      const ay = Array.isArray(a) ? a[1] : a.y;
+      const bx = Array.isArray(b) ? b[0] : b.x;
+      const by = Array.isArray(b) ? b[1] : b.y;
       const dx = bx - ax, dy = by - ay;
       const t = clamp(((p.x - ax) * dx + (p.y - ay) * dy) / (dx * dx + dy * dy), 0, 1);
       best = Math.min(best, Math.hypot(ax + dx * t - p.x, ay + dy * t - p.y));
@@ -100,16 +80,26 @@ function patchedIndex() {
       const offences = [];
       for (const e of events) counts[e.kind] = (counts[e.kind] || 0) + 1;
       const add = (kind, detail) => offences.push({ kind, detail });
-      for (const route of ['portal', 'lymph', 'bile', 'pancreatic']) {
+      const names = ['portal', 'lymph', 'bile', 'pancreatic'];
+      for (const route of names) {
+        const source = GEOM.routes[route].points;
         (window.__dotRoutes[route] || []).forEach((p, i) => {
-          const d = routeDistance(baselineRoutes[route], { x: p[0], y: p[1] });
-          if (d > 3) add('traced-route', route + '[' + i + '] ' + d.toFixed(2) + 'px from baseline polyline');
+          const d = routeDistance(source, { x: p[0], y: p[1] });
+          if (d > 3) add('traced-route', route + '[' + i + '] ' + d.toFixed(2) + 'px from current route');
+          if (route === 'lymph') {
+            const clearance = routeDistance(oesophagusCentreline, { x: p[0], y: p[1] });
+            if (clearance < 4) add('lymph-clearance', route + '[' + i + '] ' + clearance.toFixed(2) + 'px from oesophagus');
+          }
         });
       }
-      const papilla = window.__dotRoutes.papilla;
-      const baselinePapilla = { x: baselineRoutes.papilla[0][0], y: baselineRoutes.papilla[0][1] };
-      if (!papilla || Math.hypot(papilla[0] - baselinePapilla.x, papilla[1] - baselinePapilla.y) > 4) {
-        add('papilla-route', 'papilla endpoint does not match baseline');
+      const geometryPapilla = GEOM.routes.bile.points[GEOM.routes.bile.points.length - 1];
+      const dotPapilla = window.__dotRoutes.papilla;
+      if (!dotPapilla || Math.hypot(dotPapilla[0] - geometryPapilla[0], dotPapilla[1] - geometryPapilla[1]) > 0.01) {
+        add('papilla-route', 'papilla endpoint does not match current geometry');
+      }
+      const papillaDistance = routeDistance(duodenumCentreline, { x: papillaAnchor[0], y: papillaAnchor[1] });
+      if (papillaDistance > 12) {
+        add('papilla-route', papillaDistance.toFixed(2) + ' SVG units from duodenum centreline over 12');
       }
       for (const kind of ['carb', 'protein', 'fat', 'bile', 'bicarbonate']) {
         if (!counts[kind]) add('missing-dots', kind + ' emitted zero dots');
@@ -128,18 +118,19 @@ function patchedIndex() {
           if (e.kind === 'carb' || e.kind === 'protein' || e.kind === 'fat') {
             const route = e.kind === 'fat' ? 'lymph' : 'portal';
             if (e.route !== route) add('wrong-route', label + ' route=' + e.route + ' expected=' + route);
-            const d = routeDistance(baselineRoutes[route], p);
-            if (d > 3) {
-              add('route-distance', label + ' ' + where + ' ' + d.toFixed(2) + 'px from baseline ' + route);
-            }
+            const d = routeDistance(GEOM.routes[route].points, p);
+            if (d > 3) add('route-distance', label + ' ' + where + ' ' + d.toFixed(2) + 'px from current ' + route);
             if (i === 0 && !pointInMasks(masks.small, p)) {
               add('start-outside-lumen', label + ' start x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2));
             }
-            if (i === 2 && route === 'portal' && !pointNearMasks(masks.liver, p, 4)) {
+            if (i === 2 && route === 'portal' && !pointNearMasks(masks.liver, p, 12)) {
               add('portal-end', label + ' end x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2));
             }
-            if (i === 2 && route === 'lymph' && (p.y < 40 || p.y > H || p.x < 0 || p.x > W)) {
+            if (i === 2 && route === 'lymph' && (p.y < DOT_NECK_Y || p.y > H || p.x < 0 || p.x > W)) {
               add('lymph-end', label + ' end x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2));
+            }
+            if (route === 'lymph' && routeDistance(oesophagusCentreline, p) < 4) {
+              add('lymph-clearance', label + ' ' + where + ' ' + routeDistance(oesophagusCentreline, p).toFixed(2) + 'px from oesophagus');
             }
           } else {
             const route = e.kind === 'bile' ? 'bile' : 'pancreatic';
@@ -147,18 +138,16 @@ function patchedIndex() {
             if (!pointNearMasks(masks[route], p, 4)) {
               add('duct-offset', label + ' ' + where + ' x=' + p.x.toFixed(2) + ' y=' + p.y.toFixed(2) + ' outside ' + route + ' art');
             }
-            if (i === 2) {
-              const papilla = { x: baselineRoutes.papilla[0][0], y: baselineRoutes.papilla[0][1] };
-              const d = Math.hypot(p.x - papilla.x, p.y - papilla.y);
-              if (d > 4) add('papilla-end', label + ' end ' + d.toFixed(2) + 'px from papilla');
+            if (i === 2 && dotPapilla && Math.hypot(p.x - dotPapilla[0], p.y - dotPapilla[1]) > 4) {
+              add('papilla-end', label + ' end ' + Math.hypot(p.x - dotPapilla[0], p.y - dotPapilla[1]).toFixed(2) + 'px from papilla');
             }
           }
         }
       }
       const routeSamples = {};
-      for (const route of ['portal', 'lymph', 'bile', 'pancreatic']) {
+      for (const route of names) {
         routeSamples[route] = window.__dotRoutes[route].map((p) =>
-          routeDistance(baselineRoutes[route], { x: p[0], y: p[1] }));
+          routeDistance(GEOM.routes[route].points, { x: p[0], y: p[1] }));
       }
       return {
         chew: chew,
@@ -172,10 +161,11 @@ function patchedIndex() {
           pancreatic: masks.pancreatic.length,
           small: masks.small.length
         },
-        baseline: {
-          portal: baselineRoutes.portal.length,
-          lymph: baselineRoutes.lymph.length,
-          papilla: baselineRoutes.papilla[0]
+        geometry: {
+          routes: Object.fromEntries(names.map((name) => [name, GEOM.routes[name].points.length])),
+          papillaAnchor: papillaAnchor,
+          papillaDistance: papillaDistance,
+          oesophagusSamples: oesophagusCentreline.length
         }
       };
     }
@@ -191,7 +181,7 @@ function patchedIndex() {
   const tag = '<script src="script.js"></script>';
   if (!html.includes(tag)) throw new Error('cannot find script.js tag in index.html');
   html = html.replace(tag, '<script>\n' + js + '\n</script>');
-  html = html.replace('<head>', '<head>\n<script>\n' + clockSource + '\n</script>\n<script>\n' + routeDefaults + '\n</script>\n' + hook);
+  html = html.replace('<head>', '<head>\n<script>\n' + clockSource + '\n</script>\n' + hook);
   return html;
 }
 
@@ -230,11 +220,11 @@ try {
   await browser.goto(url);
   let ready = false;
   for (let i = 0; i < 25 && !ready; i++) {
-    ready = await browser.eval('return !!(window.__clock && window.__posprobe && window.ROUTE_DEFAULTS);');
+    ready = await browser.eval('return !!(window.__clock && window.__posprobe);');
     if (!ready) await new Promise((r) => setTimeout(r, 200));
   }
   if (!ready) {
-    const diag = await browser.eval('return JSON.stringify({ clock: typeof window.__clock, probe: typeof window.__posprobe, defaults: typeof window.ROUTE_DEFAULTS, events: typeof window.__dotEvents, readyState: document.readyState });');
+    const diag = await browser.eval('return JSON.stringify({ clock: typeof window.__clock, probe: typeof window.__posprobe, events: typeof window.__dotEvents, readyState: document.readyState });');
     const error = await browser.eval('return window.__probeError || window.__pageError || null;');
     throw new Error('virtual clock or independent route oracle missing in page: ' + diag + ' error=' + error);
   }

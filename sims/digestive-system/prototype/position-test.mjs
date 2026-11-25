@@ -33,5 +33,5 @@ if (failed) {
   console.log('FAILED: independent position oracle reported offences');
   process.exitCode = 1;
 } else {
-  console.log('PASS: emitted dots follow independent traced routes and SVG masks');
+  console.log('PASS: emitted dots follow current geometry, traced routes, and SVG masks');
 }
