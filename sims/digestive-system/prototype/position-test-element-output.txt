@@ -1,0 +1,11 @@
+position-test: 102 sampled frames, tolerance 6.064px, offences 8
+by kind: {"dot-route":6,"secretion-missing":2}
+FAIL frame 600 [secretion-missing] bile dot never drawn during duodenum/small intestine in SVG mode
+FAIL frame 600 [secretion-missing] bicarbonate dot never drawn during duodenum/small intestine in SVG mode
+FAIL frame 990 [dot-route] portal t=0.104 x=391.77 y=283.03 routeDistance=2.17 jitter=3.20 inLumen=false
+FAIL frame 990 [dot-route] portal t=0.090 x=389.31 y=285.98 routeDistance=6.00 jitter=6.01 inLumen=false
+FAIL frame 1050 [dot-route] portal t=0.690 x=276.27 y=193.11 routeDistance=3.15 jitter=3.17 inLumen=false
+FAIL frame 1050 [dot-route] portal t=0.636 x=285.70 y=201.09 routeDistance=3.06 jitter=3.16 inLumen=false
+FAIL frame 1140 [dot-route] portal t=0.432 x=335.77 y=228.81 routeDistance=3.14 jitter=3.15 inLumen=false
+FAIL frame 1170 [dot-route] portal t=0.686 x=280.38 y=189.84 routeDistance=2.01 jitter=2.05 inLumen=false
+FAILED: 8 position offences (first 10 shown)
