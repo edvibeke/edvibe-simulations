@@ -23,10 +23,14 @@ const out = document.getElementById('out');
 const frame = document.getElementById('frame');
 const outlineCache = new Map();
 function canvasToSvg(p) {
-  return { x: (p.x - fit.tx) / fit.scale, y: (p.y - fit.ty) / fit.scale };
+  const anat = fit.anat || {x: 0, y: 0};
+  const vu = fit.visibleUnion || {x: 0, y: 0};
+  return { x: vu.x + (p.x - anat.x) / fit.scale, y: vu.y + (p.y - anat.y) / fit.scale };
 }
 function svgToCanvas(p) {
-  return { x: p.x * fit.scale + fit.tx, y: p.y * fit.scale + fit.ty };
+  const anat = fit.anat || {x: 0, y: 0};
+  const vu = fit.visibleUnion || {x: 0, y: 0};
+  return { x: anat.x + (p.x - vu.x) * fit.scale, y: anat.y + (p.y - vu.y) * fit.scale };
 }
 function localPoint(el, canvasPoint) {
   const svgPoint = canvasToSvg(canvasPoint);

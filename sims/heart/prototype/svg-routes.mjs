@@ -40,7 +40,9 @@ function join(...groups) {
 }
 
 function svgPoint(p) {
-  return { x: (p.x - FIT.tx) / FIT.scale, y: (p.y - FIT.ty) / FIT.scale };
+  const vu = geometry.fit.visibleUnion || {x:0,y:0};
+  const anat = geometry.fit.anat || {x:0,y:0};
+  return { x: vu.x + (p.x - anat.x) / geometry.fit.scale, y: vu.y + (p.y - anat.y) / geometry.fit.scale };
 }
 
 function splitVeil(id, points) {
@@ -100,14 +102,14 @@ function buildRoutes() {
     line.points.filter((p) => p.inside && p.margin >= 4).map((p) => point(p.x, p.y, line.id, 'centreline', { margin: p.margin, axis: p.axis, slice: p.slice }))
   ]));
   const valveSeeds = {
-    tricuspid_valve_1: [232.55, 316.85],
-    tricuspid_valve_2: [271.33, 259.91],
-    mitral_valve_1: [351.93, 217.26],
-    mitral_valve_2: [395.85, 202.30],
-    pulmonary_valve_1: [282.11, 258.71],
-    pulmonary_valve_2: [304.61, 257.49],
-    aortic_valve_1: [331.35, 251.80],
-    aortic_valve_2: [346.43, 228.13]
+    tricuspid_valve_1: [104.5323, 309.7295],
+    tricuspid_valve_2: [121.9368, 276.6781],
+    mitral_valve_1: [210.2593, 227.1927],
+    mitral_valve_2: [239.9007, 219.3785],
+    pulmonary_valve_1: [136.0147, 251.8261],
+    pulmonary_valve_2: [157.7203, 251.7185],
+    aortic_valve_1: [180.8699, 246.0149],
+    aortic_valve_2: [193.2130, 228.7504]
   };
   const valveChecks = edgeMarginMany(valveIds.map((id) => ({
     id,
@@ -310,17 +312,16 @@ function shiftRoute(route, dx) {
 
 function render(routes, outlinesById, kinds) {
   const svgUrl = pathToFileURL(svgPath).href;
-  const extents = FIT.extents;
   const crop = {
-    x: extents.x - 24,
-    y: extents.y - 24,
-    w: extents.w + 48,
-    h: extents.h + 48
+    x: 0,
+    y: 0,
+    w: Math.ceil(geometry.fit.drawImage.x + geometry.fit.drawImage.w + 40),
+    h: Math.ceil(geometry.fit.drawImage.y + geometry.fit.drawImage.h + 40)
   };
-  const imgX = FIT.tx - geometry.visibleUnion.x * FIT.scale;
-  const imgY = FIT.ty - geometry.visibleUnion.y * FIT.scale;
-  const imgW = geometry.root.width * FIT.scale;
-  const imgH = geometry.root.height * FIT.scale;
+  const imgX = geometry.fit.drawImage.x;
+  const imgY = geometry.fit.drawImage.y;
+  const imgW = geometry.fit.drawImage.w;
+  const imgH = geometry.fit.drawImage.h;
 
   function renderOne(name, selected, fileName) {
     const dir = fs.mkdtempSync('/var/tmp/opencode/routes-render-');
