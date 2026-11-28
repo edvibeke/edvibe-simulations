@@ -1,0 +1,1893 @@
+{
+  "frame": [
+    663,
+    652
+  ],
+  "common": [
+    {
+      "tag": "visible",
+      "x": 432,
+      "y": 291,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "gap",
+      "x": 436,
+      "y": 322,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 446,
+      "y": 352,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 452,
+      "y": 385,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 430,
+      "y": 398,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 405,
+      "y": 380,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 386,
+      "y": 364,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "gap",
+      "x": 374,
+      "y": 347,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "gap",
+      "x": 366,
+      "y": 322,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 361,
+      "y": 292,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "hidden",
+      "x": 356,
+      "y": 288,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "hidden",
+      "x": 282,
+      "y": 262,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 270,
+      "y": 245,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 264,
+      "y": 215,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 262,
+      "y": 185,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 262,
+      "y": 155,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 272,
+      "y": 125,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 295,
+      "y": 108,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 325,
+      "y": 105,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    },
+    {
+      "tag": "visible",
+      "x": 352,
+      "y": 110,
+      "cover": [
+        "pulmonary_artery_1"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "name": "blue-svc-right",
+      "color": "blue",
+      "anchors": [
+        {
+          "tag": "offart",
+          "x": 70,
+          "y": 58
+        },
+        {
+          "tag": "visible",
+          "x": 137,
+          "y": 58,
+          "family": "blue",
+          "shape": "superior_vena_cava",
+          "snapped": true,
+          "source": [
+            132,
+            58
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 170,
+          "y": 75,
+          "family": "blue",
+          "shape": "superior_vena_cava",
+          "snapped": false,
+          "source": [
+            170,
+            75
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 196,
+          "y": 98,
+          "family": "blue",
+          "shape": "superior_vena_cava",
+          "snapped": false,
+          "source": [
+            196,
+            98
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 206,
+          "y": 135,
+          "family": "blue",
+          "shape": "superior_vena_cava",
+          "snapped": false,
+          "source": [
+            206,
+            135
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 207,
+          "y": 200,
+          "family": "blue",
+          "shape": "superior_vena_cava",
+          "snapped": false,
+          "source": [
+            207,
+            200
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 208,
+          "y": 255,
+          "family": "blue",
+          "shape": "path1780",
+          "snapped": true,
+          "source": [
+            208,
+            250
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 208,
+          "y": 268,
+          "family": "blue",
+          "shape": "path1780",
+          "snapped": false,
+          "source": [
+            208,
+            268
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 212,
+          "y": 300,
+          "family": "blue",
+          "shape": "right_atrium",
+          "snapped": false,
+          "source": [
+            212,
+            300
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 226,
+          "y": 340,
+          "family": "blue",
+          "shape": "right_atrium",
+          "snapped": false,
+          "source": [
+            226,
+            340
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 244,
+          "y": 382,
+          "family": "blue",
+          "shape": "right_atrium",
+          "snapped": true,
+          "source": [
+            240,
+            385
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 245,
+          "y": 398,
+          "family": "blue",
+          "shape": "right_atrium",
+          "snapped": true,
+          "source": [
+            240,
+            398
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 258,
+          "y": 420
+        },
+        {
+          "tag": "visible",
+          "x": 290,
+          "y": 421,
+          "family": "blue",
+          "shape": "right_ventricle",
+          "snapped": true,
+          "source": [
+            285,
+            429
+          ],
+          "repaired": true
+        },
+        {
+          "tag": "visible",
+          "x": 308,
+          "y": 395,
+          "family": "blue",
+          "shape": "right_ventricle",
+          "snapped": false,
+          "source": [
+            308,
+            395
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 310,
+          "y": 368
+        },
+        {
+          "tag": "visible",
+          "x": 311,
+          "y": 339,
+          "family": "blue",
+          "shape": "path1875",
+          "snapped": true,
+          "source": [
+            311,
+            340
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 311,
+          "y": 300,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            311,
+            300
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 315,
+          "y": 250,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            315,
+            250
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 319,
+          "y": 215,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            319,
+            215
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 329,
+          "y": 185,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            329,
+            185
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 360,
+          "y": 168,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            360,
+            168
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 394,
+          "y": 163,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            394,
+            163
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 445,
+          "y": 168,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            445,
+            168
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 479,
+          "y": 173,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            479,
+            173
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 498,
+          "y": 183,
+          "family": "blue",
+          "shape": "ellipse3847",
+          "snapped": false,
+          "source": [
+            498,
+            183
+          ]
+        },
+        {
+          "tag": "offart",
+          "x": 610,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "name": "blue-svc-left",
+      "color": "blue",
+      "anchors": [
+        {
+          "tag": "visible",
+          "x": 329,
+          "y": 185,
+          "family": "blue",
+          "shape": "pulmonary_artery_1",
+          "snapped": false,
+          "source": [
+            329,
+            185
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 310,
+          "y": 178,
+          "family": "blue",
+          "shape": "path4370",
+          "snapped": false,
+          "source": [
+            310,
+            178
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 298,
+          "y": 172,
+          "cover": [
+            "aorta",
+            "superior_vena_cava"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 240,
+          "y": 168,
+          "cover": [
+            "aorta",
+            "superior_vena_cava"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 172,
+          "y": 170,
+          "cover": [
+            "aorta",
+            "superior_vena_cava"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 167,
+          "y": 170,
+          "family": "blue",
+          "shape": "pulmonary_artery_2",
+          "snapped": true,
+          "source": [
+            172,
+            170
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 129,
+          "y": 176,
+          "family": "blue",
+          "shape": "pulmonary_artery_2",
+          "snapped": true,
+          "source": [
+            125,
+            176
+          ]
+        },
+        {
+          "tag": "offart",
+          "x": 60,
+          "y": 176,
+          "cover": [
+            "aorta",
+            "superior_vena_cava"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "blue-ivc",
+      "color": "blue",
+      "anchors": [
+        {
+          "tag": "offart",
+          "x": 198,
+          "y": 625
+        },
+        {
+          "tag": "visible",
+          "x": 198,
+          "y": 575,
+          "family": "blue",
+          "shape": "inferior_vena_cava",
+          "snapped": false,
+          "source": [
+            198,
+            575
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 198,
+          "y": 540,
+          "family": "blue",
+          "shape": "inferior_vena_cava",
+          "snapped": false,
+          "source": [
+            198,
+            540
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 196,
+          "y": 516,
+          "family": "blue",
+          "shape": "inferior_vena_cava",
+          "snapped": true,
+          "source": [
+            199,
+            512
+          ]
+        },
+        {
+          "tag": "bridge",
+          "x": 203,
+          "y": 505,
+          "cover": [
+            "grey wall rim",
+            "yellow circle"
+          ]
+        },
+        {
+          "tag": "bridge",
+          "x": 208,
+          "y": 462,
+          "cover": [
+            "grey wall rim",
+            "yellow circle"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 204,
+          "y": 435,
+          "family": "blue",
+          "shape": "vena_cava_in_1",
+          "snapped": false,
+          "source": [
+            204,
+            435
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 202,
+          "y": 409,
+          "family": "blue",
+          "shape": "vena_cava_in_1",
+          "snapped": false,
+          "source": [
+            202,
+            409
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 222,
+          "y": 402,
+          "family": "blue",
+          "shape": "vena_cava_in_1",
+          "snapped": false,
+          "source": [
+            222,
+            402
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 234,
+          "y": 397,
+          "family": "blue",
+          "shape": "path1762",
+          "snapped": false,
+          "source": [
+            238,
+            397
+          ],
+          "repaired": true
+        }
+      ]
+    },
+    {
+      "name": "red-pv1-left",
+      "color": "red",
+      "anchors": [
+        {
+          "tag": "offart",
+          "x": 60,
+          "y": 208,
+          "cover": [
+            "superior_vena_cava",
+            "aorta",
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 125,
+          "y": 208,
+          "family": "orange",
+          "shape": "pulmonary_vein_1",
+          "snapped": true,
+          "source": [
+            120,
+            208
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 167,
+          "y": 213,
+          "family": "orange",
+          "shape": "pulmonary_vein_1",
+          "snapped": true,
+          "source": [
+            172,
+            213
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 172,
+          "y": 213,
+          "cover": [
+            "superior_vena_cava",
+            "aorta",
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 345,
+          "y": 222,
+          "cover": [
+            "superior_vena_cava",
+            "aorta",
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 353,
+          "y": 221,
+          "family": "red",
+          "shape": "pulmonary_artery_1",
+          "snapped": true,
+          "source": [
+            348,
+            221
+          ],
+          "repaired": true
+        },
+        {
+          "tag": "visible",
+          "x": 406,
+          "y": 229,
+          "family": "orange",
+          "shape": "path604",
+          "snapped": true,
+          "source": [
+            404,
+            231
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 432,
+          "y": 291,
+          "family": "red",
+          "shape": "left_atrium",
+          "snapped": false,
+          "source": [
+            432,
+            291
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 436,
+          "y": 322,
+          "cover": [
+            "superior_vena_cava",
+            "aorta",
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 352,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            446,
+            352
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 388,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            452,
+            385
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 425,
+          "y": 398,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            430,
+            398
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 405,
+          "y": 380,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": false,
+          "source": [
+            405,
+            380
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 386,
+          "y": 364,
+          "family": "red",
+          "shape": "path1951",
+          "snapped": false,
+          "source": [
+            386,
+            364
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 374,
+          "y": 347,
+          "cover": [
+            "superior_vena_cava",
+            "aorta",
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 366,
+          "y": 322,
+          "cover": [
+            "superior_vena_cava",
+            "aorta",
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 363,
+          "y": 288,
+          "family": "red",
+          "shape": "path4102",
+          "snapped": true,
+          "source": [
+            360,
+            292
+          ],
+          "repaired": true
+        },
+        {
+          "tag": "hidden",
+          "x": 356,
+          "y": 288,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 282,
+          "y": 262,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 270,
+          "y": 245,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            270,
+            245
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 264,
+          "y": 215,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            264,
+            215
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 185,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            185
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 155,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            155
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 274,
+          "y": 126,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": true,
+          "source": [
+            272,
+            125
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 295,
+          "y": 108,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            295,
+            108
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 325,
+          "y": 105,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            325,
+            105
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 352,
+          "y": 110,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            352,
+            110
+          ]
+        }
+      ]
+    },
+    {
+      "name": "red-pv2-left",
+      "color": "red",
+      "anchors": [
+        {
+          "tag": "offart",
+          "x": 60,
+          "y": 260,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 123,
+          "y": 262,
+          "family": "orange",
+          "shape": "pulmonary_vein_2",
+          "snapped": true,
+          "source": [
+            118,
+            262
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 167,
+          "y": 248,
+          "family": "orange",
+          "shape": "pulmonary_vein_2",
+          "snapped": true,
+          "source": [
+            172,
+            248
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 172,
+          "y": 248,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 345,
+          "y": 262,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 350,
+          "y": 264,
+          "family": "red",
+          "shape": "left_atrium",
+          "snapped": true,
+          "source": [
+            348,
+            262
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 433,
+          "y": 253,
+          "family": "orange",
+          "shape": "path604",
+          "snapped": true,
+          "source": [
+            433,
+            254
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 432,
+          "y": 291,
+          "family": "red",
+          "shape": "left_atrium",
+          "snapped": false,
+          "source": [
+            432,
+            291
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 436,
+          "y": 322,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 352,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            446,
+            352
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 388,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            452,
+            385
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 425,
+          "y": 398,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            430,
+            398
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 405,
+          "y": 380,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": false,
+          "source": [
+            405,
+            380
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 386,
+          "y": 364,
+          "family": "red",
+          "shape": "path1951",
+          "snapped": false,
+          "source": [
+            386,
+            364
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 374,
+          "y": 347,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 366,
+          "y": 322,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 363,
+          "y": 288,
+          "family": "red",
+          "shape": "path4102",
+          "snapped": true,
+          "source": [
+            360,
+            292
+          ],
+          "repaired": true
+        },
+        {
+          "tag": "hidden",
+          "x": 356,
+          "y": 288,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 282,
+          "y": 262,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 270,
+          "y": 245,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            270,
+            245
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 264,
+          "y": 215,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            264,
+            215
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 185,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            185
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 155,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            155
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 274,
+          "y": 126,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": true,
+          "source": [
+            272,
+            125
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 295,
+          "y": 108,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            295,
+            108
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 325,
+          "y": 105,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            325,
+            105
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 352,
+          "y": 110,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            352,
+            110
+          ]
+        }
+      ]
+    },
+    {
+      "name": "red-pv1-right",
+      "color": "red",
+      "anchors": [
+        {
+          "tag": "offart",
+          "x": 600,
+          "y": 205,
+          "cover": [
+            "pulmonary_artery_1",
+            "heart wall"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 519,
+          "y": 205,
+          "family": "orange",
+          "shape": "ellipse3849",
+          "snapped": false,
+          "source": [
+            519,
+            205
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 445,
+          "y": 215,
+          "family": "neutral",
+          "shape": "path4009",
+          "snapped": true,
+          "source": [
+            445,
+            210
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 442,
+          "y": 208,
+          "cover": [
+            "pulmonary_artery_1",
+            "heart wall"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 425,
+          "y": 222,
+          "cover": [
+            "pulmonary_artery_1",
+            "heart wall"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 425,
+          "y": 222,
+          "family": "red",
+          "shape": "path4354",
+          "snapped": false,
+          "source": [
+            425,
+            222
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 406,
+          "y": 229,
+          "family": "orange",
+          "shape": "path604",
+          "snapped": true,
+          "source": [
+            404,
+            231
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 432,
+          "y": 291,
+          "family": "red",
+          "shape": "left_atrium",
+          "snapped": false,
+          "source": [
+            432,
+            291
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 436,
+          "y": 322,
+          "cover": [
+            "pulmonary_artery_1",
+            "heart wall"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 352,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            446,
+            352
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 388,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            452,
+            385
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 425,
+          "y": 398,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            430,
+            398
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 405,
+          "y": 380,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": false,
+          "source": [
+            405,
+            380
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 386,
+          "y": 364,
+          "family": "red",
+          "shape": "path1951",
+          "snapped": false,
+          "source": [
+            386,
+            364
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 374,
+          "y": 347,
+          "cover": [
+            "pulmonary_artery_1",
+            "heart wall"
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 366,
+          "y": 322,
+          "cover": [
+            "pulmonary_artery_1",
+            "heart wall"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 363,
+          "y": 288,
+          "family": "red",
+          "shape": "path4102",
+          "snapped": true,
+          "source": [
+            360,
+            292
+          ],
+          "repaired": true
+        },
+        {
+          "tag": "hidden",
+          "x": 356,
+          "y": 288,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 282,
+          "y": 262,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 270,
+          "y": 245,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            270,
+            245
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 264,
+          "y": 215,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            264,
+            215
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 185,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            185
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 155,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            155
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 274,
+          "y": 126,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": true,
+          "source": [
+            272,
+            125
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 295,
+          "y": 108,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            295,
+            108
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 325,
+          "y": 105,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            325,
+            105
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 352,
+          "y": 110,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            352,
+            110
+          ]
+        }
+      ]
+    },
+    {
+      "name": "red-pv2-right",
+      "color": "red",
+      "anchors": [
+        {
+          "tag": "offart",
+          "x": 600,
+          "y": 252,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 516,
+          "y": 252,
+          "family": "orange",
+          "shape": "ellipse3851",
+          "snapped": true,
+          "source": [
+            515,
+            252
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 489,
+          "y": 243,
+          "family": "orange",
+          "shape": "pulmonary_vein_2",
+          "snapped": true,
+          "source": [
+            487,
+            245
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 486,
+          "y": 245,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 466,
+          "y": 250,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 461,
+          "y": 257,
+          "family": "red",
+          "shape": "path4014",
+          "snapped": true,
+          "source": [
+            469,
+            252
+          ],
+          "repaired": true
+        },
+        {
+          "tag": "visible",
+          "x": 433,
+          "y": 253,
+          "family": "orange",
+          "shape": "path604",
+          "snapped": true,
+          "source": [
+            433,
+            254
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 432,
+          "y": 291,
+          "family": "red",
+          "shape": "left_atrium",
+          "snapped": false,
+          "source": [
+            432,
+            291
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 436,
+          "y": 322,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 352,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            446,
+            352
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 448,
+          "y": 388,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            452,
+            385
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 425,
+          "y": 398,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": true,
+          "source": [
+            430,
+            398
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 405,
+          "y": 380,
+          "family": "red",
+          "shape": "left_ventricle",
+          "snapped": false,
+          "source": [
+            405,
+            380
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 386,
+          "y": 364,
+          "family": "red",
+          "shape": "path1951",
+          "snapped": false,
+          "source": [
+            386,
+            364
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 374,
+          "y": 347,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "gap",
+          "x": 366,
+          "y": 322,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 363,
+          "y": 288,
+          "family": "red",
+          "shape": "path4102",
+          "snapped": true,
+          "source": [
+            360,
+            292
+          ],
+          "repaired": true
+        },
+        {
+          "tag": "hidden",
+          "x": 356,
+          "y": 288,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "hidden",
+          "x": 282,
+          "y": 262,
+          "cover": [
+            "pulmonary_artery_1"
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 270,
+          "y": 245,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            270,
+            245
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 264,
+          "y": 215,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            264,
+            215
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 185,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            185
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 262,
+          "y": 155,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            262,
+            155
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 274,
+          "y": 126,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": true,
+          "source": [
+            272,
+            125
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 295,
+          "y": 108,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            295,
+            108
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 325,
+          "y": 105,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            325,
+            105
+          ]
+        },
+        {
+          "tag": "visible",
+          "x": 352,
+          "y": 110,
+          "family": "red",
+          "shape": "aorta",
+          "snapped": false,
+          "source": [
+            352,
+            110
+          ]
+        }
+      ]
+    }
+  ]
+}
