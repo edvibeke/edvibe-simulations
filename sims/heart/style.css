@@ -1,5 +1,18 @@
 /* Sim-specific styles — base shared by shared/edvibe-sim.css */
 
+.eb-sim-main .ev-header h1 { color: var(--ev-text); }
+.eb-sim-main .ev-header p { color: var(--ev-text-dim); }
+
+.ev-credit {
+  max-width: 1000px;
+  margin: 8px auto 24px;
+  padding: 0 2px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--ev-text-dim);
+}
+.ev-credit a { color: var(--ev-primary-2); }
+
 /* A slider that owns a full row: arterial resistance is the odd
    one out, and a half-width track reads as a mistake. */
 .ev-control--wide { grid-column: 1 / -1; }

@@ -768,12 +768,15 @@
   const s = makeState();
   let paused = false;
   let slowmo = false;
-  let labelsOn = true;
+  const narrowLabels = window.matchMedia && window.matchMedia('(max-width: 520px)').matches;
+  let labelsOn = !narrowLabels;
+  let labelsManual = false;
   let clock = 0;            // simulation seconds since load
   let rafId = null;
   let lastTime = 0;
   let interactions = 0;
   let dirty = false;
+  if (narrowLabels) labelsBtn.setAttribute('aria-pressed', 'false');
 
   /* Travel speed in track units per second at full flow. Both circuits
      are normalised to their own length so the blood takes a similar
@@ -1489,6 +1492,9 @@
     for (const item of labels) {
       console.log('LABEL', item.text, 'anchor=' + JSON.stringify({ x: +item.anchor.x.toFixed(2), y: +item.anchor.y.toFixed(2) }), 'col=' + item.col);
     }
+    window.__heartLabelDebug = labels.map((item) => ({ text: item.text, x: item.x, y: item.y, w: ctx.measureText(item.text).width, h: 8, anchor: item.anchor, col: item.col }));
+    window.__heartArtBox = { x: artBox.x0, y: artBox.y0, w: artBox.x1 - artBox.x0, h: artBox.y1 - artBox.y0 };
+    window.__heartLabelsOn = labelsOn;
   }
 
   /* Drawn outside the scaled anatomy: the readouts are about the model,
@@ -2006,9 +2012,23 @@
 
   EV.onToggle(labelsBtn, () => {
     labelsOn = !labelsOn;
+    labelsManual = true;
     EV.label(labelsBtn, 'tag', labelsOn ? 'Labels on' : 'Labels off');
     return labelsOn;
   });
+
+  if (window.matchMedia) {
+    const narrowMq = window.matchMedia('(max-width: 520px)');
+    const onNarrowChange = (e) => {
+      if (labelsManual) return;
+      labelsOn = !e.matches;
+      labelsBtn.setAttribute('aria-pressed', labelsOn ? 'true' : 'false');
+      EV.label(labelsBtn, 'tag', labelsOn ? 'Labels on' : 'Labels off');
+      dirty = true;
+    };
+    if (narrowMq.addEventListener) narrowMq.addEventListener('change', onNarrowChange);
+    else if (narrowMq.addListener) narrowMq.addListener(onNarrowChange);
+  }
 
   /* Space pauses and S slows, but only when the keystroke is not already
      meaningful somewhere else: a focused button should activate itself,
@@ -2036,12 +2056,13 @@
     applyPreset('rest');
     paused = false;
     slowmo = false;
-    labelsOn = true;
+    labelsManual = false;
+    labelsOn = !(window.matchMedia && window.matchMedia('(max-width: 520px)').matches);
     pauseBtn.setAttribute('aria-pressed', 'false');
     EV.label(pauseBtn, 'pause', 'Pause');
     slowBtn.setAttribute('aria-pressed', 'false');
-    labelsBtn.setAttribute('aria-pressed', 'true');
-    EV.label(labelsBtn, 'tag', 'Labels on');
+    labelsBtn.setAttribute('aria-pressed', labelsOn ? 'true' : 'false');
+    EV.label(labelsBtn, 'tag', labelsOn ? 'Labels on' : 'Labels off');
     interactions = 0;
     svSmooth = 68;
 
