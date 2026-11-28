@@ -33,9 +33,10 @@
   const ANAT_TY = ANAT.y + (ANAT.h - SRC.h * ANAT_K) / 2 - SRC.y * ANAT_K;
 
   const USE_SVG_ART = true;
-  const ROUTE_DEBUG = true;
+  const ROUTE_DEBUG = false;
   const SVG_ROOT = { w: 663, h: 652 };
-  const SVG_ART_SCALE = Math.min(ANAT.w / SVG_ROOT.w, ANAT.h / SVG_ROOT.h) * ANAT_FIT;
+  const SVG_ART_FIT = 0.98;
+  const SVG_ART_SCALE = Math.min(ANAT.w / SVG_ROOT.w, ANAT.h / SVG_ROOT.h) * SVG_ART_FIT;
   const SVG_ART_TX = ANAT.x + (ANAT.w - SVG_ROOT.w * SVG_ART_SCALE) / 2;
   const SVG_ART_TY = ANAT.y + (ANAT.h - SVG_ROOT.h * SVG_ART_SCALE) / 2;
 
@@ -372,7 +373,7 @@
             const prev = this.pts[this.pts.length - 1];
             total += Math.hypot(list[i].x - prev.x, list[i].y - prev.y);
           }
-          this.pts.push({ x: list[i].x, y: list[i].y, s: total, src });
+          this.pts.push({ x: list[i].x, y: list[i].y, s: total, src, tag: list[i].tag || 'visible' });
         }
       }
       // A malformed point makes the running length NaN, and a NaN length
@@ -397,7 +398,7 @@
       const seg = b.s - a.s || 1;
       const u = clamp((d - a.s) / seg, 0, 1);
       return {
-        x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u), src: a.src,
+        x: lerp(a.x, b.x, u), y: lerp(a.y, b.y, u), src: a.src, tag: a.tag,
         dx: (b.x - a.x) / seg, dy: (b.y - a.y) / seg
       };
     }
@@ -548,6 +549,144 @@
     { x: BED_R.x, y: BED_R.y }             // bed centre: fully deoxygenated
   ];
 
+  function routeByName(name) {
+    const data = window.SVG_ROUTES_DATA;
+    if (!data || !data.routes) return null;
+    return data.routes.find((r) => r.name === name) || null;
+  }
+
+  function nearestPointIndex(pts, target) {
+    let best = 0, bestD = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const dx = pts[i].x - target.x, dy = pts[i].y - target.y;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+  }
+
+  function sliceRoutePoints(pts, start, endInclusive) {
+    const out = [];
+    const step = start <= endInclusive ? 1 : -1;
+    for (let i = start; step > 0 ? i <= endInclusive : i >= endInclusive; i += step) {
+      const p = pts[i];
+      out.push({ x: p.x, y: p.y, tag: p.tag || 'visible' });
+    }
+    return out;
+  }
+
+  function concatRoutePoints(...lists) {
+    const out = [];
+    for (const list of lists) {
+      for (const p of list) {
+        if (out.length) {
+          const last = out[out.length - 1];
+          if (Math.abs(last.x - p.x) < 1e-6 && Math.abs(last.y - p.y) < 1e-6) {
+            if (last.tag !== p.tag) last.tag = p.tag;
+            continue;
+          }
+        }
+        out.push({ x: p.x, y: p.y, tag: p.tag || 'visible' });
+      }
+    }
+    return out;
+  }
+
+  function trackFromPoints(name, color, points, splitTarget, splitMode) {
+    let splitIdx = nearestPointIndex(points, splitTarget);
+    let splitS = 0;
+    for (let i = 1; i <= splitIdx; i++) splitS += Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y);
+    const segs = [];
+    const fillPts = [];
+    const ejectPts = [];
+    for (let i = 0; i < points.length; i++) {
+      const src = i <= splitIdx ? 'fill' : 'eject';
+      (src === 'fill' ? fillPts : ejectPts).push(points[i]);
+    }
+    if (splitMode === 'blue') {
+      if (fillPts.length) fillPts[0].srcOverride = 'fill';
+      if (ejectPts.length) ejectPts[ejectPts.length - 1].srcOverride = 'fill';
+      if (!ejectPts.length && fillPts.length) fillPts[fillPts.length - 1].srcOverride = 'fill';
+    }
+    const built = [];
+    for (let i = 0; i < points.length; i++) {
+      let src = i <= splitIdx ? 'fill' : 'eject';
+      if (splitMode === 'blue' && (i === 0 || i === points.length - 1)) src = 'fill';
+      built.push({ x: points[i].x, y: points[i].y, tag: points[i].tag || 'visible', src });
+    }
+    let curSrc = built[0].src;
+    let curList = [{ x: built[0].x, y: built[0].y, tag: built[0].tag }];
+    for (let i = 1; i < built.length; i++) {
+      if (built[i].src !== curSrc) {
+        segs.push([curSrc, curList]);
+        curList = [{ x: built[i - 1].x, y: built[i - 1].y, tag: built[i - 1].tag }, { x: built[i].x, y: built[i].y, tag: built[i].tag }];
+        curSrc = built[i].src;
+      } else {
+        curList.push({ x: built[i].x, y: built[i].y, tag: built[i].tag });
+      }
+    }
+    segs.push([curSrc, curList]);
+    const track = new Track(segs);
+    track.name = name;
+    track.color = color;
+    track.splitS = splitS;
+    track.splitIdx = splitIdx;
+    return track;
+  }
+
+  function buildRouteTracks() {
+    const svcR = routeByName('blue-svc-right');
+    const svcL = routeByName('blue-svc-left');
+    const ivc = routeByName('blue-ivc');
+    const pv1L = routeByName('red-pv1-left');
+    const pv2L = routeByName('red-pv2-left');
+    const pv1R = routeByName('red-pv1-right');
+    const pv2R = routeByName('red-pv2-right');
+    const aoL = routeByName('aorta-top-left');
+    const aoM = routeByName('aorta-top-middle');
+    const aoR = routeByName('aorta-top-right');
+    const needed = [svcR, svcL, ivc, pv1L, pv2L, pv1R, pv2R, aoL, aoM, aoR];
+    if (needed.some((r) => !r || !r.points || r.points.length < 2)) return null;
+
+    const svcBranchIdx = nearestPointIndex(svcR.points, { x: 329, y: 185 });
+    const ivcJoinInSvcR = nearestPointIndex(svcR.points, { x: 240, y: 398 });
+    const ivcEndIdx = ivc.points.length - 1;
+
+    const blueDefs = [
+      { name: 'blue-svc-right-lung', points: sliceRoutePoints(svcR.points, 0, svcR.points.length - 1) },
+      { name: 'blue-svc-left-lung', points: concatRoutePoints(sliceRoutePoints(svcR.points, 0, svcBranchIdx), sliceRoutePoints(svcL.points, 0, svcL.points.length - 1)) },
+      { name: 'blue-ivc-right-lung', points: concatRoutePoints(sliceRoutePoints(ivc.points, 0, ivcEndIdx), sliceRoutePoints(svcR.points, ivcJoinInSvcR, svcR.points.length - 1)) },
+      { name: 'blue-ivc-left-lung', points: concatRoutePoints(sliceRoutePoints(ivc.points, 0, ivcEndIdx), sliceRoutePoints(svcR.points, ivcJoinInSvcR, svcBranchIdx), sliceRoutePoints(svcL.points, 0, svcL.points.length - 1)) }
+    ];
+    const blueTracks = blueDefs.map((d) => trackFromPoints(d.name, 'blue', d.points, { x: 310, y: 368 }, 'blue'));
+
+    const redVeins = [pv1L, pv2L, pv1R, pv2R];
+    const aortas = [aoL, aoM, aoR];
+    const redTracks = [];
+    for (const vein of redVeins) {
+      for (const ao of aortas) {
+        const pts = concatRoutePoints(sliceRoutePoints(vein.points, 0, vein.points.length - 1), sliceRoutePoints(ao.points, 0, ao.points.length - 1));
+        redTracks.push(trackFromPoints(`red-${vein.name}-${ao.name}`, 'red', pts, { x: 374, y: 347 }, 'red'));
+      }
+    }
+    return { blueTracks, redTracks, all: blueTracks.concat(redTracks) };
+  }
+
+  const ROUTE_TRACKS = buildRouteTracks();
+  if (ROUTE_TRACKS) {
+    console.log('TRACK_COUNT', ROUTE_TRACKS.all.length);
+    for (const t of ROUTE_TRACKS.all) {
+      const p0 = t.pts[0], p1 = t.pts[t.pts.length - 1];
+      console.log('TRACK', t.name, 'length=' + t.total.toFixed(3), 'first=' + JSON.stringify({ x: p0.x, y: p0.y, tag: p0.tag }), 'last=' + JSON.stringify({ x: p1.x, y: p1.y, tag: p1.tag }), 'splitS=' + t.splitS.toFixed(3));
+    }
+    const sampleBlue = ROUTE_TRACKS.blueTracks[0];
+    const sampleRed = ROUTE_TRACKS.redTracks[0];
+    console.log('SPLIT_BLUE', sampleBlue.name, sampleBlue.splitS.toFixed(3));
+    console.log('SPLIT_RED', sampleRed.name, sampleRed.splitS.toFixed(3));
+  } else {
+    console.log('TRACK_COUNT', 0, 'ROUTE_DATA_MISSING');
+  }
+
   const CIRC_BLUE = new Track([
     ['fill', [{ x: BED_L.x + 22, y: BED_L.y + 44 }, ...IVC_X]],
     ['fill', [IVC[2], { x: G.raC.x - 12, y: G.raC.y + 26 }, { x: G.tricuspid.x, y: G.tricuspid.y }]],
@@ -646,15 +785,39 @@
   const trace = [];         // {t, ecg, ao} for the monitor strip
   const loopTrail = [];     // {t, v, p} for the pressure-volume loop
   const particles = [];
-  for (let i = 0; i < 26; i++) {
-    particles.push({ track: CIRC_BLUE, s: (i / 26) * CIRC_BLUE.total, span: BLUE_SPAN });
-    particles.push({ track: CIRC_RED, s: ((i + 0.5) / 26) * CIRC_RED.total, span: RED_SPAN });
+
+  function pickRouteTrack(color) {
+    if (ROUTE_TRACKS) {
+      if (color === 'blue') {
+        const fromSVC = Math.random() < 0.4;
+        const names = fromSVC ? ['blue-svc-right-lung', 'blue-svc-left-lung'] : ['blue-ivc-right-lung', 'blue-ivc-left-lung'];
+        const name = names[Math.floor(Math.random() * names.length)];
+        return ROUTE_TRACKS.blueTracks.find((t) => t.name === name) || ROUTE_TRACKS.blueTracks[0];
+      }
+      const list = ROUTE_TRACKS.redTracks;
+      return list[Math.floor(Math.random() * list.length)];
+    }
+    return color === 'blue' ? CIRC_BLUE : CIRC_RED;
   }
 
-  function resetParticles() {
-    for (const p of particles) {
-      p.s = p.track.total * (((p.s / p.track.total) % 1 + 1) % 1);
+  function makeParticle(color, s, span) {
+    return { color, track: pickRouteTrack(color), s, span };
+  }
+
+  function initParticles() {
+    particles.length = 0;
+    for (let i = 0; i < 26; i++) {
+      const blueTrack = pickRouteTrack('blue');
+      const redTrack = pickRouteTrack('red');
+      particles.push({ color: 'blue', track: blueTrack, s: (i / 26) * blueTrack.total, span: BLUE_SPAN });
+      particles.push({ color: 'red', track: redTrack, s: ((i + 0.5) / 26) * redTrack.total, span: RED_SPAN });
     }
+  }
+
+  initParticles();
+
+  function resetParticles() {
+    initParticles();
   }
 
   let svSmooth = 68;
@@ -1158,28 +1321,44 @@
      stops dead whenever every valve is shut. Advancing here rather
      than inside the draw call keeps it frame-rate independent and
      means it freezes with the simulation. */
+  function particleOpacity(tag) {
+    if (tag === 'hidden' || tag === 'offart') return 0.25;
+    if (tag === 'bridge') return 0.45;
+    return 1;
+  }
+
   function advanceParticles(dt) {
     for (const p of particles) {
       const flow = p.track.at(p.s).src === 'eject' ? s.ejectC : s.fillC;
       p.s += flow * PARTICLE_SPEED * p.span * dt;
+      while (p.s >= p.track.total) {
+        const overflow = p.s - p.track.total;
+        p.color = p.color === 'blue' ? 'red' : 'blue';
+        p.track = pickRouteTrack(p.color);
+        p.s = overflow;
+      }
+      if (p.s < 0) p.s = 0;
     }
   }
 
   function drawParticles() {
     for (const p of particles) {
       const q = p.track.at(p.s);
-      const o = oxygenation(q, p.track);
+      const o = p.color === 'red' ? 1 : 0;
+      const alpha = particleOpacity(q.tag);
       const r = 3.4;
+      const pos = USE_SVG_ART ? svgArtPoint(q) : q;
+      const dpos = USE_SVG_ART ? { x: q.dx * SVG_ART_SCALE, y: q.dy * SVG_ART_SCALE } : { x: q.dx, y: q.dy };
       ctx.beginPath();
-      ctx.moveTo(q.x - q.dx * 9, q.y - q.dy * 9);
-      ctx.lineTo(q.x, q.y);
-      ctx.strokeStyle = mixHex(COL.deoxLit, COL.oxyLit, o, 0.75);
+      ctx.moveTo(pos.x - dpos.x * 9, pos.y - dpos.y * 9);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = mixHex(COL.deoxLit, COL.oxyLit, o, 0.75 * alpha);
       ctx.lineWidth = 1.6;
       ctx.lineCap = 'round';
       ctx.stroke();
       ctx.beginPath();
-      ctx.arc(q.x, q.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = mixHex(COL.deoxLit, COL.oxyLit, o);
+      ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = mixHex(COL.deoxLit, COL.oxyLit, o, alpha);
       ctx.fill();
       ctx.lineCap = 'butt';
     }
