@@ -32,6 +32,13 @@
   const ANAT_TX = ANAT.x + (ANAT.w - SRC.w * ANAT_K) / 2 - SRC.x * ANAT_K;
   const ANAT_TY = ANAT.y + (ANAT.h - SRC.h * ANAT_K) / 2 - SRC.y * ANAT_K;
 
+  const USE_SVG_ART = true;
+  const ROUTE_DEBUG = true;
+  const SVG_ROOT = { w: 663, h: 652 };
+  const SVG_ART_SCALE = Math.min(ANAT.w / SVG_ROOT.w, ANAT.h / SVG_ROOT.h) * ANAT_FIT;
+  const SVG_ART_TX = ANAT.x + (ANAT.w - SVG_ROOT.w * SVG_ART_SCALE) / 2;
+  const SVG_ART_TY = ANAT.y + (ANAT.h - SVG_ROOT.h * SVG_ART_SCALE) / 2;
+
   // Pressure-volume loop, top right, level with the anatomy.
   const PV_BOX = { x: 612, y: ANAT.y, w: 368, h: ANAT.h };
   const PV_PLOT = { x: PV_BOX.x + 34, y: PV_BOX.y + 30, w: PV_BOX.w - 56, h: PV_BOX.h - 74 };
@@ -562,6 +569,33 @@
   const stage = EV.stage('stage');
   const ctx = stage.ctx;
 
+  const svgArtImg = new Image();
+  svgArtImg.decoding = 'async';
+  svgArtImg.src = 'art/heart-anatomy.svg';
+  let svgArtReady = false;
+  svgArtImg.addEventListener('load', () => { svgArtReady = true; dirty = true; });
+  svgArtImg.addEventListener('error', () => { console.error('SVG_ART_LOAD_ERROR', svgArtImg.src); });
+
+  let routeDebugData = null;
+  let routeDebugLoading = false;
+  function ensureRouteDebug() {
+    if (!ROUTE_DEBUG || routeDebugData || routeDebugLoading) return;
+    routeDebugLoading = true;
+    fetch('prototype/svg-routes.json')
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then((j) => { routeDebugData = j; dirty = true; })
+      .catch((err) => {
+        console.warn('ROUTE_DEBUG_FETCH_FAILED', err);
+        const s = document.createElement('script');
+        s.src = 'routes-data.js';
+        s.onload = () => { routeDebugData = window.SVG_ROUTES_DATA || null; dirty = true; };
+        s.onerror = (e) => { console.error('ROUTE_DEBUG_LOAD_ERROR', e); };
+        document.head.appendChild(s);
+      })
+      .finally(() => { routeDebugLoading = false; });
+  }
+  ensureRouteDebug();
+
 
   const el = (id) => document.getElementById(id);
   const sliders = {
@@ -674,6 +708,63 @@
     return base * hypertrophy;
   }
 
+  function svgArtPoint(p) {
+    return { x: SVG_ART_TX + p.x * SVG_ART_SCALE, y: SVG_ART_TY + p.y * SVG_ART_SCALE };
+  }
+
+  function drawRouteDebug() {
+    if (!ROUTE_DEBUG || !routeDebugData || !routeDebugData.routes) return;
+    ctx.save();
+    for (const route of routeDebugData.routes) {
+      const pts = route.points || [];
+      if (pts.length < 2) continue;
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        const p = svgArtPoint(pts[i]);
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      }
+      const red = /^red|aorta/.test(route.name);
+      ctx.strokeStyle = red ? 'rgba(255,80,80,0.95)' : 'rgba(80,160,255,0.95)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.stroke();
+
+      // hidden dashed
+      ctx.beginPath();
+      let drawing = false;
+      for (let i = 0; i < pts.length; i++) {
+        const p = svgArtPoint(pts[i]);
+        const hidden = pts[i].tag === 'hidden';
+        if (hidden) {
+          if (!drawing) { ctx.moveTo(p.x, p.y); drawing = true; } else ctx.lineTo(p.x, p.y);
+        } else if (drawing) { drawing = false; ctx.moveTo(p.x, p.y); }
+      }
+      ctx.strokeStyle = red ? 'rgba(255,220,80,0.95)' : 'rgba(80,255,220,0.95)';
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([4, 4]);
+      ctx.globalAlpha = 0.95;
+      ctx.stroke();
+
+      // offart faint
+      ctx.beginPath();
+      let off = false;
+      for (let i = 0; i < pts.length; i++) {
+        const p = svgArtPoint(pts[i]);
+        const isOff = pts[i].tag === 'offart';
+        if (isOff) {
+          if (!off) { ctx.moveTo(p.x, p.y); off = true; } else ctx.lineTo(p.x, p.y);
+        } else if (off) { off = false; ctx.moveTo(p.x, p.y); }
+      }
+      ctx.strokeStyle = red ? 'rgba(255,80,80,0.25)' : 'rgba(80,160,255,0.25)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
 /* Apex crowding: the ventricles narrow and round as they squeeze. */
   function drawAnatomy() {
     const edvRef = 120 * params().preload;
@@ -692,6 +783,20 @@
     const csx = sx * (1 + 0.06 * iso) * (1 + 0.03 * s.sysC);
     const csy = sy * (1 - 0.15 * iso) * (1 - 0.02 * s.sysC);
     const baseDrop = 9 * s.sysC;
+
+    if (USE_SVG_ART && svgArtReady) {
+      ctx.save();
+      ctx.drawImage(svgArtImg, SVG_ART_TX, SVG_ART_TY, SVG_ROOT.w * SVG_ART_SCALE, SVG_ROOT.h * SVG_ART_SCALE);
+      ctx.restore();
+      drawRouteDebug();
+      ctx.save();
+      ctx.translate(ANAT_TX, ANAT_TY + baseDrop);
+      ctx.scale(ANAT_K, ANAT_K);
+      drawParticles();
+      ctx.restore();
+      if (labelsOn) drawLabels(hypertrophy);
+      return;
+    }
 
     // Everything anatomical is authored in the roomier SRC space and
     // scaled into its frame here, so a shorter frame never forces the
@@ -772,6 +877,7 @@
     // the heart.
     drawParticles();
     ctx.restore();
+    drawRouteDebug();
     if (labelsOn) drawLabels(hypertrophy);
   }
 
