@@ -804,13 +804,15 @@
     return { color, track: pickRouteTrack(color), s, span };
   }
 
+  const PARTICLE_COUNT_PER_COLOR = 40;
+  const PARTICLE_RADIUS = 4.4;
   function initParticles() {
     particles.length = 0;
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < PARTICLE_COUNT_PER_COLOR; i++) {
       const blueTrack = pickRouteTrack('blue');
       const redTrack = pickRouteTrack('red');
-      particles.push({ color: 'blue', track: blueTrack, s: (i / 26) * blueTrack.total, span: BLUE_SPAN });
-      particles.push({ color: 'red', track: redTrack, s: ((i + 0.5) / 26) * redTrack.total, span: RED_SPAN });
+      particles.push({ color: 'blue', track: blueTrack, s: (i / PARTICLE_COUNT_PER_COLOR) * blueTrack.total, span: BLUE_SPAN });
+      particles.push({ color: 'red', track: redTrack, s: ((i + 0.5) / PARTICLE_COUNT_PER_COLOR) * redTrack.total, span: RED_SPAN });
     }
   }
 
@@ -948,14 +950,26 @@
     const baseDrop = 9 * s.sysC;
 
     if (USE_SVG_ART && svgArtReady) {
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const beatScale = reduceMotion ? 1 : (1.015 - 0.03 * clamp(s.sysC, 0, 1) + 0.005 * clamp(s.fillC, 0, 1));
+      const beatCx = SVG_ART_TX + (SVG_ROOT.w * SVG_ART_SCALE) / 2;
+      const beatCy = SVG_ART_TY + (SVG_ROOT.h * SVG_ART_SCALE) / 2;
+      if (!window.__beatLogged) { console.log('BEAT_VARS sysC fillC scale_range'); window.__beatLogged = true; }
       ctx.save();
+      ctx.translate(beatCx, beatCy);
+      ctx.scale(beatScale, beatScale);
+      ctx.translate(-beatCx, -beatCy);
+      ctx.save();
+      ctx.shadowColor = 'rgba(125,211,252,0.35)';
+      ctx.shadowBlur = 18;
       ctx.drawImage(svgArtImg, SVG_ART_TX, SVG_ART_TY, SVG_ROOT.w * SVG_ART_SCALE, SVG_ROOT.h * SVG_ART_SCALE);
       ctx.restore();
       drawRouteDebug();
       ctx.save();
-      ctx.translate(ANAT_TX, ANAT_TY + baseDrop);
-      ctx.scale(ANAT_K, ANAT_K);
+      ctx.shadowColor = 'rgba(255,255,255,0.35)';
+      ctx.shadowBlur = 8;
       drawParticles();
+      ctx.restore();
       ctx.restore();
       if (labelsOn) drawLabels(hypertrophy);
       return;
@@ -1346,14 +1360,14 @@
       const q = p.track.at(p.s);
       const o = p.color === 'red' ? 1 : 0;
       const alpha = particleOpacity(q.tag);
-      const r = 3.4;
+      const r = PARTICLE_RADIUS;
       const pos = USE_SVG_ART ? svgArtPoint(q) : q;
       const dpos = USE_SVG_ART ? { x: q.dx * SVG_ART_SCALE, y: q.dy * SVG_ART_SCALE } : { x: q.dx, y: q.dy };
       ctx.beginPath();
-      ctx.moveTo(pos.x - dpos.x * 9, pos.y - dpos.y * 9);
+      ctx.moveTo(pos.x - dpos.x * 10, pos.y - dpos.y * 10);
       ctx.lineTo(pos.x, pos.y);
       ctx.strokeStyle = mixHex(COL.deoxLit, COL.oxyLit, o, 0.75 * alpha);
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 2.0;
       ctx.lineCap = 'round';
       ctx.stroke();
       ctx.beginPath();
@@ -1382,74 +1396,99 @@
       retuning the anatomy can never push a name off the frame or across
       into the pressure-volume loop. */
   function drawLabels(hypertrophy) {
+    const artBox = {
+      x0: SVG_ART_TX,
+      y0: SVG_ART_TY,
+      x1: SVG_ART_TX + SVG_ROOT.w * SVG_ART_SCALE,
+      y1: SVG_ART_TY + SVG_ROOT.h * SVG_ART_SCALE
+    };
     const pad = 6;
-    const box = {
-      x0: ANAT.x + pad, y0: ANAT.y + pad,
-      x1: ANAT.x + ANAT.w - pad, y1: ANAT.y + ANAT.h - pad
+    const panelBox = { x0: ANAT.x + pad, y0: ANAT.y + pad, x1: ANAT.x + ANAT.w - pad, y1: ANAT.y + ANAT.h - pad };
+    const bboxes = {
+      right_atrium: { x: 132.86257934570312, y: 262.152587890625, w: 137.724853515625, h: 246.486572265625 },
+      right_ventricle: { x: 181.85101318359375, y: 358.44915771484375, w: 261.7782897949219, h: 231.406494140625 },
+      left_atrium: { x: 309.40869140625, y: 224.3628692626953, w: 150.25369262695312, h: 144.44410705566406 },
+      left_ventricle: { x: 298.89501953125, y: 314.1732177734375, w: 209.07318115234375, h: 243.98809814453125 },
+      aorta: { x: 216.14764404296875, y: 50.41160202026367, w: 193.0977783203125, h: 345.39361572265625 },
+      superior_vena_cava: { x: 113.16728210449219, y: 61.18455505371094, w: 157.20079040527344, h: 227.97926330566406 },
+      inferior_vena_cava: { x: 145.21153259277344, y: 455.9205017089844, w: 77.75602722167969, h: 154.46310424804688 },
+      pulmonary_artery_1: { x: 259.6564025878906, y: 164.3712921142578, w: 230.28955078125, h: 230.32969665527344 },
+      pulmonary_vein_1: { x: 101.3027572631836, y: 209.79661560058594, w: 401.6329345703125, h: 52.95341491699219 }
     };
-    ctx.textAlign = 'center';
+    function anchorFor(id) {
+      const b = bboxes[id];
+      return svgArtPoint({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
+    }
+    const lungL = routeByName('blue-svc-left');
+    const lungR = routeByName('blue-svc-right');
+    const aoExits = ['aorta-top-left', 'aorta-top-middle', 'aorta-top-right'].map(routeByName).filter(Boolean);
+    const sysAnchor = aoExits.length ? svgArtPoint({ x: aoExits[2].points[aoExits[2].points.length - 1].x, y: aoExits[2].points[aoExits[2].points.length - 1].y }) : svgArtPoint({ x: 409, y: 13 });
+
+    const labels = [
+      { text: 'RIGHT ATRIUM', anchor: anchorFor('right_atrium'), col: 'left', color: COL.deoxLit },
+      { text: 'RIGHT VENTRICLE', anchor: anchorFor('right_ventricle'), col: 'left', color: COL.deoxLit },
+      { text: 'SUPERIOR VENA CAVA', anchor: anchorFor('superior_vena_cava'), col: 'left', color: COL.dim },
+      { text: 'INFERIOR VENA CAVA', anchor: anchorFor('inferior_vena_cava'), col: 'left', color: COL.dim },
+      { text: 'PULMONARY ARTERY', anchor: anchorFor('pulmonary_artery_1'), col: 'left', color: COL.dim },
+      { text: 'LUNG (LEFT)', anchor: lungL ? svgArtPoint(lungL.points[lungL.points.length - 1]) : svgArtPoint({ x: 60, y: 176 }), col: 'left', color: COL.dim },
+      { text: 'LEFT ATRIUM', anchor: anchorFor('left_atrium'), col: 'right', color: COL.oxyLit },
+      { text: 'LEFT VENTRICLE', anchor: anchorFor('left_ventricle'), col: 'right', color: COL.oxyLit },
+      { text: 'AORTA', anchor: anchorFor('aorta'), col: 'right', color: COL.dim },
+      { text: 'PULMONARY VEINS', anchor: anchorFor('pulmonary_vein_1'), col: 'right', color: COL.dim },
+      { text: 'LUNG (RIGHT)', anchor: lungR ? svgArtPoint(lungR.points[lungR.points.length - 1]) : svgArtPoint({ x: 610, y: 180 }), col: 'right', color: COL.dim },
+      { text: 'SYSTEMIC BED', anchor: sysAnchor, col: 'right', color: COL.dim },
+      { text: 'LV WALL ' + Math.round(10 * hypertrophy) + ' mm', anchor: svgArtPoint({ x: 420, y: 470 }), col: 'right', color: COL.muscleLit }
+    ];
+
+    const colX = { left: panelBox.x0 + 2, right: panelBox.x1 - 2 };
+    const colAlign = { left: 'left', right: 'right' };
+    const byCol = { left: labels.filter((l) => l.col === 'left'), right: labels.filter((l) => l.col === 'right') };
+    for (const col of ['left', 'right']) {
+      const items = byCol[col].sort((a, b) => a.anchor.y - b.anchor.y);
+      ctx.font = '600 10px system-ui, sans-serif';
+      let y = panelBox.y0 + 10;
+      for (const item of items) {
+        const w = ctx.measureText(item.text).width;
+        item.w = w;
+        item.h = 14;
+        item.x = col === 'left' ? colX.left : colX.right - w;
+        item.y = clamp(item.anchor.y, y, panelBox.y1 - 8);
+        y = item.y + 18;
+      }
+      for (let i = items.length - 1; i > 0; i--) {
+        if (items[i].y - items[i - 1].y < 18) items[i - 1].y = items[i].y - 18;
+      }
+      for (let i = 0; i < items.length; i++) {
+        items[i].y = clamp(items[i].y, panelBox.y0 + 10 + i * 18, panelBox.y1 - 8 - (items.length - 1 - i) * 18);
+      }
+    }
+
+    ctx.save();
+    ctx.font = '600 10px system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-
-    // Chamber names ride just outside their own cavity, in a plate that is
-    // nudged back inside the frame if it would overhang.
-    const tag = (pt, text, colour) => {
-      ctx.font = '700 10px system-ui, sans-serif';
-      const w = Math.min(ctx.measureText(text).width + 12, ANAT.w - 2 * pad);
-      const cx = clamp(pt.x, box.x0 + w / 2, box.x1 - w / 2);
-      const cy = clamp(pt.y, box.y0 + 8, box.y1 - 8);
-      ctx.fillStyle = 'rgba(8,12,24,0.72)';
-      panel(cx - w / 2, cy - 8, w, 16, 4);
-      ctx.fill();
-      ctx.fillStyle = colour;
-      ctx.fillText(text, cx, cy);
-    };
-
-    // Vessel names are set flush against the vessel they name, then pulled
-    // back to whichever frame edge is nearer.
-    const vesselTag = (pt, text, side) => {
-      ctx.font = '600 9px system-ui, sans-serif';
-      const w = ctx.measureText(text).width;
-      const x = side < 0
-        ? clamp(pt.x, box.x0 + w, box.x1)
-        : clamp(pt.x, box.x0, box.x1 - w);
-      const y = clamp(pt.y, box.y0 + 6, box.y1 - 6);
-      ctx.fillStyle = COL.dim;
-      ctx.textAlign = side < 0 ? 'left' : 'right';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, x, y);
-    };
-
-    // The two ventricles share one apex, so their names sit at one height: a
-    // pair of labels at different heights reads as a difference in the anatomy
-    // rather than as the same muscle seen from two sides. The atria are left
-    // following their own centres, because those really are offset.
-    tag(mapPt(G.raC.x - 30, G.raC.y - 84), 'RIGHT ATRIUM', COL.deoxLit);
-    tag(mapPt(G.rvBase.x - 34, LVY + VENT_H + 52), 'RIGHT VENTRICLE', COL.deoxLit);
-    tag(mapPt(G.laC.x + 40, G.laC.y - 78), 'LEFT ATRIUM', COL.oxyLit);
-    tag(mapPt(LVX + 30, LVY + VENT_H + 52), 'LEFT VENTRICLE', COL.oxyLit);
-    tag(mapPt(LUNG_L.x, LUNG_L.y), 'LUNG', COL.dim);
-    tag(mapPt(BED_R.x - 44, BED_R.y + 120), 'SYSTEMIC BED', COL.dim);
-
-    // Superior vena cava and pulmonary artery both set out from the top of the
-    // panel on near-identical x, and flush-set on opposite edges they ended a
-    // single pixel apart. Separating them by height puts each name beside the
-    // vessel it names instead of in one crowded band.
-    vesselTag(mapPt(G.aortic.x + 118, LVY - 220), 'AORTA', 1);
-    vesselTag(mapPt(G.raC.x - 40, LVY - 240), 'SUPERIOR VENA CAVA', 1);
-    vesselTag(mapPt(G.pulmonary.x - 96, LVY - 190), 'PULMONARY ARTERY', -1);
-    vesselTag(mapPt(G.raC.x - 100, LVY + 150), 'INFERIOR VENA CAVA', -1);
-    vesselTag(mapPt(G.laC.x + 132, LVY - 178), 'PULMONARY VEINS', -1);
-
-    // Pressure overload shows up as a wall the eye can measure.
-    const wall = Math.round(10 * hypertrophy);
-    ctx.font = '700 9px system-ui, sans-serif';
-    ctx.fillStyle = COL.muscleLit;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    const wallPt = mapPt(LVX + 80, LVY + 0.52 * VENT_H);
-    ctx.fillText('LV WALL ' + wall + ' mm',
-      clamp(wallPt.x, box.x0, box.x1 - 74),
-      clamp(wallPt.y, box.y0 + 6, box.y1 - 6));
+    for (const item of labels) {
+      const x0 = item.x;
+      const x1 = item.x + item.w;
+      const y = item.y;
+      const anchor = item.anchor;
+      const ax = clamp(anchor.x, artBox.x0, artBox.x1);
+      const ay = clamp(anchor.y, artBox.y0, artBox.y1);
+      const lx = item.col === 'left' ? x1 + 2 : x0 - 2;
+      ctx.strokeStyle = 'rgba(148,163,184,0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(lx, y);
+      ctx.lineTo(ax, ay);
+      ctx.stroke();
+      ctx.fillStyle = item.color;
+      ctx.textAlign = item.col === 'left' ? 'left' : 'right';
+      ctx.fillText(item.text, item.col === 'left' ? x0 : x1, y);
+    }
+    ctx.restore();
+    console.log('LABEL_LAYOUT');
+    for (const item of labels) {
+      console.log('LABEL', item.text, 'anchor=' + JSON.stringify({ x: +item.anchor.x.toFixed(2), y: +item.anchor.y.toFixed(2) }), 'col=' + item.col);
+    }
   }
 
   /* Drawn outside the scaled anatomy: the readouts are about the model,
@@ -1859,6 +1898,9 @@
     while (loopTrail.length && clock - loopTrail[0].t > 2.6) loopTrail.shift();
   }
 
+  const perfWanted = new URLSearchParams(location.search).get('perf') === '1';
+  let perfFrames = 0;
+  let perfSum = 0;
   function tick(now) {
     const dt = EV.delta(now, lastTime);
     lastTime = now;
@@ -1866,9 +1908,15 @@
     // no reason to repaint a frame that would look identical. A control
     // interaction flips `dirty` and gets one fresh frame instead.
     if (dt > 0 && !paused) {
+      const t0 = performance.now();
       update(dt);
       syncReadout(dt);
       render();
+      if (perfWanted && perfFrames < 120) {
+        perfSum += performance.now() - t0;
+        perfFrames++;
+        if (perfFrames === 120) console.log('PERF_AVG_MS_PER_FRAME=' + (perfSum / 120).toFixed(3));
+      }
     } else if (dirty) {
       // Paused or reduced motion: nothing is advancing, but a control
       // still has to be able to refresh the numbers on screen.
